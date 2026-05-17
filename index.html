@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>诺贝尔奖科学发现可视化</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <header class="hero">
+    <h1>从发现到认可：诺贝尔奖科学发现可视化</h1>
+    <p>
+      本项目基于诺贝尔奖得主论文发表记录，探索关键科学发现出现的职业阶段、
+      论文发表到获奖之间的等待时间，以及不同学科之间的差异。
+    </p>
+  </header>
+
+  <main>
+    <section class="section">
+      <h2>一、关键发现为何常常“迟到”？</h2>
+      <p>
+        蓝点表示关键论文发表年份，橙点表示诺贝尔奖获奖年份，中间连线表示从发现到认可的等待时间。
+      </p>
+
+      <div class="controls">
+        <button data-field="all" class="active">全部</button>
+        <button data-field="Physics">物理学</button>
+        <button data-field="Chemistry">化学</button>
+        <button data-field="Medicine">医学</button>
+      </div>
+
+      <div id="timeline-chart" class="chart"></div>
+    </section>
+
+    <section class="section">
+      <h2>二、关键发现发生在科学家职业生涯的哪个阶段？</h2>
+      <p>
+        后续将在这里展示科学家的首篇论文年份、关键论文发表年份与获奖年份之间的关系。
+      </p>
+
+      <div id="career-chart" class="chart placeholder">
+        Career chart will be here.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>数据来源与说明</h2>
+      <p>
+        数据来源于诺贝尔奖得主发表记录数据集。后续将在此处补充具体数据来源、清洗方式和变量构造说明。
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Data Visualization Course Project · D3.js</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="js/utils/dataLoader.js"></script>
+  <script src="js/charts/timeline.js"></script>
+  <script src="js/charts/career.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, "Microsoft YaHei", sans-serif;
+  color: #222;
+  background: #f7f7f5;
+  line-height: 1.6;
+}
+
+.hero {
+  padding: 64px 10%;
+  background: #1f2937;
+  color: white;
+}
+
+.hero h1 {
+  margin: 0 0 16px;
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.hero p {
+  max-width: 860px;
+  margin: 0;
+  font-size: 18px;
+  color: #e5e7eb;
+}
+
+main {
+  width: 80%;
+  max-width: 1100px;
+  margin: 40px auto;
+}
+
+.section {
+  margin-bottom: 48px;
+  padding: 32px;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.section h2 {
+  margin-top: 0;
+  font-size: 24px;
+}
+
+.controls {
+  margin: 24px 0;
+}
+
+.controls button {
+  margin-right: 8px;
+  padding: 8px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: white;
+  cursor: pointer;
+}
+
+.controls button.active {
+  background: #1f2937;
+  color: white;
+}
+
+.chart {
+  width: 100%;
+  min-height: 420px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fafafa;
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #777;
+}
+
+.tooltip {
+  position: absolute;
+  padding: 10px 12px;
+  background: rgba(31, 41, 55, 0.95);
+  color: white;
+  border-radius: 8px;
+  font-size: 13px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+footer {
+  padding: 24px;
+  text-align: center;
+  color: #777;
+}
