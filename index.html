@@ -1,65 +1,129 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>诺贝尔奖科学发现可视化</title>
-  <link rel="stylesheet" href="css/style.css" />
-</head>
-
-<body>
-  <header class="hero">
-    <h1>从发现到认可：诺贝尔奖科学发现可视化</h1>
-    <p>
-      本项目基于诺贝尔奖得主论文发表记录，探索关键科学发现出现的职业阶段、
-      论文发表到获奖之间的等待时间，以及不同学科之间的差异。
-    </p>
-  </header>
-
-  <main>
-    <section class="section">
-      <h2>一、关键发现为何常常“迟到”？</h2>
-      <p>
-        蓝点表示关键论文发表年份，橙点表示诺贝尔奖获奖年份，中间连线表示从发现到认可的等待时间。
-      </p>
-
-      <div class="controls">
-        <button data-field="all" class="active">全部</button>
-        <button data-field="Physics">物理学</button>
-        <button data-field="Chemistry">化学</button>
-        <button data-field="Medicine">医学</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>诺贝尔奖可视化框架</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero-content">
+        <h1>项目标题</h1>
+        <p>补充文字</p>
       </div>
+    </header>
 
-      <div id="timeline-chart" class="chart"></div>
-    </section>
+    <main>
+      <section id="section-career" class="section">
+        <div class="section-header">
+          <div>
+            <h2>1. 职业生涯阶段与认可</h2>
+            <p>左侧宏观总览与右侧科学家生涯轨迹联动，支持学科筛选与个体切换。</p>
+          </div>
+        </div>
 
-    <section class="section">
-      <h2>二、关键发现发生在科学家职业生涯的哪个阶段？</h2>
-      <p>
-        后续将在这里展示科学家的首篇论文年份、关键论文发表年份与获奖年份之间的关系。
-      </p>
+        <div class="career-layout">
+          <aside class="card panel panel-overview">
+            <div class="panel-title">标题在此修改</div>
+            <div class="panel-note">学科筛选、总体趋势和宏观总览区。</div>
+            <div class="panel-controls">
+              <label for="career-field-filter">学科筛选：</label>
+              <select id="career-field-filter">
+                <option value="all">全部学科</option>
+                <option value="physics">Physics</option>
+                <option value="chemistry">Chemistry</option>
+                <option value="medicine">Medicine</option>
+              </select>
+            </div>
+            <div id="career-overview" class="chart placeholder-box">
+              <div class="placeholder">宏观总览图位置在此修改</div>
+            </div>
+          </aside>
 
-      <div id="career-chart" class="chart placeholder">
-        Career chart will be here.
-      </div>
-    </section>
+          <div class="card panel panel-detail">
+            <div class="panel-title">标题在此修改</div>
+            <div class="panel-note">具体科学家生涯轨迹、右侧详情与列表切换。</div>
+            <div class="detail-top">
+              <div class="detail-list">
+                <div class="placeholder">科学家列表 / 个体切换在此修改</div>
+              </div>
+              <div class="detail-filter">
+                <label for="career-scientist-select">当前个体：</label>
+                <select id="career-scientist-select">
+                  <option>Scientist A</option>
+                  <option>Scientist B</option>
+                  <option>Scientist C</option>
+                </select>
+              </div>
+            </div>
+            <div id="career-detail" class="chart placeholder-box">
+              <div class="placeholder">微观细节图位置在此修改</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    <section class="section">
-      <h2>数据来源与说明</h2>
-      <p>
-        数据来源于诺贝尔奖得主发表记录数据集。后续将在此处补充具体数据来源、清洗方式和变量构造说明。
-      </p>
-    </section>
-  </main>
+      <section id="section-waittime" class="section">
+        <div class="section-header">
+          <div>
+            <h2>2. 等待时间影响因素探索</h2>
+            <p>通过职业年龄、机构国家、期刊等控制下拉框，分析 wait_time 变化。</p>
+          </div>
+        </div>
 
-  <footer>
-    <p>Data Visualization Course Project · D3.js</p>
-  </footer>
+        <div class="controls-row">
+          <label for="waittime-age-filter">职业年龄</label>
+          <select id="waittime-age-filter">
+            <option>全部</option>
+          </select>
+          <label for="waittime-country-filter">机构国家</label>
+          <select id="waittime-country-filter">
+            <option>全部</option>
+          </select>
+          <label for="waittime-journal-filter">期刊类型</label>
+          <select id="waittime-journal-filter">
+            <option>全部</option>
+          </select>
+        </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-  <script src="js/utils/dataLoader.js"></script>
-  <script src="js/charts/timeline.js"></script>
-  <script src="js/charts/career.js"></script>
-  <script src="js/main.js"></script>
-</body>
+        <div class="wait-layout">
+          <div class="card chart placeholder-box">
+            <div class="placeholder">等待时间因素示意图 1 在此修改</div>
+          </div>
+          <div class="card chart placeholder-box">
+            <div class="placeholder">等待时间因素示意图 2 在此修改</div>
+          </div>
+          <div class="card chart placeholder-box">
+            <div class="placeholder">等待时间因素示意图 3 在此修改</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-special" class="section">
+        <div class="section-header">
+          <div>
+            <h2>3. 特殊作者模块</h2>
+            <p>展示特殊作者、标志性人物或特殊贡献路径的分析图。</p>
+          </div>
+        </div>
+
+        <div class="special-layout">
+          <div class="card chart placeholder-box">
+            <div class="placeholder">特殊作者图 1 在此修改</div>
+          </div>
+          <div class="card chart placeholder-box">
+            <div class="placeholder">特殊作者图 2 在此修改</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>说明文字</p>
+    </footer>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
 </html>

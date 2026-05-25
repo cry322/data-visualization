@@ -1,99 +1,225 @@
+/* 全局重置：让边框和内外间距计算更直观。 */
 * {
   box-sizing: border-box;
 }
 
+/* 页面主体基础样式 */
 body {
-  margin: 0;
-  font-family: Arial, "Microsoft YaHei", sans-serif;
-  color: #222;
-  background: #f7f7f5;
-  line-height: 1.6;
+  margin: 0; /* 去除浏览器默认 margin */
+  font-family: Arial, "Microsoft YaHei", sans-serif; /* 中文与英文字体优先顺序 */
+  color: #222; /* 正文字体颜色 */
+  background: #f7f7f5; /* 页面背景色 */
+  line-height: 1.65; /* 提升可读性 */
 }
 
+/* 页面顶部引导区样式 */
 .hero {
-  padding: 64px 10%;
-  background: #1f2937;
-  color: white;
+  padding: 48px 10%; /* 顶部内边距，左右留白 */
+  background: #1f2937; /* 深色背景，让标题更醒目 */
+  color: white; /* 文字白色 */
 }
 
+/* 顶部主标题样式 */
 .hero h1 {
-  margin: 0 0 16px;
-  font-size: 36px;
+  margin: 0 0 12px; /* 标题底部间距 */
+  font-size: 34px; /* 标题字号 */
+}
+
+/* 顶部副标题说明文本 */
+.hero p {
+  margin: 0;
+  max-width: 900px; /* 限制行宽，提升阅读体验 */
+  font-size: 17px;
+  color: #d1d5db; /* 文字柔和白色 */
+}
+
+/* 主内容区域宽度和居中 */
+main {
+  width: 90%;
+  max-width: 1200px;
+  margin: 32px auto 48px; /* 上间距、自动左右居中、底部间距 */
+}
+
+/* 每个模块卡片的基础样式 */
+.section {
+  margin-bottom: 40px; /* 模块之间竖直间距 */
+  padding: 28px; /* 模块内边距 */
+  background: white; /* 白色卡片背景 */
+  border-radius: 18px; /* 圆角 */
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06); /* 轻微阴影 */
+}
+
+/* 模块头部标题与说明布局 */
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px; /* 元素间距 */
+  margin-bottom: 24px;
+}
+
+/* 模块标题样式 */
+.section h2 {
+  margin: 0 0 8px;
+  font-size: 26px;
+}
+
+/* 模块说明文本 */
+.section p {
+  margin: 0;
+  color: #555;
+}
+
+/* 职业阶段模块左右两列布局 */
+.career-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.7fr; /* 左侧 1 份，右侧 1.7 份 */
+  gap: 24px;
+}
+
+/* 通用控件行的布局 */
+.controls-row {
+  display: flex;
+  flex-wrap: wrap; /* 小屏幕时换行 */
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* 字段标签统一样式 */
+.controls-row label,
+.detail-filter label {
+  font-size: 14px;
+  color: #444;
+}
+
+/* 下拉框样式 */
+.controls-row select,
+.detail-filter select {
+  min-width: 160px;
+  padding: 8px 10px;
+  border: 1px solid #ccd0d7;
+  border-radius: 10px;
+  background: white;
+}
+
+/* 通用面板样式，用于侧栏与详情容器 */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px; /* 子元素间距 */
+  padding: 20px;
+  border: 1px solid #e6e8ee;
+  border-radius: 16px;
+  background: #fff;
+}
+
+/* 小面板标题样式 */
+.panel-title {
+  font-size: 18px;
   font-weight: 700;
 }
 
-.hero p {
-  max-width: 860px;
-  margin: 0;
-  font-size: 18px;
-  color: #e5e7eb;
+/* 面板说明文字样式 */
+.panel-note {
+  color: #555;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
-main {
-  width: 80%;
-  max-width: 1100px;
-  margin: 40px auto;
+/* 详情区顶部控制区域布局 */
+.panel-controls,
+.detail-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
 }
 
-.section {
-  margin-bottom: 48px;
-  padding: 32px;
-  background: white;
-  border-radius: 18px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-}
-
-.section h2 {
-  margin-top: 0;
-  font-size: 24px;
-}
-
-.controls {
-  margin: 24px 0;
-}
-
-.controls button {
-  margin-right: 8px;
-  padding: 8px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 999px;
-  background: white;
-  cursor: pointer;
-}
-
-.controls button.active {
-  background: #1f2937;
-  color: white;
-}
-
-.chart {
-  width: 100%;
-  min-height: 420px;
-  border: 1px solid #e5e7eb;
+/* 科学家列表/切换区样式 */
+.detail-list {
+  flex: 1; /* 占据可用剩余空间 */
+  min-width: 220px;
+  padding: 14px;
+  border: 1px dashed #d1d5db;
   border-radius: 14px;
-  background: #fafafa;
+  background: #f8f9fb;
 }
 
+/* 过滤器组合区样式 */
+.detail-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 图表及占位框共享样式 */
+.chart,
+.placeholder-box {
+  width: 100%;
+  min-height: 320px;
+  padding: 12px;
+  border: 1px dashed #cfd4db;
+  border-radius: 16px;
+  background: #fbfcfd;
+}
+
+/* 占位文字居中展示 */
 .placeholder {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #777;
-}
-
-.tooltip {
-  position: absolute;
-  padding: 10px 12px;
-  background: rgba(31, 41, 55, 0.95);
-  color: white;
-  border-radius: 8px;
-  font-size: 13px;
-  pointer-events: none;
-  opacity: 0;
-}
-
-footer {
-  padding: 24px;
   text-align: center;
-  color: #777;
+  color: #6b7280;
+  font-size: 16px;
+  padding: 14px;
+}
+
+/* 等待时间与特殊作者模块的网格布局基类 */
+.wait-layout,
+.special-layout {
+  display: grid;
+  gap: 20px;
+}
+
+/* 等待时间模块中三个子图的等宽布局 */
+.wait-layout {
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+}
+
+/* 特殊作者模块中两个子图的等宽布局 */
+.special-layout {
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+}
+
+/* 页脚文字样式 */
+footer {
+  padding: 24px 10%;
+  text-align: center;
+  color: #555;
+  font-size: 14px;
+}
+
+/* 响应式：宽度较小时将网格改为单列 */
+@media (max-width: 1024px) {
+  .career-layout,
+  .wait-layout,
+  .special-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 小屏幕优化：顶部留白与控件垂直堆叠 */
+@media (max-width: 640px) {
+  .hero {
+    padding: 32px 6%;
+  }
+
+  .controls-row,
+  .detail-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
