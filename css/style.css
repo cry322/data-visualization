@@ -81,7 +81,7 @@ main {
 .controls-row {
   display: flex;
   flex-wrap: wrap; /* 小屏幕时换行 */
-  gap: 16px;
+  gap: 16px 18px;
   align-items: center;
   margin-bottom: 20px;
 }
@@ -97,10 +97,32 @@ main {
 .controls-row select,
 .detail-filter select {
   min-width: 160px;
-  padding: 8px 10px;
+  padding: 10px 38px 10px 13px;
   border: 1px solid #ccd0d7;
-  border-radius: 10px;
-  background: white;
+  border-radius: 8px;
+  background:
+    linear-gradient(45deg, transparent 50%, #394150 50%) right 16px center / 6px 6px no-repeat,
+    linear-gradient(135deg, #394150 50%, transparent 50%) right 10px center / 6px 6px no-repeat,
+    #fff;
+  color: #111827;
+  font: inherit;
+  line-height: 1.2;
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.controls-row select:hover,
+.detail-filter select:hover {
+  border-color: #8d98a8;
+}
+
+.controls-row select:focus,
+.detail-filter select:focus {
+  outline: none;
+  border-color: #26323f;
+  box-shadow: 0 0 0 3px rgba(38, 50, 63, 0.12);
 }
 
 /* 通用面板样式，用于侧栏与详情容器 */
@@ -189,6 +211,189 @@ main {
   grid-template-columns: repeat(3, minmax(220px, 1fr));
 }
 
+#section-waittime {
+  background: #ffffff;
+}
+
+#section-waittime .controls-row {
+  gap: 18px 22px;
+}
+
+#section-waittime .controls-row label {
+  color: #1f2933;
+  font-weight: 600;
+}
+
+#section-waittime .controls-row select {
+  min-width: 176px;
+  border-radius: 8px;
+  border-color: #b7c0cc;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+#section-waittime .controls-row select:disabled {
+  color: #8b95a1;
+  background:
+    linear-gradient(45deg, transparent 50%, #9aa3af 50%) right 16px center / 6px 6px no-repeat,
+    linear-gradient(135deg, #9aa3af 50%, transparent 50%) right 10px center / 6px 6px no-repeat,
+    #f7f8fa;
+}
+
+#section-waittime .card {
+  border: 1px solid #cfd8e3;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.wait-main-card {
+  grid-column: span 2;
+  min-height: 620px;
+}
+
+.wait-side-card {
+  min-height: 320px;
+}
+
+.wait-card-header {
+  margin-bottom: 10px;
+}
+
+.waittime-chart {
+  width: 100%;
+  min-height: 520px;
+  background: #ffffff;
+}
+
+.waittime-axis path,
+.waittime-axis line {
+  stroke: #6b7280;
+}
+
+.waittime-axis text {
+  fill: #374151;
+  font-size: 12px;
+}
+
+.waittime-grid line {
+  stroke: #d9dee7;
+  stroke-width: 1;
+}
+
+.waittime-grid path {
+  display: none;
+}
+
+.waittime-axis-label,
+.waittime-reference-label,
+.waittime-legend text {
+  fill: #26323f;
+  font-size: 12px;
+}
+
+.waittime-reference {
+  stroke: #7d8794;
+  stroke-dasharray: 5 5;
+  stroke-width: 1.4;
+}
+
+.waittime-dot {
+  cursor: pointer;
+  shape-rendering: geometricPrecision;
+}
+
+.waittime-summary,
+.waittime-insights {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.waittime-stat,
+.waittime-quadrant,
+.waittime-field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #d9dee7;
+  border-radius: 6px;
+  background: #fbfcfe;
+}
+
+.waittime-stat span,
+.waittime-quadrant span,
+.waittime-field-row span {
+  color: #4b5563;
+  font-size: 13px;
+}
+
+.waittime-stat strong,
+.waittime-quadrant strong,
+.waittime-field-row strong {
+  color: #111827;
+  font-size: 16px;
+}
+
+.waittime-field-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.waittime-field-row i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.waittime-case-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.waittime-case {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-left: 3px solid #7d8794;
+  background: #fbfcfe;
+}
+
+.waittime-case span {
+  color: #4b5563;
+  font-size: 12px;
+}
+
+.waittime-case.empty {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.waittime-tooltip {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  pointer-events: none;
+  opacity: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(17, 24, 39, 0.94);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.55;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+}
+
 /* 特殊作者模块中两个子图的等宽布局 */
 .special-layout {
   grid-template-columns: repeat(2, minmax(240px, 1fr));
@@ -208,6 +413,10 @@ footer {
   .wait-layout,
   .special-layout {
     grid-template-columns: 1fr;
+  }
+
+  .wait-main-card {
+    grid-column: auto;
   }
 }
 

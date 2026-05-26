@@ -1,0 +1,29 @@
+# This repository should not track local workspace files or generated data.
+*
+
+# Keep Git ignore rules visible.
+!.gitignore
+
+# Local project files and data.
+data/
+direction3-prototype/
+docx_render_check/
+docx_render_front_four/
+css/
+js/
+
+# Local scripts and generated documents.
+*.py
+*.md
+*.docx
+*.html
+
+# Local/runtime artifacts.
+.venv/
+__pycache__/
+*.py[cod]
+*.filepart
+.DS_Store
+Thumbs.db
+.env
+.env.*
