@@ -223,3 +223,137 @@ footer {
     align-items: stretch;
   }
 }
+
+/* ========== Section 4: Institution & Academic Migration ========== */
+
+.section-institution {
+  scroll-margin-top: 24px;
+}
+
+.institution-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: stretch;
+  margin-bottom: 20px;
+}
+
+.institution-hero-text {
+  flex: 1.4;
+}
+
+.institution-metrics {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metric-card {
+  border-radius: 14px;
+  padding: 14px 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(120, 130, 150, 0.18);
+  text-align: center;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.metric-label {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.institution-subnav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+  padding: 12px 16px;
+}
+
+.institution-subnav a {
+  text-decoration: none;
+  color: #334155;
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.16);
+}
+
+.institution-subnav a:hover {
+  background: rgba(59, 130, 246, 0.14);
+  color: #1d4ed8;
+}
+
+.institution-block {
+  margin-top: 34px;
+}
+
+.section-header.compact {
+  margin-bottom: 14px;
+}
+
+.section-header.compact h3 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
+.institution-overview-layout,
+.country-layout,
+.sankey-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.institution-detail-panel {
+  min-height: 420px;
+}
+
+.detail-content {
+  min-height: 260px;
+}
+
+.network-controls {
+  gap: 10px 14px;
+}
+
+.large-chart {
+  min-height: 560px;
+}
+
+.topic-case-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.mini-card {
+  min-height: 96px;
+}
+
+@media (max-width: 960px) {
+  .institution-hero,
+  .institution-overview-layout,
+  .country-layout,
+  .sankey-layout {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .institution-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .topic-case-cards {
+    grid-template-columns: 1fr;
+  }
+}

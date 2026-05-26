@@ -118,6 +118,272 @@
           </div>
         </div>
       </section>
+
+            <!-- 方案三：科研机构与学术迁移合作网络 -->
+      <section id="section-institution" class="section section-institution">
+        <div class="section-header">
+          <div>
+            <h2>4. 科研机构与学术迁移合作网络</h2>
+            <p>
+              从机构分布、国家版图、合作网络到学术主题迁移，展示诺贝尔奖科学成果背后的科研组织结构。
+            </p>
+          </div>
+        </div>
+
+        <!-- 方案三总览标题区 -->
+        <div class="institution-hero card">
+          <div class="institution-hero-text">
+            <div class="panel-title">科研机构与学术迁移合作网络</div>
+            <div class="panel-note">
+              观察哪些机构和国家构成诺奖科研中心，机构之间如何合作，以及学术主题如何随时间演化。
+            </div>
+          </div>
+
+          <div class="institution-metrics">
+            <div class="metric-card">
+              <div class="metric-value" id="metric-institution-count">--</div>
+              <div class="metric-label">机构数量</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="metric-country-count">--</div>
+              <div class="metric-label">国家 / 地区</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="metric-paper-count">--</div>
+              <div class="metric-label">论文数量</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="metric-edge-count">--</div>
+              <div class="metric-label">合作关系</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 方案三内部导航 -->
+        <nav class="institution-subnav card">
+          <a href="#institution-overview-block">机构概览</a>
+          <a href="#institution-country-block">国家分布</a>
+          <a href="#institution-network-block">合作网络</a>
+          <a href="#institution-sankey-block">机构-学科</a>
+          <a href="#topic-migration-block">主题迁移</a>
+        </nav>
+
+        <!-- 1. 机构影响力概览 -->
+        <div id="institution-overview-block" class="institution-block">
+          <div class="section-header compact">
+            <div>
+              <h3>4.1 机构影响力概览</h3>
+              <p>哪些机构在诺奖科学家的发表记录中最常出现？哪些机构在论文数、关键论文和引用影响力上更突出？</p>
+            </div>
+          </div>
+
+          <div class="institution-overview-layout">
+            <div class="card panel">
+              <div class="panel-title">Top 20 机构排行榜</div>
+              <div class="panel-note">默认按参与论文数排序，可切换排序指标。</div>
+
+              <div class="panel-controls">
+                <label for="institution-field-filter">学科筛选：</label>
+                <select id="institution-field-filter">
+                  <option value="all">全部学科</option>
+                  <option value="Physics">Physics</option>
+                  <option value="Chemistry">Chemistry</option>
+                  <option value="Medicine">Medicine</option>
+                </select>
+
+                <label for="institution-sort-select">排序指标：</label>
+                <select id="institution-sort-select">
+                  <option value="paper_count">参与论文数</option>
+                  <option value="authorship_count">机构出现次数</option>
+                  <option value="laureate_count">关联科学家数</option>
+                  <option value="prize_paper_count">关键论文数</option>
+                  <option value="mean_citation_normalized_percentile">平均引用百分位</option>
+                </select>
+              </div>
+
+              <div id="institution-overview-chart" class="chart placeholder-box">
+                <div class="placeholder">机构 Top 20 横向柱状图位置</div>
+              </div>
+            </div>
+
+            <aside class="card panel institution-detail-panel">
+              <div class="panel-title">机构详情</div>
+              <div class="panel-note">点击任意机构后，在此显示代表科学家、论文、主题与合作机构。</div>
+
+              <div id="institution-detail-content" class="detail-content">
+                <div class="placeholder">机构详情面板位置</div>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <!-- 2. 国家 / 地区分布图 -->
+        <div id="institution-country-block" class="institution-block">
+          <div class="section-header compact">
+            <div>
+              <h3>4.2 国家 / 地区分布图</h3>
+              <p>诺奖科研机构主要分布在哪些国家或地区？不同国家是否具有不同的学科结构？</p>
+            </div>
+          </div>
+
+          <div class="country-layout">
+            <div class="card panel">
+              <div class="panel-title">全球科研机构分布</div>
+              <div class="panel-note">基于 country_code 进行国家级地图展示。</div>
+
+              <div id="country-map-chart" class="chart placeholder-box">
+                <div class="placeholder">世界地图 / 国家气泡图位置</div>
+              </div>
+            </div>
+
+            <div class="card panel">
+              <div class="panel-title">国家 / 地区 Top 10</div>
+              <div class="panel-note">按机构数、论文数或关联科学家数排序。</div>
+
+              <div class="panel-controls">
+                <label for="country-sort-select">排序指标：</label>
+                <select id="country-sort-select">
+                  <option value="paper_count">论文数</option>
+                  <option value="institution_count">机构数</option>
+                  <option value="laureate_count">关联科学家数</option>
+                  <option value="prize_paper_count">关键论文数</option>
+                </select>
+              </div>
+
+              <div id="country-ranking-chart" class="chart placeholder-box">
+                <div class="placeholder">国家 Top 10 排行榜位置</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 机构合作网络图 -->
+        <div id="institution-network-block" class="institution-block">
+          <div class="section-header compact">
+            <div>
+              <h3>4.3 机构合作网络图</h3>
+              <p>哪些机构之间形成了高频合作关系？哪些机构位于诺奖科研合作网络的中心？</p>
+            </div>
+          </div>
+
+          <div class="card panel">
+            <div class="panel-title">机构合作力导向网络</div>
+            <div class="panel-note">节点表示机构，边表示两个机构共同出现在同一篇论文中，边宽表示合作次数。</div>
+
+            <div class="panel-controls network-controls">
+              <label for="network-field-filter">学科筛选：</label>
+              <select id="network-field-filter">
+                <option value="all">全部学科</option>
+                <option value="Physics">Physics</option>
+                <option value="Chemistry">Chemistry</option>
+                <option value="Medicine">Medicine</option>
+              </select>
+
+              <label for="network-topn-range">Top N 机构：</label>
+              <input id="network-topn-range" type="range" min="20" max="100" value="50" step="10" />
+              <span id="network-topn-value">50</span>
+
+              <label for="network-weight-range">最小边权重：</label>
+              <input id="network-weight-range" type="range" min="1" max="10" value="2" step="1" />
+              <span id="network-weight-value">2</span>
+
+              <button id="network-reset-btn" type="button">重置布局</button>
+            </div>
+
+            <div id="institution-network-chart" class="chart placeholder-box large-chart">
+              <div class="placeholder">机构合作力导向网络图位置</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. 机构—学科关系图 -->
+        <div id="institution-sankey-block" class="institution-block">
+          <div class="section-header compact">
+            <div>
+              <h3>4.4 机构—学科关系图</h3>
+              <p>不同学科的诺奖科研活动是否集中在不同机构？哪些机构是综合型科研中心？</p>
+            </div>
+          </div>
+
+          <div class="sankey-layout">
+            <div class="card panel">
+              <div class="panel-title">机构 → 学科 / 主题 桑基图</div>
+              <div class="panel-note">展示 Top 机构与 Physics、Chemistry、Medicine 及主题之间的关系。</div>
+
+              <div class="panel-controls">
+                <label for="sankey-mode-select">显示层级：</label>
+                <select id="sankey-mode-select">
+                  <option value="field">机构 → 学科</option>
+                  <option value="field-topic">机构 → 学科 → 主题</option>
+                </select>
+              </div>
+
+              <div id="institution-sankey-chart" class="chart placeholder-box">
+                <div class="placeholder">机构—学科桑基图位置</div>
+              </div>
+            </div>
+
+            <aside class="card panel">
+              <div class="panel-title">关系解读</div>
+              <div class="panel-note">点击桑基图节点或连线后，在此展示对应机构、学科或主题的解释信息。</div>
+              <div id="sankey-insight-card" class="detail-content">
+                <div class="placeholder">桑基图解读卡片位置</div>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <!-- 5. 学术主题迁移与知识路径图 -->
+        <div id="topic-migration-block" class="institution-block">
+          <div class="section-header compact">
+            <div>
+              <h3>4.5 学术主题迁移与知识路径图</h3>
+              <p>诺奖科学家的研究主题如何随时间演化？获奖关键论文是否处在主题转向或知识汇聚的重要节点上？</p>
+            </div>
+          </div>
+
+          <div class="card panel">
+            <div class="panel-title">学术主题迁移</div>
+            <div class="panel-note">展示 field、subfield、topic 在获奖前后不同阶段中的动态变化。</div>
+
+            <div class="panel-controls">
+              <label for="topic-field-filter">学科筛选：</label>
+              <select id="topic-field-filter">
+                <option value="all">全部学科</option>
+                <option value="Physics">Physics</option>
+                <option value="Chemistry">Chemistry</option>
+                <option value="Medicine">Medicine</option>
+              </select>
+
+              <label for="topic-view-select">图表类型：</label>
+              <select id="topic-view-select">
+                <option value="sankey">主题迁移 Sankey</option>
+                <option value="river">主题河流图</option>
+                <option value="network">引用路径网络</option>
+              </select>
+            </div>
+
+            <div id="topic-migration-chart" class="chart placeholder-box large-chart">
+              <div class="placeholder">主题迁移 / 主题河流 / 引用路径网络图位置</div>
+            </div>
+
+            <div id="topic-case-cards" class="topic-case-cards">
+              <div class="card mini-card">
+                <div class="panel-title">代表主题</div>
+                <div class="panel-note">点击主题后展示代表论文和科学家。</div>
+              </div>
+              <div class="card mini-card">
+                <div class="panel-title">关键论文阶段</div>
+                <div class="panel-note">突出获奖关键论文附近的主题变化。</div>
+              </div>
+              <div class="card mini-card">
+                <div class="panel-title">知识路径</div>
+                <div class="panel-note">可选展示样本内部引用路径。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer>
