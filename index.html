@@ -320,11 +320,24 @@
               <div class="panel-title">机构 → 学科 / 主题 桑基图</div>
               <div class="panel-note">展示 Top 机构与 Physics、Chemistry、Medicine 及主题之间的关系。</div>
 
-              <div class="panel-controls">
+              <div class="panel-controls sankey-controls">
                 <label for="sankey-mode-select">显示层级：</label>
                 <select id="sankey-mode-select">
                   <option value="field">机构 → 学科</option>
-                  <option value="field-topic">机构 → 学科 → 主题</option>
+                  <option value="field-topic">机构 → 学科 → 主题（探索版）</option>
+                </select>
+
+                <label for="sankey-topn-select">机构范围：</label>
+                <select id="sankey-topn-select">
+                  <option value="10">Top 10</option>
+                  <option value="20" selected>Top 20</option>
+                  <option value="30">Top 30</option>
+                </select>
+
+                <label for="sankey-mapping-select">数据口径：</label>
+                <select id="sankey-mapping-select">
+                  <option value="field_exact" selected>精确映射：只看 field 直接对应</option>
+                  <option value="all">扩展映射：加入 subfield/topic 关键词</option>
                 </select>
               </div>
 
@@ -334,8 +347,8 @@
             </div>
 
             <aside class="card panel">
-              <div class="panel-title">关系解读</div>
-              <div class="panel-note">点击桑基图节点或连线后，在此展示对应机构、学科或主题的解释信息。</div>
+              <div class="panel-title">获奖领域与研究集中度</div>
+              <div class="panel-note">点击机构、学科或连线后，在此查看该机构的研究最集中领域、实际获奖关联领域，以及二者是否一致。</div>
               <div id="sankey-insight-card" class="detail-content">
                 <div class="placeholder">桑基图解读卡片位置</div>
               </div>

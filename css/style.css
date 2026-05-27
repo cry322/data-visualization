@@ -566,3 +566,257 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* ========== Institution Sankey ========== */
+
+#institution-sankey-chart {
+  position: relative;
+  min-height: 560px;
+}
+
+.sankey-link {
+  transition: stroke-opacity 0.18s ease, stroke 0.18s ease;
+  cursor: pointer;
+}
+
+.sankey-node rect {
+  cursor: pointer;
+  transition: stroke 0.18s ease, stroke-width 0.18s ease;
+}
+
+.sankey-node text {
+  pointer-events: none;
+  user-select: none;
+}
+
+.chart-tooltip {
+  position: absolute;
+  z-index: 9999;
+  max-width: 360px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.55;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.24);
+}
+
+.tooltip-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.sankey-insight-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.sankey-stat {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.sankey-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sankey-stat-label {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.sankey-explain {
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.sankey-detail-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.sankey-detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  font-size: 13px;
+}
+
+.sankey-detail-row span {
+  color: #64748b;
+}
+
+.sankey-detail-row strong {
+  color: #0f172a;
+  text-align: right;
+}
+
+/* ========== Improved Institution Sankey ========== */
+
+.sankey-controls {
+  align-items: center;
+  gap: 10px 14px;
+  flex-wrap: wrap;
+}
+
+.sankey-controls select {
+  min-width: 120px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  background: #fff;
+  color: #334155;
+  padding: 2px 8px;
+}
+
+#institution-sankey-chart {
+  min-height: 600px;
+  padding: 8px;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.92), rgba(255, 255, 255, 0.96));
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.sankey-link {
+  transition: stroke-opacity 0.18s ease, stroke 0.18s ease;
+  cursor: pointer;
+  mix-blend-mode: multiply;
+}
+
+.sankey-node rect {
+  cursor: pointer;
+  transition: stroke 0.18s ease, stroke-width 0.18s ease, filter 0.18s ease;
+  filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.12));
+}
+
+.sankey-node text {
+  pointer-events: none;
+  user-select: none;
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.84);
+  stroke-width: 3px;
+}
+
+.chart-tooltip {
+  position: absolute;
+  z-index: 9999;
+  max-width: 360px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.94);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.55;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.24);
+}
+
+.tooltip-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.sankey-insight-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.sankey-stat {
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.sankey-stat-value {
+  font-size: 24px;
+  font-weight: 750;
+  color: #0f172a;
+}
+
+.sankey-stat-label {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.sankey-explain {
+  margin: 10px 0 0;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.sankey-detail-title {
+  font-size: 17px;
+  font-weight: 750;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.sankey-detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  font-size: 13px;
+}
+
+.sankey-detail-row span {
+  color: #64748b;
+}
+
+.sankey-detail-row strong {
+  color: #0f172a;
+  text-align: right;
+}
+
+/* Softer Sankey visual style */
+
+#institution-sankey-chart {
+  background: #fbfcfe;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 18px;
+}
+
+.sankey-link {
+  mix-blend-mode: normal;
+}
+
+.sankey-node rect {
+  filter: none;
+}
+
+.sankey-node text {
+  fill: #334155;
+  stroke: rgba(255, 255, 255, 0.92);
+  stroke-width: 4px;
+  paint-order: stroke;
+}
+
+.sankey-legend text {
+  fill: #64748b;
+}
