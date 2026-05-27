@@ -1,4 +1,4 @@
-async function loadCSV(path) {
+export async function loadCSV(path) {
   try {
     return await d3.csv(path);
   } catch (error) {
@@ -7,7 +7,7 @@ async function loadCSV(path) {
   }
 }
 
-async function loadJSON(path) {
+export async function loadJSON(path) {
   try {
     return await d3.json(path);
   } catch (error) {
@@ -15,3 +15,8 @@ async function loadJSON(path) {
     return null;
   }
 }
+
+export default {
+  loadCSV,
+  loadJSON
+};
