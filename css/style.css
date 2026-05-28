@@ -3,13 +3,34 @@
   box-sizing: border-box;
 }
 
+:root {
+  --font-body: "Times New Roman", "SimSun", "Songti SC", "STSong", serif;
+  --font-title: "Times New Roman", "SimHei", "Microsoft YaHei", "Heiti SC", sans-serif;
+  --font-note: "Times New Roman", "KaiTi", "STKaiti", "KaiTi_GB2312", cursive;
+  --ink: #111827;
+  --muted: #5b6472;
+  --hairline: #d8dee8;
+  --paper: #ffffff;
+  --paper-soft: #f7f8fa;
+  --accent: #14213d;
+}
+
 /* 页面主体基础样式 */
 body {
   margin: 0; /* 去除浏览器默认 margin */
-  font-family: Arial, "Microsoft YaHei", sans-serif; /* 中文与英文字体优先顺序 */
+  font-family: var(--font-body); /* 中文与英文字体优先顺序 */
   color: #222; /* 正文字体颜色 */
   background: #f7f7f5; /* 页面背景色 */
   line-height: 1.65; /* 提升可读性 */
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-title);
 }
 
 /* 页面顶部引导区样式 */
@@ -29,6 +50,7 @@ body {
 .hero p {
   margin: 0;
   max-width: 900px; /* 限制行宽，提升阅读体验 */
+  font-family: var(--font-note);
   font-size: 17px;
   color: #d1d5db; /* 文字柔和白色 */
 }
@@ -67,6 +89,7 @@ main {
 /* 模块说明文本 */
 .section p {
   margin: 0;
+  font-family: var(--font-note);
   color: #555;
 }
 
@@ -97,32 +120,51 @@ main {
 .controls-row select,
 .detail-filter select {
   min-width: 160px;
-  padding: 10px 38px 10px 13px;
-  border: 1px solid #ccd0d7;
+  padding: 11px 40px 11px 14px;
+  border: 1px solid #b9c2cf;
   border-radius: 8px;
   background:
-    linear-gradient(45deg, transparent 50%, #394150 50%) right 16px center / 6px 6px no-repeat,
-    linear-gradient(135deg, #394150 50%, transparent 50%) right 10px center / 6px 6px no-repeat,
-    #fff;
-  color: #111827;
+    linear-gradient(45deg, transparent 50%, #233044 50%) right 17px center / 6px 6px no-repeat,
+    linear-gradient(135deg, #233044 50%, transparent 50%) right 11px center / 6px 6px no-repeat,
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  color: var(--ink);
   font: inherit;
+  font-weight: 600;
   line-height: 1.2;
   appearance: none;
   -webkit-appearance: none;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+}
+
+.controls-row select option,
+.detail-filter select option,
+.panel-controls select option {
+  color: #111827;
+  background: #ffffff;
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 10px 12px;
+}
+
+.controls-row select option:checked,
+.detail-filter select option:checked,
+.panel-controls select option:checked {
+  color: #ffffff;
+  background: #14213d;
 }
 
 .controls-row select:hover,
 .detail-filter select:hover {
-  border-color: #8d98a8;
+  border-color: #6b7788;
+  transform: translateY(-1px);
 }
 
 .controls-row select:focus,
 .detail-filter select:focus {
   outline: none;
-  border-color: #26323f;
-  box-shadow: 0 0 0 3px rgba(38, 50, 63, 0.12);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.14), 0 8px 20px rgba(15, 23, 42, 0.08);
 }
 
 /* 通用面板样式，用于侧栏与详情容器 */
@@ -138,12 +180,14 @@ main {
 
 /* 小面板标题样式 */
 .panel-title {
+  font-family: var(--font-title);
   font-size: 18px;
   font-weight: 700;
 }
 
 /* 面板说明文字样式 */
 .panel-note {
+  font-family: var(--font-note);
   color: #555;
   font-size: 14px;
   line-height: 1.6;
@@ -194,6 +238,7 @@ main {
   align-items: center;
   justify-content: center;
   text-align: center;
+  font-family: var(--font-note);
   color: #6b7280;
   font-size: 16px;
   padding: 14px;
@@ -212,20 +257,27 @@ main {
 }
 
 #section-waittime {
-  background: #ffffff;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 251, 253, 0.98));
+  border: 1px solid rgba(167, 176, 190, 0.38);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06);
 }
 
 #section-waittime .controls-row {
-  gap: 18px 22px;
+  gap: 14px 18px;
+  padding: 14px;
+  border: 1px solid rgba(185, 194, 207, 0.5);
+  border-radius: 10px;
+  background: #f9fafb;
 }
 
 #section-waittime .controls-row label {
-  color: #1f2933;
+  color: #202938;
   font-weight: 600;
 }
 
 #section-waittime .controls-row select {
-  min-width: 176px;
+  min-width: 188px;
   border-radius: 8px;
   border-color: #b7c0cc;
   color: #0f172a;
@@ -241,43 +293,43 @@ main {
 }
 
 #section-waittime .card {
-  border: 1px solid #cfd8e3;
+  border: 1px solid rgba(190, 199, 212, 0.74);
   border-radius: 6px;
-  background: #ffffff;
-  box-shadow: none;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.045);
 }
 
-.wait-main-card {
-  grid-column: span 2;
-  min-height: 620px;
-}
-
-.wait-side-card {
-  min-height: 320px;
+.wait-chart-card {
+  min-height: 460px;
+  padding: 18px;
 }
 
 .wait-card-header {
-  margin-bottom: 10px;
+  min-height: 92px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(216, 222, 232, 0.82);
+  padding-bottom: 12px;
 }
 
 .waittime-chart {
   width: 100%;
-  min-height: 520px;
+  min-height: 342px;
   background: #ffffff;
 }
 
 .waittime-axis path,
 .waittime-axis line {
-  stroke: #6b7280;
+  stroke: #7f8a99;
 }
 
 .waittime-axis text {
-  fill: #374151;
-  font-size: 12px;
+  font-family: var(--font-body);
+  fill: #334155;
+  font-size: 11px;
 }
 
 .waittime-grid line {
-  stroke: #d9dee7;
+  stroke: #e1e6ee;
   stroke-width: 1;
 }
 
@@ -288,19 +340,26 @@ main {
 .waittime-axis-label,
 .waittime-reference-label,
 .waittime-legend text {
-  fill: #26323f;
-  font-size: 12px;
+  font-family: var(--font-note);
+  fill: #263244;
+  font-size: 11px;
 }
 
 .waittime-reference {
-  stroke: #7d8794;
-  stroke-dasharray: 5 5;
+  stroke: #8b96a6;
+  stroke-dasharray: 4 5;
   stroke-width: 1.4;
 }
 
 .waittime-dot {
   cursor: pointer;
   shape-rendering: geometricPrecision;
+  transition: opacity 0.16s ease, r 0.16s ease;
+}
+
+.waittime-dot:hover {
+  opacity: 1;
+  r: 6;
 }
 
 .waittime-summary,
@@ -334,6 +393,7 @@ main {
 .waittime-stat strong,
 .waittime-quadrant strong,
 .waittime-field-row strong {
+  font-family: var(--font-title);
   color: #111827;
   font-size: 16px;
 }
@@ -370,11 +430,13 @@ main {
 }
 
 .waittime-case span {
+  font-family: var(--font-note);
   color: #4b5563;
   font-size: 12px;
 }
 
 .waittime-case.empty {
+  font-family: var(--font-note);
   color: #6b7280;
   font-size: 13px;
 }
@@ -382,16 +444,18 @@ main {
 .waittime-tooltip {
   position: absolute;
   z-index: 1000;
-  max-width: 360px;
+  max-width: 380px;
   pointer-events: none;
   opacity: 0;
   padding: 10px 12px;
-  border-radius: 10px;
-  background: rgba(17, 24, 39, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(17, 24, 39, 0.96);
   color: #fff;
+  font-family: var(--font-note);
   font-size: 12px;
   line-height: 1.55;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
 }
 
 /* 特殊作者模块中两个子图的等宽布局 */
@@ -403,6 +467,7 @@ main {
 footer {
   padding: 24px 10%;
   text-align: center;
+  font-family: var(--font-note);
   color: #555;
   font-size: 14px;
 }
@@ -467,6 +532,7 @@ footer {
 }
 
 .metric-value {
+  font-family: var(--font-title);
   font-size: 24px;
   font-weight: 700;
   line-height: 1.2;
@@ -474,6 +540,7 @@ footer {
 
 .metric-label {
   margin-top: 6px;
+  font-family: var(--font-note);
   font-size: 13px;
   color: #6b7280;
 }
@@ -819,4 +886,292 @@ footer {
 
 .sankey-legend text {
   fill: #64748b;
+}
+
+/* ========== Warm Paper Theme Trial ========== */
+
+:root {
+  --ink: #1f2933;
+  --muted: #746b60;
+  --hairline: rgba(129, 115, 97, 0.22);
+  --paper: #fffefa;
+  --paper-soft: #fbf8f1;
+  --accent: #426b8f;
+}
+
+body {
+  color: #1f2933;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(255, 255, 255, 0.92), transparent 32%),
+    linear-gradient(180deg, #fdfaf4 0%, #f8f2e8 100%);
+}
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(255, 254, 250, 0.98) 0%, rgba(255, 254, 250, 0.92) 42%, rgba(255, 254, 250, 0.58) 100%),
+    url("https://cdn.loc.gov/service/pnp/hec/03700/03732v.jpg") right 34% center / cover no-repeat,
+    linear-gradient(135deg, #fffefa 0%, #f7eddc 100%);
+  color: #1f2933;
+  border-bottom: 1px solid rgba(129, 115, 97, 0.18);
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(243, 233, 218, 0.18)),
+    radial-gradient(circle at 84% 48%, rgba(187, 145, 70, 0.14), transparent 30%);
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.hero p,
+.section p,
+.panel-note,
+.metric-label,
+footer {
+  color: #746b60;
+}
+
+.section,
+.panel,
+.card,
+.metric-card {
+  background: rgba(255, 254, 250, 0.94);
+  border-color: rgba(129, 115, 97, 0.18);
+  box-shadow: 0 18px 42px rgba(86, 67, 45, 0.10);
+}
+
+.section {
+  border: 1px solid rgba(129, 115, 97, 0.16);
+}
+
+.panel-title,
+.metric-value,
+.waittime-stat strong,
+.waittime-quadrant strong,
+.waittime-field-row strong {
+  color: #16212d;
+}
+
+.chart,
+.placeholder-box {
+  background: rgba(255, 254, 250, 0.9);
+  border-color: rgba(129, 115, 97, 0.2);
+}
+
+.placeholder,
+.waittime-stat span,
+.waittime-quadrant span,
+.waittime-field-row span,
+.sankey-detail-row span,
+.sankey-explain,
+.sankey-stat-label {
+  color: #746b60;
+}
+
+.controls-row select,
+.detail-filter select,
+.panel-controls select {
+  border-color: rgba(129, 115, 97, 0.26);
+  background:
+    linear-gradient(45deg, transparent 50%, #334155 50%) right 17px center / 6px 6px no-repeat,
+    linear-gradient(135deg, #334155 50%, transparent 50%) right 11px center / 6px 6px no-repeat,
+    linear-gradient(180deg, #fffefa 0%, #fbf8f1 100%);
+  color: #1f2933;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.82), 0 8px 18px rgba(86, 67, 45, 0.08);
+}
+
+.controls-row select option,
+.detail-filter select option,
+.panel-controls select option {
+  color: #1f2933;
+  background: #fffefa;
+}
+
+.controls-row select option:checked,
+.detail-filter select option:checked,
+.panel-controls select option:checked {
+  background: #d8c5aa;
+}
+
+.controls-row select:hover,
+.detail-filter select:hover,
+.panel-controls select:hover {
+  border-color: rgba(66, 107, 143, 0.62);
+}
+
+.controls-row select:focus,
+.detail-filter select:focus,
+.panel-controls select:focus {
+  border-color: #426b8f;
+  box-shadow: 0 0 0 3px rgba(66, 107, 143, 0.16), 0 14px 26px rgba(86, 67, 45, 0.10);
+}
+
+#section-waittime {
+  background: linear-gradient(180deg, rgba(255, 254, 250, 0.98), rgba(252, 248, 241, 0.98));
+  border-color: rgba(129, 115, 97, 0.2);
+  border-radius: 24px;
+}
+
+#section-waittime .controls-row {
+  background: rgba(255, 254, 250, 0.84);
+  border-color: rgba(129, 115, 97, 0.18);
+}
+
+#section-waittime .controls-row label {
+  color: #2d3743;
+}
+
+#section-waittime .card {
+  background: rgba(255, 254, 250, 0.94);
+  border-color: rgba(129, 115, 97, 0.18);
+  border-radius: 22px;
+}
+
+.wait-layout {
+  grid-template-columns: minmax(0, 2.25fr) minmax(280px, 0.75fr);
+  align-items: stretch;
+}
+
+.wait-main-card {
+  min-height: 680px;
+  padding: 24px;
+}
+
+.wait-detail-card {
+  min-height: 680px;
+  padding: 24px;
+}
+
+.wait-hidden-card {
+  display: none;
+}
+
+.wait-card-header {
+  min-height: auto;
+  border-bottom-color: rgba(129, 115, 97, 0.16);
+}
+
+.waittime-chart {
+  min-height: 560px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 250, 241, 0.22));
+  border-radius: 20px;
+}
+
+.waittime-axis path,
+.waittime-axis line {
+  stroke: #a8a094;
+  stroke-linecap: round;
+}
+
+.waittime-axis text {
+  fill: #334155;
+  font-size: 14px;
+}
+
+.waittime-grid line {
+  stroke: rgba(129, 115, 97, 0.14);
+  stroke-linecap: round;
+}
+
+.waittime-axis-label,
+.waittime-reference-label,
+.waittime-legend text {
+  fill: #243447;
+  font-size: 15px;
+}
+
+.waittime-axis-label {
+  font-size: 16px;
+}
+
+.waittime-reference-label {
+  font-family: var(--font-note);
+  font-size: 16px;
+  font-weight: 400;
+  fill: #243447;
+}
+
+.waittime-legend text {
+  font-size: 15px;
+}
+
+.waittime-reference {
+  stroke: rgba(115, 124, 137, 0.62);
+  stroke-linecap: round;
+}
+
+.waittime-dot {
+  filter: drop-shadow(0 2px 4px rgba(86, 67, 45, 0.12));
+}
+
+.waittime-detail-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.waittime-detail-row {
+  display: grid;
+  grid-template-columns: minmax(92px, 0.62fr) minmax(0, 1fr);
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(129, 115, 97, 0.14);
+}
+
+.waittime-detail-row span {
+  color: #746b60;
+  font-size: 13px;
+}
+
+.waittime-detail-row strong {
+  color: #1f2933;
+  font-size: 13px;
+  text-align: right;
+  word-break: break-word;
+}
+
+.waittime-hover-tooltip {
+  position: absolute;
+  z-index: 1000;
+  max-width: 220px;
+  pointer-events: none;
+  opacity: 0;
+  padding: 7px 9px;
+  border: 1px solid rgba(129, 115, 97, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 254, 250, 0.98);
+  color: #1f2933;
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.35;
+  box-shadow: 0 12px 26px rgba(86, 67, 45, 0.14);
+}
+
+.waittime-hover-tooltip strong,
+.waittime-hover-tooltip span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1024px) {
+  .wait-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .wait-main-card,
+  .wait-detail-card {
+    min-height: auto;
+  }
 }
