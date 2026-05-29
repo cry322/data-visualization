@@ -1219,3 +1219,260 @@ footer {
     min-height: auto;
   }
 }
+
+
+/*
+  等待时间模块局部优化补丁
+  用法：在原 style.css 之后引入本文件。
+  设计原则：所有选择器都限制在 #section-waittime 或 #waittime-hover-tooltip，避免影响协作项目中其他模块。
+*/
+
+#section-waittime {
+  --wait-paper: #fffefa;
+  --wait-paper-soft: #fbf8f1;
+  --wait-ink: #1f2933;
+  --wait-muted: #746b60;
+  --wait-line: rgba(129, 115, 97, 0.18);
+  --wait-accent: #426b8f;
+  --wait-shadow: 0 18px 42px rgba(86, 67, 45, 0.09);
+  border-radius: 24px;
+}
+
+#section-waittime .wait-layout {
+  grid-template-columns: minmax(0, 2.2fr) minmax(286px, 0.8fr);
+  gap: 22px;
+  align-items: stretch;
+}
+
+#section-waittime .wait-chart-card,
+#section-waittime .wait-main-card,
+#section-waittime .wait-detail-card {
+  padding: 24px;
+  border: 1px solid var(--wait-line);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 254, 250, 0.98), rgba(252, 248, 241, 0.94));
+  box-shadow: var(--wait-shadow);
+}
+
+#section-waittime .wait-main-card,
+#section-waittime .wait-detail-card {
+  min-height: 680px;
+}
+
+#section-waittime .wait-hidden-card {
+  display: none;
+}
+
+#section-waittime .wait-card-header {
+  display: grid;
+  gap: 8px;
+  min-height: auto;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--wait-line);
+}
+
+#section-waittime .waittime-chart-count {
+  width: fit-content;
+  padding: 4px 10px;
+  border: 1px solid rgba(66, 107, 143, 0.18);
+  border-radius: 999px;
+  background: rgba(66, 107, 143, 0.08);
+  color: var(--wait-accent);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+#section-waittime .waittime-chart {
+  position: relative;
+  min-height: 560px;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 16% 12%, rgba(255, 255, 255, 0.82), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(255, 250, 241, 0.32));
+  overflow: hidden;
+}
+
+#section-waittime .waittime-plot-bg {
+  fill: rgba(255, 255, 255, 0.34);
+  stroke: rgba(129, 115, 97, 0.10);
+}
+
+#section-waittime .waittime-axis path,
+#section-waittime .waittime-axis line {
+  stroke: #a8a094;
+  stroke-linecap: round;
+}
+
+#section-waittime .waittime-axis text {
+  fill: #334155;
+  font-size: 13px;
+}
+
+#section-waittime .waittime-grid line {
+  stroke: rgba(129, 115, 97, 0.13);
+  stroke-linecap: round;
+}
+
+#section-waittime .waittime-grid path {
+  display: none;
+}
+
+#section-waittime .waittime-axis-label,
+#section-waittime .waittime-reference-label,
+#section-waittime .waittime-legend text {
+  fill: #243447;
+  font-size: 14px;
+}
+
+#section-waittime .waittime-axis-label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+#section-waittime .waittime-reference {
+  stroke: rgba(115, 124, 137, 0.62);
+  stroke-dasharray: 4 5;
+  stroke-linecap: round;
+}
+
+#section-waittime .waittime-dot {
+  cursor: pointer;
+  shape-rendering: geometricPrecision;
+  filter: drop-shadow(0 2px 4px rgba(86, 67, 45, 0.12));
+  transition: opacity 0.16s ease, r 0.16s ease, stroke-width 0.16s ease, filter 0.16s ease;
+}
+
+#section-waittime .waittime-dot:hover,
+#section-waittime .waittime-dot:focus,
+#section-waittime .waittime-dot.is-active {
+  opacity: 1;
+  r: 7;
+  stroke-width: 2.2;
+  filter: drop-shadow(0 4px 8px rgba(66, 107, 143, 0.22));
+  outline: none;
+}
+
+#section-waittime .waittime-dot.is-muted {
+  opacity: 0.18;
+}
+
+#section-waittime .waittime-detail-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+#section-waittime .waittime-detail-row {
+  display: grid;
+  grid-template-columns: minmax(92px, 0.62fr) minmax(0, 1fr);
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(129, 115, 97, 0.14);
+}
+
+#section-waittime .waittime-detail-row span {
+  color: var(--wait-muted);
+  font-size: 13px;
+}
+
+#section-waittime .waittime-detail-row strong {
+  color: var(--wait-ink);
+  font-size: 13px;
+  text-align: right;
+  word-break: break-word;
+}
+
+#section-waittime .waittime-mini-title {
+  margin-top: 8px;
+  color: var(--wait-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+#section-waittime .waittime-field-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+#section-waittime .waittime-field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(129, 115, 97, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+#section-waittime .waittime-field-row i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 8px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+#section-waittime .waittime-field-row span {
+  color: var(--wait-muted);
+  font-size: 13px;
+}
+
+#section-waittime .waittime-field-row strong {
+  color: var(--wait-ink);
+  font-size: 13px;
+}
+
+#waittime-hover-tooltip {
+  position: absolute;
+  z-index: 1000;
+  max-width: 230px;
+  pointer-events: none;
+  opacity: 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(129, 115, 97, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 254, 250, 0.98);
+  color: #1f2933;
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.38;
+  box-shadow: 0 12px 26px rgba(86, 67, 45, 0.14);
+}
+
+#waittime-hover-tooltip strong,
+#waittime-hover-tooltip span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1024px) {
+  #section-waittime .wait-layout {
+    grid-template-columns: 1fr;
+  }
+
+  #section-waittime .wait-main-card,
+  #section-waittime .wait-detail-card {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  #section-waittime .wait-chart-card,
+  #section-waittime .wait-main-card,
+  #section-waittime .wait-detail-card {
+    padding: 18px;
+  }
+
+  #section-waittime .waittime-chart {
+    min-height: 460px;
+  }
+}
