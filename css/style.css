@@ -255,6 +255,50 @@ main {
 .wait-layout {
   grid-template-columns: repeat(3, minmax(220px, 1fr));
 }
+/* 特殊作者模块 */
+
+.special-layout {
+  grid-template-columns: 1fr;
+}
+
+.special-panel-columns {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.special-panel-columns > .chart {
+  min-height: 500px;
+}
+
+#special-keyword-chart {
+  overflow-x: auto;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.special-layout .chart {
+  border: none;
+}
+
+#special-keyword-chart svg {
+  display: block;
+  height: auto;
+  max-width: none;
+}
+
+.term-chart-title {
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #d17551;
+  line-height: 1.4;
+}
+
+.term-chart-title strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #df8040;
+}
 
 #section-waittime {
   background:
@@ -458,9 +502,9 @@ main {
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
 }
 
-/* 特殊作者模块中两个子图的等宽布局 */
+/* 特殊作者模块中两个子图的宽度比例 */
 .special-layout {
-  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  grid-template-columns: minmax(520px, 3fr) minmax(220px, 1fr);
 }
 
 /* 页脚文字样式 */

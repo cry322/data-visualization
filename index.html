@@ -69,16 +69,16 @@
         <div class="section-header">
           <div>
             <h2>2. 等待时间影响因素探索</h2>
-            <p>通过职业年龄、机构国家、期刊等控制下拉框，分析 wait_time 变化。</p>
+            <p>通过职业年龄、机构声誉等维度，分析 wait_time 变化。</p>
           </div>
         </div>
 
         <div class="controls-row">
           <label for="waittime-yaxis-filter">Y 轴</label>
           <select id="waittime-yaxis-filter">
-            <option value="prePubs">获奖前发文数量</option>
+            <option value="prePubs">首篇获奖论文前发文数量</option>
             <option value="careerAge">发表时职业年龄</option>
-            <option value="country">发表机构国家</option>
+            <option value="institutionHIndex">发表机构 h-index</option>
           </select>
           <label for="waittime-field-filter">学科</label>
           <select id="waittime-field-filter">
@@ -86,14 +86,6 @@
             <option value="Physics">物理</option>
             <option value="Chemistry">化学</option>
             <option value="Medicine">生物</option>
-          </select>
-          <label for="waittime-country-filter">机构国家</label>
-          <select id="waittime-country-filter">
-            <option>全部</option>
-          </select>
-          <label for="waittime-journal-filter">期刊</label>
-          <select id="waittime-journal-filter">
-            <option>全部</option>
           </select>
         </div>
 
@@ -111,21 +103,16 @@
       </section>
 
       <section id="section-special" class="section">
-        <div class="section-header">
-          <div>
-            <h2>3. 特殊作者模块</h2>
-            <p>展示特殊作者、标志性人物或特殊贡献路径的分析图。</p>
+      
+        
+        <div class="card panel special-panel">
+          <div class="panel-title">Peyton Rous通往诺奖的漫漫等待之路——科研关键词的时间轨迹</div>
+          <div class="panel-note">A TRANSMISSIBLE AVIAN NEOPLASM. (SARCOMA OF THE COMMON FOWL.)</div>
+          <div class="special-panel-columns">
+            <div id="special-keyword-chart" class="chart"></div>
           </div>
         </div>
-
-        <div class="special-layout">
-          <div class="card chart placeholder-box">
-            <div class="placeholder">特殊作者图 1 在此修改</div>
-          </div>
-          <div class="card chart placeholder-box">
-            <div class="placeholder">特殊作者图 2 在此修改</div>
-          </div>
-        </div>
+        
       </section>
 
       <section id="section-institution" class="section section-institution">
