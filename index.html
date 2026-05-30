@@ -29,7 +29,7 @@
           </div>
         </div>
 
-        <div class="career-layout">
+        <div id="career-stage-overview" class="career-layout career-stage-overview">
 
           <!-- ===================================================== -->
           <!-- LEFT OVERVIEW -->
@@ -65,7 +65,7 @@
 
             </div>
 
-            <div id="career-overview" class="chart career-overview-chart"></div>
+            <div id="career-stage-left-chart" class="chart career-overview-chart"></div>
 
           </aside>
 
@@ -140,9 +140,17 @@
                 </select>
               </div>
 
+              <div class="detail-filter-block">
+                <label for="career-y-metric-select">Y Axis</label>
+                <select id="career-y-metric-select">
+                  <option value="cumulative">Cumulative publications</option>
+                  <option value="yearly">Annual publications</option>
+                </select>
+              </div>
+
             </div>
 
-            <div id="career-detail" class="chart career-detail-chart"></div>
+            <div id="career-stage-right-chart" class="chart career-detail-chart"></div>
 
             <div class="career-summary-grid">
               <div class="career-summary-card">
@@ -177,17 +185,16 @@
         <div class="section-header">
           <div>
             <h2>2. 等待时间影响因素探索</h2>
-            <p>通过职业年龄、机构国家、期刊等控制下拉框，分析 wait_time 变化。</p>
+            <p>通过职业年龄、机构声誉等维度，分析 wait_time 变化。</p>
           </div>
         </div>
 
         <div class="controls-row">
           <label for="waittime-yaxis-filter">Y 轴</label>
           <select id="waittime-yaxis-filter">
-            <option value="prePubs">获奖前发文数量</option>
-            <option value="careerAge">职业年龄</option>
-            <option value="country">机构国家</option>
-            <option value="institution">机构</option>
+            <option value="prePubs">首篇获奖论文前发文数量</option>
+            <option value="careerAge">发表时职业年龄</option>
+            <option value="institutionHIndex">发表机构 h-index</option>
           </select>
           <label for="waittime-field-filter">学科</label>
           <select id="waittime-field-filter">
@@ -195,14 +202,6 @@
             <option value="Physics">物理</option>
             <option value="Chemistry">化学</option>
             <option value="Medicine">生物</option>
-          </select>
-          <label for="waittime-country-filter">机构国家</label>
-          <select id="waittime-country-filter">
-            <option>全部</option>
-          </select>
-          <label for="waittime-journal-filter">期刊</label>
-          <select id="waittime-journal-filter">
-            <option>全部</option>
           </select>
         </div>
 
@@ -220,24 +219,18 @@
       </section>
 
       <section id="section-special" class="section">
-        <div class="section-header">
-          <div>
-            <h2>3. 特殊作者模块</h2>
-            <p>展示特殊作者、标志性人物或特殊贡献路径的分析图。</p>
+      
+        
+        <div class="card panel special-panel">
+          <div class="panel-title">Peyton Rous通往诺奖的漫漫等待之路——科研关键词的时间轨迹</div>
+          <div class="panel-note">A TRANSMISSIBLE AVIAN NEOPLASM. (SARCOMA OF THE COMMON FOWL.)</div>
+          <div class="special-panel-columns">
+            <div id="special-keyword-chart" class="chart"></div>
           </div>
         </div>
-
-        <div class="special-layout">
-          <div class="card chart placeholder-box">
-            <div class="placeholder">特殊作者图 1 在此修改</div>
-          </div>
-          <div class="card chart placeholder-box">
-            <div class="placeholder">特殊作者图 2 在此修改</div>
-          </div>
-        </div>
+        
       </section>
 
-            <!-- 方案三：科研机构与学术迁移合作网络 -->
       <section id="section-institution" class="section section-institution">
         <div class="section-header">
           <div>
@@ -248,7 +241,6 @@
           </div>
         </div>
 
-        <!-- 方案三总览标题区 -->
         <div class="institution-hero card">
           <div class="institution-hero-text">
             <div class="panel-title">科研机构与学术迁移合作网络</div>
@@ -277,7 +269,6 @@
           </div>
         </div>
 
-        <!-- 方案三内部导航 -->
         <nav class="institution-subnav card">
           <a href="#institution-overview-block">机构概览</a>
           <a href="#institution-country-block">国家分布</a>
@@ -286,7 +277,6 @@
           <a href="#topic-migration-block">主题迁移</a>
         </nav>
 
-        <!-- 1. 机构影响力概览 -->
         <div id="institution-overview-block" class="institution-block">
           <div class="section-header compact">
             <div>
@@ -311,11 +301,12 @@
 
                 <label for="institution-sort-select">排序指标：</label>
                 <select id="institution-sort-select">
-                  <option value="paper_count">参与论文数</option>
-                  <option value="authorship_count">机构出现次数</option>
-                  <option value="laureate_count">关联科学家数</option>
-                  <option value="prize_paper_count">关键论文数</option>
-                  <option value="mean_citation_normalized_percentile">平均引用百分位</option>
+                  <option value="prize_paper_count">参与获奖论文数量</option>
+                  <option value="associated_laureate_count">关联获奖者数量</option>
+                  <option value="associated_scientist_count">关联科学家数量</option>
+                  <option value="institution_total_works_count">机构总发文量</option>
+                  <option value="median_prize_paper_cited_by_count">关键论文被引中位数</option>
+                  <option value="avg_citations_per_work">机构发文平均被引</option>
                 </select>
               </div>
 
@@ -335,7 +326,6 @@
           </div>
         </div>
 
-        <!-- 2. 国家 / 地区分布图 -->
         <div id="institution-country-block" class="institution-block">
           <div class="section-header compact">
             <div>
@@ -347,35 +337,44 @@
           <div class="country-layout">
             <div class="card panel">
               <div class="panel-title">全球科研机构分布</div>
-              <div class="panel-note">基于 country_code 进行国家级地图展示。</div>
+              <div class="panel-note">基于 country_code 进行国家级着色地图展示。</div>
+
+              <div class="panel-controls" style="justify-content: flex-end;">
+                <label for="country-sort-select">指标切换：</label>
+                <select id="country-sort-select">
+                  <option value="m1">诺奖关联机构数</option>
+                  <option value="m2">诺奖关联论文数</option>
+                  <option value="m3">诺奖获奖科学家数</option>
+                </select>
+              </div>
 
               <div id="country-map-chart" class="chart placeholder-box">
-                <div class="placeholder">世界地图 / 国家气泡图位置</div>
+                <div class="placeholder">世界地图 / 国家着色图位置</div>
               </div>
             </div>
 
             <div class="card panel">
               <div class="panel-title">国家 / 地区 Top 10</div>
-              <div class="panel-note">按机构数、论文数或关联科学家数排序。</div>
-
-              <div class="panel-controls">
-                <label for="country-sort-select">排序指标：</label>
-                <select id="country-sort-select">
-                  <option value="paper_count">论文数</option>
-                  <option value="institution_count">机构数</option>
-                  <option value="laureate_count">关联科学家数</option>
-                  <option value="prize_paper_count">关键论文数</option>
-                </select>
-              </div>
+              <div class="panel-note">展示当前选定指标排名前 10 的国家。</div>
 
               <div id="country-ranking-chart" class="chart placeholder-box">
                 <div class="placeholder">国家 Top 10 排行榜位置</div>
               </div>
             </div>
           </div>
+
+          <div class="card panel" id="country-detail-panel" style="margin-top: 24px; display: none; animation: fadeIn 0.4s ease-in-out;">
+            <div class="panel-title" style="font-size: 20px; color: #0f172a;">
+               国家科研档案：<span id="detail-country-name" style="color: #e15759; font-weight: 800;">请选择国家</span>
+            </div>
+            <div class="panel-note" style="margin-bottom: 20px;">展示该国在诺奖历史中的核心科研力量、代表性学术产出与顶尖科学家名录。</div>
+            
+            <div id="country-detail-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+              </div>
+          </div>
+
         </div>
 
-        <!-- 3. 机构合作网络图 -->
         <div id="institution-network-block" class="institution-block">
           <div class="section-header compact">
             <div>
@@ -414,7 +413,6 @@
           </div>
         </div>
 
-        <!-- 4. 机构—学科关系图 -->
         <div id="institution-sankey-block" class="institution-block">
           <div class="section-header compact">
             <div>
@@ -428,11 +426,24 @@
               <div class="panel-title">机构 → 学科 / 主题 桑基图</div>
               <div class="panel-note">展示 Top 机构与 Physics、Chemistry、Medicine 及主题之间的关系。</div>
 
-              <div class="panel-controls">
+              <div class="panel-controls sankey-controls">
                 <label for="sankey-mode-select">显示层级：</label>
                 <select id="sankey-mode-select">
                   <option value="field">机构 → 学科</option>
-                  <option value="field-topic">机构 → 学科 → 主题</option>
+                  <option value="field-topic">机构 → 学科 → 主题（探索版）</option>
+                </select>
+
+                <label for="sankey-topn-select">机构范围：</label>
+                <select id="sankey-topn-select">
+                  <option value="10">Top 10</option>
+                  <option value="20" selected>Top 20</option>
+                  <option value="30">Top 30</option>
+                </select>
+
+                <label for="sankey-mapping-select">数据口径：</label>
+                <select id="sankey-mapping-select">
+                  <option value="field_exact" selected>精确映射：只看 field 直接对应</option>
+                  <option value="all">扩展映射：加入 subfield/topic 关键词</option>
                 </select>
               </div>
 
@@ -442,8 +453,8 @@
             </div>
 
             <aside class="card panel">
-              <div class="panel-title">关系解读</div>
-              <div class="panel-note">点击桑基图节点或连线后，在此展示对应机构、学科或主题的解释信息。</div>
+              <div class="panel-title">获奖领域与研究集中度</div>
+              <div class="panel-note">点击机构、学科或连线后，在此查看该机构的研究最集中领域、实际获奖关联领域，以及二者是否一致。</div>
               <div id="sankey-insight-card" class="detail-content">
                 <div class="placeholder">桑基图解读卡片位置</div>
               </div>
@@ -451,7 +462,6 @@
           </div>
         </div>
 
-        <!-- 5. 学术主题迁移与知识路径图 -->
         <div id="topic-migration-block" class="institution-block">
           <div class="section-header compact">
             <div>
