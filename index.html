@@ -16,54 +16,162 @@
     </header>
 
     <main>
+
       <section id="section-career" class="section">
+
         <div class="section-header">
           <div>
-            <h2>1. 职业生涯阶段与认可</h2>
-            <p>左侧宏观总览与右侧科学家生涯轨迹联动，支持学科筛选与个体切换。</p>
+            <h2>1. Career Stage & Nobel Recognition</h2>
+            <p>
+              Explore when Nobel-winning work emerges across scientific careers
+              through macro publication trends and individual trajectories.
+            </p>
           </div>
         </div>
 
         <div class="career-layout">
+
+          <!-- ===================================================== -->
+          <!-- LEFT OVERVIEW -->
+          <!-- ===================================================== -->
+
           <aside class="card panel panel-overview">
-            <div class="panel-title">标题在此修改</div>
-            <div class="panel-note">学科筛选、总体趋势和宏观总览区。</div>
+
+            <div class="panel-title">
+              Career Publication Density Overview
+            </div>
+
+            <div class="panel-note">
+              Compare publication density patterns across Physics,
+              Chemistry and Medicine throughout career stages.
+            </div>
+
             <div class="panel-controls">
-              <label for="career-field-filter">学科筛选：</label>
+
+              <label for="career-field-filter">
+                学科筛选：
+              </label>
+
               <select id="career-field-filter">
-                <option value="all">全部学科</option>
                 <option value="physics">Physics</option>
                 <option value="chemistry">Chemistry</option>
                 <option value="medicine">Medicine</option>
               </select>
+
+              <label class="career-checkbox">
+                <input type="checkbox" id="career-show-all" checked />
+                Show overall distribution
+              </label>
+
             </div>
-            <div id="career-overview" class="chart placeholder-box">
-              <div class="placeholder">宏观总览图位置在此修改</div>
-            </div>
+
+            <div id="career-overview" class="chart career-overview-chart"></div>
+
           </aside>
 
+          <!-- ===================================================== -->
+          <!-- RIGHT DETAIL -->
+          <!-- ===================================================== -->
+
           <div class="card panel panel-detail">
-            <div class="panel-title">标题在此修改</div>
-            <div class="panel-note">具体科学家生涯轨迹、右侧详情与列表切换。</div>
-            <div class="detail-top">
-              <div class="detail-list">
-                <div class="placeholder">科学家列表 / 个体切换在此修改</div>
+
+            <div class="panel-title">
+              Scientist Career Trajectory Explorer
+            </div>
+
+            <div class="panel-note">
+              Explore individual publication trajectories and identify
+              when Nobel-winning work emerged during scientific careers.
+            </div>
+
+            <div class="trajectory-rows">
+
+              <div class="trajectory-row">
+                <button class="trajectory-tag active" data-type="early">
+                  🟢 Early Peak
+                </button>
+
+                <div class="trajectory-row-scientists">
+                  <span class="scientist-chip" data-name="Dirac" data-field="Physics">⚛ Dirac</span>
+                  <span class="scientist-chip" data-name="Arrhenius" data-field="Chemistry">🧪 Arrhenius</span>
+                </div>
               </div>
-              <div class="detail-filter">
-                <label for="career-scientist-select">当前个体：</label>
-                <select id="career-scientist-select">
-                  <option>Scientist A</option>
-                  <option>Scientist B</option>
-                  <option>Scientist C</option>
+
+              <div class="trajectory-row">
+                <button class="trajectory-tag" data-type="sustained">
+                  🔵 Sustained Output
+                </button>
+
+                <div class="trajectory-row-scientists">
+                  <span class="scientist-chip" data-name="Feynman" data-field="Physics">⚛ Feynman</span>
+                  <span class="scientist-chip" data-name="Pauling" data-field="Chemistry">🧪 Pauling</span>
+                </div>
+              </div>
+
+              <div class="trajectory-row">
+                <button class="trajectory-tag" data-type="late">
+                  🟣 Late Breakthrough
+                </button>
+
+                <div class="trajectory-row-scientists">
+                  <span class="scientist-chip" data-name="Yamanaka" data-field="Medicine">🧬 Yamanaka</span>
+                  <span class="scientist-chip" data-name="Abrikosov" data-field="Physics">⚛ Abrikosov</span>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="career-detail-controls">
+
+              <div class="detail-filter-block">
+                <label for="career-detail-field-select">Field</label>
+                <select id="career-detail-field-select">
+                  <option value="all">All Fields</option>
+                  <option value="Physics">Physics</option>
+                  <option value="Chemistry">Chemistry</option>
+                  <option value="Medicine">Medicine</option>
                 </select>
               </div>
+
+              <div class="detail-filter-block">
+                <label for="career-scientist-select">Scientist</label>
+                <select id="career-scientist-select">
+                  <option>Loading...</option>
+                </select>
+              </div>
+
             </div>
-            <div id="career-detail" class="chart placeholder-box">
-              <div class="placeholder">微观细节图位置在此修改</div>
+
+            <div id="career-detail" class="chart career-detail-chart"></div>
+
+            <div class="career-summary-grid">
+              <div class="career-summary-card">
+                <div class="summary-label">Prize-winning Work</div>
+                <div class="summary-value" id="career-stat-prize">--</div>
+              </div>
+
+              <div class="career-summary-card">
+                <div class="summary-label">Peak Productivity</div>
+                <div class="summary-value" id="career-stat-peak">--</div>
+              </div>
+
+              <div class="career-summary-card">
+                <div class="summary-label">Total Publications</div>
+                <div class="summary-value" id="career-stat-total">--</div>
+              </div>
+
+              <div class="career-summary-card">
+                <div class="summary-label">Field</div>
+                <div class="summary-value" id="career-stat-field">--</div>
+              </div>
             </div>
+
           </div>
+
         </div>
+
       </section>
+
 
       <section id="section-waittime" class="section">
         <div class="section-header">
