@@ -1123,6 +1123,12 @@ footer {
   border-radius: 20px;
 }
 
+.waittime-plot-bg {
+  fill: rgba(255, 254, 250, 0.72);
+  stroke: rgba(129, 115, 97, 0.10);
+  stroke-width: 1;
+}
+
 .waittime-axis path,
 .waittime-axis line {
   stroke: #a8a094;
