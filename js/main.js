@@ -1,6 +1,4 @@
 import { initCareerModule } from "./charts/overview.js";
-import { initCareerDetailModule } from "./charts/overview.js"; // 同文件导出
-
 import { initWaitTimeModule } from "./charts/waitTime.js";
 import { initSpecialAuthorsModule } from "./charts/specialAuthors.js";
 import { initCountryMap } from "./charts/countryMap.js";
@@ -12,7 +10,6 @@ import { initTopicMigration } from "./charts/topicMigration.js";
 
 const modules = [
   ["career", initCareerModule],
-  ["career-detail", initCareerDetailModule], // ✅ 新增
   ["waittime", initWaitTimeModule],
   ["special-authors", initSpecialAuthorsModule],
   ["institution-overview", initInstitutionOverview],
