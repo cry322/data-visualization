@@ -33,6 +33,11 @@ h6 {
   font-family: var(--font-title);
 }
 
+select,
+select option {
+  font-family: "Times New Roman", "SimSun", "Songti SC", "STSong", serif;
+}
+
 /* 页面顶部引导区样式 */
 .hero {
   padding: 48px 10%; /* 顶部内边距，左右留白 */
@@ -118,7 +123,8 @@ main {
 
 /* 下拉框样式 */
 .controls-row select,
-.detail-filter select {
+.detail-filter select,
+.detail-filter-block select {
   min-width: 160px;
   padding: 11px 40px 11px 14px;
   border: 1px solid #b9c2cf;
@@ -128,7 +134,8 @@ main {
     linear-gradient(135deg, #233044 50%, transparent 50%) right 11px center / 6px 6px no-repeat,
     linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   color: var(--ink);
-  font: inherit;
+  font-family: "Times New Roman", "SimSun", "Songti SC", "STSong", serif;
+  font-size: inherit;
   font-weight: 600;
   line-height: 1.2;
   appearance: none;
@@ -139,10 +146,11 @@ main {
 
 .controls-row select option,
 .detail-filter select option,
+.detail-filter-block select option,
 .panel-controls select option {
   color: #111827;
   background: #ffffff;
-  font-family: var(--font-body);
+  font-family: "Times New Roman", "SimSun", "Songti SC", "STSong", serif;
   font-size: 14px;
   padding: 10px 12px;
 }
@@ -1023,21 +1031,25 @@ footer {
 
 .controls-row select,
 .detail-filter select,
+.detail-filter-block select,
 .panel-controls select {
   border-color: rgba(129, 115, 97, 0.26);
   background:
     linear-gradient(45deg, transparent 50%, #334155 50%) right 17px center / 6px 6px no-repeat,
     linear-gradient(135deg, #334155 50%, transparent 50%) right 11px center / 6px 6px no-repeat,
     linear-gradient(180deg, #fffefa 0%, #fbf8f1 100%);
+  font-family: "Times New Roman", "SimSun", "Songti SC", "STSong", serif;
   color: #1f2933;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.82), 0 8px 18px rgba(86, 67, 45, 0.08);
 }
 
 .controls-row select option,
 .detail-filter select option,
+.detail-filter-block select option,
 .panel-controls select option {
   color: #1f2933;
   background: #fffefa;
+  font-family: "Times New Roman", "SimSun", "Songti SC", "STSong", serif;
 }
 
 .controls-row select option:checked,
@@ -1109,6 +1121,12 @@ footer {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 250, 241, 0.22));
   border-radius: 20px;
+}
+
+.waittime-plot-bg {
+  fill: rgba(255, 254, 250, 0.72);
+  stroke: rgba(129, 115, 97, 0.10);
+  stroke-width: 1;
 }
 
 .waittime-axis path,
@@ -1220,6 +1238,7 @@ footer {
   }
 }
 
+<<<<<<< HEAD
 .network-story-card {
   padding: 24px;
   border-radius: 22px;
@@ -1237,11 +1256,111 @@ footer {
 }
 
 .network-field-pills {
+=======
+/* ========== Career Stage Overview ========== */
+
+.career-stage-overview {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.career-stage-overview .panel-overview,
+.career-stage-overview .panel-detail {
+  height: 760px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.career-stage-overview .panel-detail {
+  overflow-y: auto;
+}
+
+.career-stage-overview .career-overview-chart,
+.career-stage-overview .career-detail-chart {
+  position: relative;
+  overflow: hidden;
+}
+
+.career-stage-overview .career-overview-chart {
+  min-height: 500px;
+}
+
+.career-stage-overview .career-detail-chart {
+  flex: 0 0 330px;
+  min-height: 330px;
+}
+
+.career-stage-overview .career-overview-chart svg,
+.career-stage-overview .career-detail-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.career-stage-overview .career-detail-chart svg {
+  height: 330px;
+}
+
+.career-stage-overview .panel-controls,
+.career-stage-overview .career-detail-controls {
+  align-items: flex-end;
+  gap: 12px 16px;
+}
+
+.career-stage-overview .career-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.career-stage-overview .career-checkbox input {
+  cursor: pointer;
+}
+
+.career-stage-overview .trajectory-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.career-stage-overview .trajectory-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.career-stage-overview .trajectory-tag {
+  min-width: 164px;
+  border: 1px solid rgba(129, 115, 97, 0.2);
+  border-radius: 999px;
+  padding: 7px 13px;
+  background: rgba(255, 254, 250, 0.92);
+  color: #1f2933;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.career-stage-overview .trajectory-tag:hover,
+.career-stage-overview .trajectory-tag.active {
+  border-color: rgba(66, 107, 143, 0.52);
+  background: #e8f0f7;
+  color: #244865;
+}
+
+.career-stage-overview .trajectory-row-scientists {
+>>>>>>> 9c2e5446ea877a04d5da23ebb68f81bccb5d3f71
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
+<<<<<<< HEAD
 .network-field-btn {
   padding: 8px 14px;
   border: 1px solid #d8e0e8;
@@ -1690,6 +1809,207 @@ footer {
   .topic-metric-strip,
   .topic-case-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    .career-stage-overview .scientist-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(129, 115, 97, 0.18);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(255, 254, 250, 0.86);
+  color: #334155;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.career-stage-overview .scientist-chip:hover {
+  border-color: rgba(66, 107, 143, 0.42);
+  background: #f1f7fb;
+  color: #244865;
+}
+
+.career-stage-overview .detail-filter-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.career-stage-overview .detail-filter-block label {
+  color: #5f6b78;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.career-stage-overview .detail-filter-block select {
+  min-width: 176px;
+}
+
+.career-stage-overview .career-stage-tooltip {
+  position: absolute;
+  z-index: 20;
+  max-width: 280px;
+  pointer-events: none;
+  opacity: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.94);
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 1.55;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.22);
+  transition: opacity 0.14s ease;
+}
+
+.career-stage-overview .career-left-axis path,
+.career-stage-overview .career-left-axis line,
+.career-stage-overview .career-right-axis path,
+.career-stage-overview .career-right-axis line {
+  stroke: #9aa6b2;
+}
+
+.career-stage-overview .career-left-axis text,
+.career-stage-overview .career-right-axis text {
+  fill: #334155;
+  font-size: 12px;
+}
+
+.career-stage-overview .career-left-grid line,
+.career-stage-overview .career-right-grid line {
+  stroke: rgba(129, 115, 97, 0.14);
+}
+
+.career-stage-overview .career-left-grid path,
+.career-stage-overview .career-right-grid path {
+  display: none;
+}
+
+.career-stage-overview .career-left-label,
+.career-stage-overview .career-right-label {
+  fill: #334155;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.career-stage-overview .career-left-section-label,
+.career-stage-overview .career-right-title {
+  fill: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.career-stage-overview .career-left-reference-line {
+  stroke: #94a3b8;
+  stroke-dasharray: 4 4;
+}
+
+.career-stage-overview .career-left-overall-line {
+  fill: none;
+  stroke: #6b7280;
+  stroke-width: 2;
+  stroke-dasharray: 5 5;
+  opacity: 0.75;
+}
+
+.career-stage-overview .career-left-focus-area-top.physics {
+  fill: rgba(37, 99, 235, 0.32);
+}
+
+.career-stage-overview .career-left-focus-area-bottom.physics {
+  fill: rgba(37, 99, 235, 0.55);
+}
+
+.career-stage-overview .career-left-focus-area-top.chemistry {
+  fill: rgba(5, 150, 105, 0.32);
+}
+
+.career-stage-overview .career-left-focus-area-bottom.chemistry {
+  fill: rgba(5, 150, 105, 0.55);
+}
+
+.career-stage-overview .career-left-focus-area-top.medicine {
+  fill: rgba(220, 38, 38, 0.32);
+}
+
+.career-stage-overview .career-left-focus-area-bottom.medicine {
+  fill: rgba(220, 38, 38, 0.55);
+}
+
+.career-stage-overview .career-left-hover-line,
+.career-stage-overview .career-right-milestone line {
+  stroke: #0f172a;
+  stroke-width: 1.2;
+  stroke-dasharray: 5 5;
+  opacity: 0.7;
+}
+
+.career-stage-overview .career-right-line {
+  fill: none;
+  stroke: #426b8f;
+  stroke-width: 2.4;
+}
+
+.career-stage-overview .career-right-dot {
+  fill: #426b8f;
+  stroke: #fffefa;
+  stroke-width: 1.4;
+  cursor: pointer;
+}
+
+.career-stage-overview .career-right-dot.is-prize {
+  fill: #b45309;
+  stroke: #fff7ed;
+  stroke-width: 2;
+}
+
+.career-stage-overview .career-right-milestone text {
+  fill: #7c4a03;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.career-stage-overview .career-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.career-stage-overview .career-summary-card {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(129, 115, 97, 0.18);
+  border-radius: 10px;
+  background: rgba(255, 254, 250, 0.78);
+}
+
+.career-stage-overview .summary-label {
+  margin-bottom: 5px;
+  color: #746b60;
+  font-size: 12px;
+}
+
+.career-stage-overview .summary-value {
+  color: #16212d;
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 750;
+  line-height: 1.15;
+}
+
+@media (max-width: 1100px) {
+  .career-stage-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .career-stage-overview .panel-overview,
+  .career-stage-overview .panel-detail {
+    height: auto;
+  }
+
+  .career-stage-overview .panel-detail {
+    overflow-y: visible;
+>>>>>>> 9c2e5446ea877a04d5da23ebb68f81bccb5d3f71
   }
 }
 
@@ -1802,4 +2122,51 @@ footer {
   line-height: 1.6;
   pointer-events: none;
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.22);
+=======
+  .career-stage-overview .career-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .career-stage-overview .detail-filter-block select {
+    width: 100%;
+  }
+}
+
+/* ========== Unified Filter Selects ========== */
+
+select {
+  min-height: 34px;
+  padding: 3px 36px 3px 8px;
+  border: 1px solid #7a7a7a;
+  border-radius: 3px;
+  background:
+    linear-gradient(45deg, transparent 50%, #111827 50%) right 14px center / 7px 7px no-repeat,
+    linear-gradient(135deg, #111827 50%, transparent 50%) right 8px center / 7px 7px no-repeat,
+    #ffffff;
+  color: #111827;
+  font-family: "Times New Roman", "SimSun", "Songti SC", "STSong", serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.2;
+  box-shadow: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+select:hover {
+  border-color: #4b5563;
+}
+
+select:focus {
+  outline: none;
+  border-color: #374151;
+  box-shadow: 0 0 0 2px rgba(55, 65, 81, 0.12);
+}
+
+select option {
+  background: #ffffff;
+  color: #111827;
+  font-family: "Times New Roman", "SimSun", "Songti SC", "STSong", serif;
+  font-size: 16px;
+  font-weight: 400;
 }
