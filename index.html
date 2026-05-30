@@ -350,15 +350,23 @@
           <div class="section-header compact">
             <div>
               <h3>4.5 学术主题迁移与知识路径图</h3>
-              <p>诺奖科学家的研究主题如何随时间演化？获奖关键论文是否处在主题转向或知识汇聚的重要节点上？</p>
+              <p>
+                基于诺奖关键论文的一跳引文关系，观察知识如何流入获奖论文，又如何从获奖论文向后续研究扩散。
+              </p>
             </div>
           </div>
 
-          <div class="card panel">
-            <div class="panel-title">学术主题迁移</div>
-            <div class="panel-note">展示 field、subfield、topic 在获奖前后不同阶段中的动态变化。</div>
+          <div class="card panel topic-path-panel">
+            <div class="topic-path-head">
+              <div>
+                <div class="panel-title">诺奖关键论文的知识路径</div>
+                <div class="panel-note">
+                  本图以诺奖关键论文为中心，展示其引用的前置知识来源，以及后续引用它的研究论文。Sankey 强调学科路径，网络图强调具体论文之间的引用关系。
+                </div>
+              </div>
+            </div>
 
-            <div class="panel-controls">
+            <div class="panel-controls topic-controls">
               <label for="topic-field-filter">学科筛选：</label>
               <select id="topic-field-filter">
                 <option value="all">全部学科</option>
@@ -369,28 +377,57 @@
 
               <label for="topic-view-select">图表类型：</label>
               <select id="topic-view-select">
-                <option value="sankey">主题迁移 Sankey</option>
-                <option value="river">主题河流图</option>
+                <option value="sankey">知识路径 Sankey</option>
                 <option value="network">引用路径网络</option>
               </select>
             </div>
 
+            <div class="topic-metric-strip">
+              <div class="topic-metric">
+                <div class="topic-metric-value" id="topic-path-count">--</div>
+                <div class="topic-metric-label">当前路径数</div>
+              </div>
+
+              <div class="topic-metric">
+                <div class="topic-metric-value" id="topic-source-count">--</div>
+                <div class="topic-metric-label">知识来源</div>
+              </div>
+
+              <div class="topic-metric">
+                <div class="topic-metric-value" id="topic-prize-count">--</div>
+                <div class="topic-metric-label">诺奖核心</div>
+              </div>
+
+              <div class="topic-metric">
+                <div class="topic-metric-value" id="topic-diffusion-count">--</div>
+                <div class="topic-metric-label">后续扩散</div>
+              </div>
+            </div>
+
             <div id="topic-migration-chart" class="chart placeholder-box large-chart">
-              <div class="placeholder">主题迁移 / 主题河流 / 引用路径网络图位置</div>
+              <div class="placeholder">知识路径 Sankey / 引用路径网络图位置</div>
             </div>
 
             <div id="topic-case-cards" class="topic-case-cards">
               <div class="card mini-card">
-                <div class="panel-title">代表主题</div>
-                <div class="panel-note">点击主题后展示代表论文和科学家。</div>
+                <div class="panel-title">读图方式</div>
+                <div class="panel-note">
+                  在 Sankey 中，左侧为知识来源，中间为诺奖论文主题，右侧为后续扩散方向；在网络图中，中间为诺奖关键论文，左右分别为前置引用论文与后续引用论文。
+                </div>
               </div>
+
               <div class="card mini-card">
-                <div class="panel-title">关键论文阶段</div>
-                <div class="panel-note">突出获奖关键论文附近的主题变化。</div>
+                <div class="panel-title">知识来源</div>
+                <div class="panel-note">
+                  表示诺奖关键论文引用过的前置论文或前置学科主题，用来理解获奖成果建立在哪些知识基础之上。
+                </div>
               </div>
+
               <div class="card mini-card">
-                <div class="panel-title">知识路径</div>
-                <div class="panel-note">可选展示样本内部引用路径。</div>
+                <div class="panel-title">后续扩散</div>
+                <div class="panel-note">
+                  表示后续论文对诺奖关键论文的引用，用来观察获奖成果如何继续影响其他研究方向。
+                </div>
               </div>
             </div>
           </div>
