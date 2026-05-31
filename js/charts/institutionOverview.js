@@ -28,7 +28,7 @@ export function initInstitutionOverview() {
         "associated_laureate_count": "关联获奖者数量",
         "associated_scientist_count": "关联科学家数量",
         "institution_total_works_count": "机构总发文量",
-        "median_prize_paper_cited_by_count": "关键论文被引中位数",
+        "median_prize_paper_cited_by_count": "获奖论文被引中位数",
         "avg_citations_per_work": "机构发文平均被引"
     };
 
