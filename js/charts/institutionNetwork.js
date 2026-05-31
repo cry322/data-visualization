@@ -89,7 +89,20 @@ export async function initInstitutionNetwork() {
   const color = d3
     .scaleOrdinal()
     .domain(["Physics", "Chemistry", "Medicine", "Mixed", "Unknown"])
-    .range(["#7aa6c2", "#d9a66a", "#8bbf9f", "#b8a7d9", "#b8b8b8"]);
+    .range([
+      "rgba(37, 99, 235, 0.72)",   // Physics
+      "rgba(5, 150, 105, 0.72)",   // Chemistry
+      "rgba(220, 38, 38, 0.72)",   // Medicine
+      "rgba(139, 92, 246, 0.72)",  // Mixed
+      "rgba(148, 163, 184, 0.72)"  // Unknown
+    ]);
+
+  function edgeColorByField(field) {
+    if (field === "Physics") return "rgba(37, 99, 235, 0.28)";
+    if (field === "Chemistry") return "rgba(5, 150, 105, 0.28)";
+    if (field === "Medicine") return "rgba(220, 38, 38, 0.28)";
+    return "rgba(148, 163, 184, 0.28)";
+  }
 
   const state = {
     field: "all",
@@ -243,15 +256,14 @@ export async function initInstitutionNetwork() {
       .join("path")
       .attr("class", "network-link")
       .attr("fill", "none")
-      .attr("stroke", "#94a3b8")
-      .attr("stroke-opacity", 0.34)
+      .attr("stroke", edgeColorByField(state.field))
+      .attr("stroke-opacity", 1)
       .attr("stroke-linecap", "round")
       .attr("stroke-width", (d) => linkWidth(d.weight))
       .on("mouseover", function (event, d) {
         d3.select(this)
-          .attr("stroke-opacity", 0.9)
-          .attr("stroke", "#334155");
-
+          .attr("stroke-opacity", 0.72)
+          .attr("stroke", edgeColorByField(state.field));
         tooltip
           .style("opacity", 1)
           .html(`
@@ -279,12 +291,12 @@ export async function initInstitutionNetwork() {
     nodeGroup
       .append("circle")
       .attr("class", "network-node")
-      .attr("r", (d) => d.radius)
-      .attr("fill", (d) => color(d.display_field || "Unknown"))
+      .attr("r", d => d.radius)
+      .attr("fill", d => color(d.main_field || "Unknown"))
+      .attr("fill-opacity", 1)
       .attr("stroke", "#ffffff")
       .attr("stroke-width", 1.6)
-      .attr("filter", "url(#network-node-shadow)")
-      .style("cursor", "pointer")
+      .attr("filter", "url(#institution-node-shadow)")
       .on("mouseover", function (event, d) {
         highlightNeighborhood(d, true);
 
