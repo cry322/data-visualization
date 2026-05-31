@@ -90,18 +90,18 @@ export async function initInstitutionNetwork() {
     .scaleOrdinal()
     .domain(["Physics", "Chemistry", "Medicine", "Mixed", "Unknown"])
     .range([
-      "#2563eb", // Physics：蓝色，和 career-stage-overview 的 physics 色系统一
-      "#059669", // Chemistry：绿色
-      "#dc2626", // Medicine：红色
-      "#8b5cf6", // Mixed：混合学科，用紫色区分
-      "#94a3b8"  // Unknown：未知，用灰蓝色
+      "rgba(37, 99, 235, 0.72)",   // Physics
+      "rgba(5, 150, 105, 0.72)",   // Chemistry
+      "rgba(220, 38, 38, 0.72)",   // Medicine
+      "rgba(139, 92, 246, 0.72)",  // Mixed
+      "rgba(148, 163, 184, 0.72)"  // Unknown
     ]);
 
   function edgeColorByField(field) {
-    if (field === "Physics") return "rgba(37, 99, 235, 0.34)";
-    if (field === "Chemistry") return "rgba(5, 150, 105, 0.34)";
-    if (field === "Medicine") return "rgba(220, 38, 38, 0.34)";
-    return "rgba(148, 163, 184, 0.34)";
+    if (field === "Physics") return "rgba(37, 99, 235, 0.28)";
+    if (field === "Chemistry") return "rgba(5, 150, 105, 0.28)";
+    if (field === "Medicine") return "rgba(220, 38, 38, 0.28)";
+    return "rgba(148, 163, 184, 0.28)";
   }
 
   const state = {
@@ -257,7 +257,7 @@ export async function initInstitutionNetwork() {
       .attr("class", "network-link")
       .attr("fill", "none")
       .attr("stroke", edgeColorByField(state.field))
-      .attr("stroke-opacity", 0.38)
+      .attr("stroke-opacity", 1)
       .attr("stroke-linecap", "round")
       .attr("stroke-width", (d) => linkWidth(d.weight))
       .on("mouseover", function (event, d) {
@@ -291,12 +291,12 @@ export async function initInstitutionNetwork() {
     nodeGroup
       .append("circle")
       .attr("class", "network-node")
-      .attr("r", (d) => d.radius)
-      .attr("fill", (d) => color(d.display_field || "Unknown"))
+      .attr("r", d => d.radius)
+      .attr("fill", d => color(d.main_field || "Unknown"))
+      .attr("fill-opacity", 1)
       .attr("stroke", "#ffffff")
       .attr("stroke-width", 1.6)
-      .attr("filter", "url(#network-node-shadow)")
-      .style("cursor", "pointer")
+      .attr("filter", "url(#institution-node-shadow)")
       .on("mouseover", function (event, d) {
         highlightNeighborhood(d, true);
 
