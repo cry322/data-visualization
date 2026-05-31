@@ -89,7 +89,20 @@ export async function initInstitutionNetwork() {
   const color = d3
     .scaleOrdinal()
     .domain(["Physics", "Chemistry", "Medicine", "Mixed", "Unknown"])
-    .range(["#7aa6c2", "#d9a66a", "#8bbf9f", "#b8a7d9", "#b8b8b8"]);
+    .range([
+      "#2563eb", // Physics：蓝色，和 career-stage-overview 的 physics 色系统一
+      "#059669", // Chemistry：绿色
+      "#dc2626", // Medicine：红色
+      "#8b5cf6", // Mixed：混合学科，用紫色区分
+      "#94a3b8"  // Unknown：未知，用灰蓝色
+    ]);
+
+  function edgeColorByField(field) {
+    if (field === "Physics") return "rgba(37, 99, 235, 0.34)";
+    if (field === "Chemistry") return "rgba(5, 150, 105, 0.34)";
+    if (field === "Medicine") return "rgba(220, 38, 38, 0.34)";
+    return "rgba(148, 163, 184, 0.34)";
+  }
 
   const state = {
     field: "all",
@@ -243,15 +256,14 @@ export async function initInstitutionNetwork() {
       .join("path")
       .attr("class", "network-link")
       .attr("fill", "none")
-      .attr("stroke", "#94a3b8")
-      .attr("stroke-opacity", 0.34)
+      .attr("stroke", edgeColorByField(state.field))
+      .attr("stroke-opacity", 0.38)
       .attr("stroke-linecap", "round")
       .attr("stroke-width", (d) => linkWidth(d.weight))
       .on("mouseover", function (event, d) {
         d3.select(this)
-          .attr("stroke-opacity", 0.9)
-          .attr("stroke", "#334155");
-
+          .attr("stroke-opacity", 0.72)
+          .attr("stroke", edgeColorByField(state.field));
         tooltip
           .style("opacity", 1)
           .html(`
