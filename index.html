@@ -409,7 +409,7 @@
             <div class="panel-controls network-controls">
               <label for="network-field-filter">学科筛选：</label>
               <select id="network-field-filter">
-                <option value="all">全部学科</option>
+                <option value="all">All</option>
                 <option value="Physics">Physics</option>
                 <option value="Chemistry">Chemistry</option>
                 <option value="Medicine">Medicine</option>
@@ -496,7 +496,7 @@
               <div>
                 <div class="panel-title">诺奖关键论文的知识路径</div>
                 <div class="panel-note">
-                  本图以诺奖关键论文为中心，展示其引用的前置知识来源，以及后续引用它的研究论文。Sankey 强调学科路径，网络图强调具体论文之间的引用关系。
+                  本图以诺奖关键论文为中心，展示其引用的前置知识来源，以及后续引用它的研究论文。Sankey 强调学科路径，弧线图强调引用路径的上下方向。
                 </div>
               </div>
             </div>
@@ -513,7 +513,14 @@
               <label for="topic-view-select">图表类型：</label>
               <select id="topic-view-select">
                 <option value="sankey">知识路径 Sankey</option>
-                <option value="network">引用路径网络</option>
+                <option value="arc">引用路径弧线图</option>
+              </select>
+
+              <label for="topic-arc-topn-select">弧线图 Top N：</label>
+              <select id="topic-arc-topn-select">
+                <option value="10">Top 10</option>
+                <option value="15" selected>Top 15</option>
+                <option value="20">Top 20</option>
               </select>
             </div>
 
@@ -540,14 +547,14 @@
             </div>
 
             <div id="topic-migration-chart" class="chart placeholder-box large-chart">
-              <div class="placeholder">知识路径 Sankey / 引用路径网络图位置</div>
+              <div class="placeholder">知识路径 Sankey / 引用路径弧线图位置</div>
             </div>
 
             <div id="topic-case-cards" class="topic-case-cards">
               <div class="card mini-card">
                 <div class="panel-title">读图方式</div>
                 <div class="panel-note">
-                  在 Sankey 中，左侧为知识来源，中间为诺奖论文主题，右侧为后续扩散方向；在网络图中，中间为诺奖关键论文，左右分别为前置引用论文与后续引用论文。
+                  Sankey 中，左侧为知识来源，中间为诺奖论文主题，右侧为后续扩散方向；弧线图中，横轴分为知识来源、诺奖核心和后续扩散，上方弧线表示诺奖引用，下方弧线表示诺奖被引。
                 </div>
               </div>
 
