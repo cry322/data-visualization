@@ -79,7 +79,7 @@ function renderCareerStageLeft(containerSelector, data) {
     .append("svg")
     .attr("viewBox", `0 0 ${width} ${height}`)
     .attr("role", "img")
-    .attr("aria-label", "Career publication density overview");
+    .attr("aria-label", "职业生涯发表密度概览");
 
   const fieldSelect = d3.select("#career-field-filter");
   const overallCheckbox = d3.select("#career-show-all");
@@ -151,25 +151,25 @@ function renderCareerStageLeft(containerSelector, data) {
       .attr("x", width / 2)
       .attr("y", height - 20)
       .attr("text-anchor", "middle")
-      .text("Career Year");
+      .text("职业生涯年份");
 
     svg.append("text")
       .attr("class", "career-left-label")
       .attr("transform", `translate(18,${height / 2}) rotate(-90)`)
       .attr("text-anchor", "middle")
-      .text("Normalized Density");
+      .text("标准化密度");
 
     svg.append("text")
       .attr("class", "career-left-section-label")
       .attr("x", margin.left + 8)
       .attr("y", margin.top - 12)
-      .text("Prize-winning Paper");
+      .text("诺奖论文出现");
 
     svg.append("text")
       .attr("class", "career-left-section-label")
       .attr("x", margin.left + 8)
       .attr("y", height - margin.bottom + 45)
-      .text("Nobel Recognition");
+      .text("获得诺奖认可");
 
     svg.append("line")
       .attr("class", "career-left-reference-line")
@@ -247,9 +247,9 @@ function renderCareerStageLeft(containerSelector, data) {
           .style("opacity", 1)
           .html(`
             <strong>${fieldName}</strong><br/>
-            Career Year: ${year}<br/><br/>
-            Prize-winning Paper Density: ${getBinValue(fieldPrizeBins, year).toFixed(3)}<br/>
-            Nobel Recognition Density: ${getBinValue(fieldAwardBins, year).toFixed(3)}
+            职业生涯年份：${year}<br/><br/>
+            诺奖论文密度：${getBinValue(fieldPrizeBins, year).toFixed(3)}<br/>
+            获奖认可密度：${getBinValue(fieldAwardBins, year).toFixed(3)}
           `);
 
         moveTooltip(container, tooltip, event, 12, -28);
@@ -365,23 +365,23 @@ function renderCareerStageRight(containerSelector, overviewData, detailData) {
     if (!rows.length || !overview) {
       container.append("div")
         .attr("class", "placeholder")
-        .text("No career trajectory data available.");
+        .text("暂无该科学家的职业轨迹数据。");
       return;
     }
 
     const width = 620;
     const height = 430;
-    const margin = { top: 34, right: 34, bottom: 58, left: 64 };
+    const margin = { top: 34, right: 34, bottom: 72, left: 64 };
     const metric = yMetricSelect.property("value");
     const yKey = metric === "yearly" ? "yearly_papers" : "cumulative_papers";
-    const yLabel = metric === "yearly" ? "Annual publications" : "Cumulative publications";
+    const yLabel = metric === "yearly" ? "年发文量" : "累计发文数";
     const yMax = d3.max(rows, d => d[yKey]) || 1;
 
     const svg = container
       .append("svg")
       .attr("viewBox", `0 0 ${width} ${height}`)
       .attr("role", "img")
-      .attr("aria-label", `${formatName(selectedName)} career trajectory`);
+      .attr("aria-label", `${formatName(selectedName)} 的职业轨迹`);
 
     const maxCareerYear = d3.max([
       d3.max(rows, d => d.career_year) || 1,
@@ -422,9 +422,9 @@ function renderCareerStageRight(containerSelector, overviewData, detailData) {
     svg.append("text")
       .attr("class", "career-right-label")
       .attr("x", width / 2)
-      .attr("y", height - 16)
+      .attr("y", height - 24)
       .attr("text-anchor", "middle")
-      .text("Career Year");
+      .text("职业生涯年份");
 
     svg.append("text")
       .attr("class", "career-right-label")
@@ -447,8 +447,8 @@ function renderCareerStageRight(containerSelector, overviewData, detailData) {
       prizeYears.add(overview.prize_paper_career_year);
     }
 
-    drawMilestone(svg, x, margin, height, overview.prize_paper_career_year, "Prize paper");
-    drawMilestone(svg, x, margin, height, overview.award_career_year, "Recognition");
+    drawMilestone(svg, x, margin, height, overview.prize_paper_career_year, "诺奖论文");
+    drawMilestone(svg, x, margin, height, overview.award_career_year, "获得认可");
 
     svg.selectAll(".career-right-dot")
       .data(rows)
@@ -462,9 +462,9 @@ function renderCareerStageRight(containerSelector, overviewData, detailData) {
           .style("opacity", 1)
           .html(`
             <strong>${formatName(selectedName)}</strong><br/>
-            Career Year: ${d.career_year}<br/>
-            Annual Publications: ${d.yearly_papers}<br/>
-            Cumulative Publications: ${d.cumulative_papers}
+            职业生涯年份：${d.career_year}<br/>
+            年发文量：${d.yearly_papers}<br/>
+            累计发文数：${d.cumulative_papers}
           `);
         moveTooltip(container, tooltip, event, 12, -30);
       })
@@ -474,7 +474,7 @@ function renderCareerStageRight(containerSelector, overviewData, detailData) {
       .attr("class", "career-right-title")
       .attr("x", margin.left)
       .attr("y", 22)
-      .text(`${formatName(selectedName)} · ${overview.field} · ${overview.trajectory_type}`);
+      .text(`${formatName(selectedName)} · ${overview.field} · ${getTrajectoryLabel(overview.trajectory_type)}`);
 
     updateSummary(rows, overview);
   }
@@ -515,7 +515,7 @@ function drawMilestone(svg, x, margin, height, year, label) {
 
   lineGroup.append("text")
     .attr("x", xPos + 6)
-    .attr("y", margin.top + (label === "Prize paper" ? 12 : 30))
+    .attr("y", margin.top + (label === "诺奖论文" ? 12 : 30))
     .text(`${label}: ${year}`);
 }
 
@@ -523,7 +523,7 @@ function updateSummary(rows, overview) {
   const peak = d3.max(rows, d => d.yearly_papers) || 0;
   const total = d3.max(rows, d => d.cumulative_papers) || 0;
 
-  d3.select("#career-stat-prize").text(`Year ${overview.prize_paper_career_year}`);
+  d3.select("#career-stat-prize").text(`第 ${overview.prize_paper_career_year} 年`);
   d3.select("#career-stat-peak").text(peak);
   d3.select("#career-stat-total").text(total);
   d3.select("#career-stat-field").text(overview.field || "--");
@@ -568,4 +568,12 @@ function formatName(name) {
     .reverse()
     .join(" ")
     .replace(/\b\w/g, letter => letter.toUpperCase());
+}
+
+function getTrajectoryLabel(type) {
+  return {
+    early: "早期达到高产",
+    sustained: "长期稳定输出",
+    late: "后期重要突破"
+  }[type] || type || "未知类型";
 }

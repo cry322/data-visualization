@@ -1,9 +1,9 @@
 import { loadCSV } from "../utils/dataLoader.js";
 
 const FIELD_COLORS = {
-  Physics: "#8DB5CA",
-  Chemistry: "#D8A24A",
-  Medicine: "#76AD94"
+  Physics: "#7aa6dc",
+  Chemistry: "#6fc4a2",
+  Medicine: "#e78b8b"
 };
 
 const FIELD_LABELS = {
@@ -21,8 +21,7 @@ const FIELD_OPTIONS = [
 
 const Y_AXIS_OPTIONS = [
   { value: "prePubs", label: "首篇获奖论文前发文数量" },
-  { value: "careerAge", label: "发表时职业年龄" },
-  { value: "institutionHIndex", label: "发表机构 h-index" }
+  { value: "careerAge", label: "发表时职业年龄" }
 ];
 
 const COUNTRY_NAMES = {
@@ -87,19 +86,6 @@ const Y_CONFIGS = {
     value: row => row.careerAgeAtPaper,
     scale: (rows, height) => d3.scaleLinear()
       .domain([0, d3.max(rows, row => row.careerAgeAtPaper) || 1])
-      .nice()
-      .range([height, 0])
-  },
-  institutionHIndex: {
-    title: "等待时间与发表机构 h-index",
-    note: "机构 h-index 来自 OpenAlex 机构元数据；同一获奖论文关联多个机构时，取最高 h-index 代表当时署名机构声誉。",
-    label: "发表机构 h-index（最高值）",
-    medianLabel: "机构 h-index 中位数",
-    unit: "",
-    type: "numeric",
-    value: row => row.institutionHIndex,
-    scale: (rows, height) => d3.scaleLinear()
-      .domain([0, d3.max(rows, row => row.institutionHIndex) || 1])
       .nice()
       .range([height, 0])
   }
@@ -438,7 +424,6 @@ function buildWaitTimeRows(publications, affiliationLookup, sourceLookup) {
       const affiliations = affiliationLookup.get(`${row.laureateId}|${row.paperId}`) || {};
       const countries = affiliations.countries || [];
       const institutions = affiliations.institutions || [];
-      const institutionHIndex = d3.max(affiliations.hIndexes || []);
       const firstPublicationYear = stats?.firstPublicationYear;
       const careerAgeAtPaper = row.publicationYear - firstPublicationYear;
       const careerAgeAtPrize = row.prizeYear - firstPublicationYear;
@@ -452,7 +437,6 @@ function buildWaitTimeRows(publications, affiliationLookup, sourceLookup) {
         institutions,
         primaryCountry: getCountryName(countries[0]),
         primaryInstitution: institutions[0] || "未知机构",
-        institutionHIndex,
         firstPublicationYear,
         firstPrizePaperYear: stats?.firstPrizePaperYear,
         careerAgeAtPaper,

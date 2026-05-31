@@ -8,10 +8,21 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
   </head>
   <body>
-    <header class="hero">
+    <header class="hero" id="top">
       <div class="hero-content">
+        <h1>诺贝尔科学发现的时间、人物与组织网络</h1>
+        <p>从科学家的职业阶段、关键论文的等待时间，到科研机构与学术迁移网络，追踪诺奖成果如何产生、积累并获得认可。</p>
+
+        <nav class="global-subnav" aria-label="页面主导航">
+          <a href="#section-career"><span>1</span>职业阶段</a>
+          <a href="#section-waittime"><span>2</span>等待时间</a>
+          <a href="#section-institution"><span>3</span>机构与国家</a>
+          <a href="#section-network"><span>4</span>网络与迁移</a>
+        </nav>
+        <div class="legacy-hero-copy" hidden>
         <h1>项目标题</h1>
         <p>补充文字</p>
+        </div>
       </div>
     </header>
 
@@ -21,10 +32,9 @@
 
         <div class="section-header">
           <div>
-            <h2>1. Career Stage & Nobel Recognition</h2>
+            <h2>1. 职业阶段与诺奖认可</h2>
             <p>
-              Explore when Nobel-winning work emerges across scientific careers
-              through macro publication trends and individual trajectories.
+              从整体分布和个人轨迹两个层面，观察诺奖关键成果在科学家职业生涯中的出现时机。
             </p>
           </div>
         </div>
@@ -38,12 +48,11 @@
           <aside class="card panel panel-overview">
 
             <div class="panel-title">
-              Career Publication Density Overview
+              职业生涯发表密度概览
             </div>
 
             <div class="panel-note">
-              Compare publication density patterns across Physics,
-              Chemistry and Medicine throughout career stages.
+              比较 Physics、Chemistry 和 Medicine 三个学科在职业生涯不同阶段的关键论文与获奖认可分布。
             </div>
 
             <div class="panel-controls">
@@ -60,7 +69,7 @@
 
               <label class="career-checkbox">
                 <input type="checkbox" id="career-show-all" checked />
-                Show overall distribution
+                显示总体分布
               </label>
 
             </div>
@@ -76,46 +85,45 @@
           <div class="card panel panel-detail">
 
             <div class="panel-title">
-              Scientist Career Trajectory Explorer
+              科学家职业轨迹探索
             </div>
 
             <div class="panel-note">
-              Explore individual publication trajectories and identify
-              when Nobel-winning work emerged during scientific careers.
+              查看代表性科学家的逐年发文轨迹，并标记诺奖论文出现与获得认可的职业年份。
             </div>
 
             <div class="trajectory-rows">
 
               <div class="trajectory-row">
                 <button class="trajectory-tag active" data-type="early">
-                  🟢 Early Peak
+                  早期达到高产
                 </button>
 
                 <div class="trajectory-row-scientists">
-                  <span class="scientist-chip" data-name="Dirac" data-field="Physics">⚛ Dirac</span>
-                  <span class="scientist-chip" data-name="Arrhenius" data-field="Chemistry">🧪 Arrhenius</span>
+                  <span class="scientist-chip" data-name="dirac, pam" data-field="Physics">Dirac</span>
+                  <span class="scientist-chip" data-name="einstein, a" data-field="Physics">Einstein</span>
                 </div>
               </div>
 
               <div class="trajectory-row">
                 <button class="trajectory-tag" data-type="sustained">
-                  🔵 Sustained Output
+                  长期稳定输出
                 </button>
 
                 <div class="trajectory-row-scientists">
-                  <span class="scientist-chip" data-name="Feynman" data-field="Physics">⚛ Feynman</span>
-                  <span class="scientist-chip" data-name="Pauling" data-field="Chemistry">🧪 Pauling</span>
+                  <span class="scientist-chip" data-name="bardeen, j" data-field="Physics">Bardeen</span>
+                  <span class="scientist-chip" data-name="pauling, l" data-field="Chemistry">Pauling</span>
                 </div>
               </div>
 
               <div class="trajectory-row">
                 <button class="trajectory-tag" data-type="late">
-                  🟣 Late Breakthrough
+                  后期重要突破
                 </button>
 
                 <div class="trajectory-row-scientists">
-                  <span class="scientist-chip" data-name="Yamanaka" data-field="Medicine">🧬 Yamanaka</span>
-                  <span class="scientist-chip" data-name="Abrikosov" data-field="Physics">⚛ Abrikosov</span>
+                  <span class="scientist-chip" data-name="furchgott, rf" data-field="Medicine">Furchgott</span>
+                  <span class="scientist-chip" data-name="mulliken, r" data-field="Chemistry">Mulliken</span>
                 </div>
               </div>
 
@@ -124,9 +132,9 @@
             <div class="career-detail-controls">
 
               <div class="detail-filter-block">
-                <label for="career-detail-field-select">Field</label>
+                <label for="career-detail-field-select">学科</label>
                 <select id="career-detail-field-select">
-                  <option value="all">All Fields</option>
+                  <option value="all">全部学科</option>
                   <option value="Physics">Physics</option>
                   <option value="Chemistry">Chemistry</option>
                   <option value="Medicine">Medicine</option>
@@ -134,17 +142,17 @@
               </div>
 
               <div class="detail-filter-block">
-                <label for="career-scientist-select">Scientist</label>
+                <label for="career-scientist-select">科学家</label>
                 <select id="career-scientist-select">
-                  <option>Loading...</option>
+                  <option>加载中...</option>
                 </select>
               </div>
 
               <div class="detail-filter-block">
-                <label for="career-y-metric-select">Y Axis</label>
+                <label for="career-y-metric-select">Y 轴</label>
                 <select id="career-y-metric-select">
-                  <option value="cumulative">Cumulative publications</option>
-                  <option value="yearly">Annual publications</option>
+                  <option value="cumulative">累计发文数</option>
+                  <option value="yearly">年发文量</option>
                 </select>
               </div>
 
@@ -154,22 +162,22 @@
 
             <div class="career-summary-grid">
               <div class="career-summary-card">
-                <div class="summary-label">Prize-winning Work</div>
+                <div class="summary-label">诺奖论文年份</div>
                 <div class="summary-value" id="career-stat-prize">--</div>
               </div>
 
               <div class="career-summary-card">
-                <div class="summary-label">Peak Productivity</div>
+                <div class="summary-label">最高年产出</div>
                 <div class="summary-value" id="career-stat-peak">--</div>
               </div>
 
               <div class="career-summary-card">
-                <div class="summary-label">Total Publications</div>
+                <div class="summary-label">职业累计论文</div>
                 <div class="summary-value" id="career-stat-total">--</div>
               </div>
 
               <div class="career-summary-card">
-                <div class="summary-label">Field</div>
+                <div class="summary-label">学科</div>
                 <div class="summary-value" id="career-stat-field">--</div>
               </div>
             </div>
@@ -194,7 +202,6 @@
           <select id="waittime-yaxis-filter">
             <option value="prePubs">首篇获奖论文前发文数量</option>
             <option value="careerAge">发表时职业年龄</option>
-            <option value="institutionHIndex">发表机构 h-index</option>
           </select>
           <label for="waittime-field-filter">学科</label>
           <select id="waittime-field-filter">
@@ -218,6 +225,7 @@
         </div>
       </section>
 
+      <!-- 暂不展示第三张图，保留结构便于后续恢复。
       <section id="section-special" class="section">
       
         
@@ -230,22 +238,23 @@
         </div>
         
       </section>
+      -->
 
       <section id="section-institution" class="section section-institution">
         <div class="section-header">
           <div>
-            <h2>4. 科研机构与学术迁移合作网络</h2>
+            <h2>3. 科研机构与国家分布</h2>
             <p>
-              从机构分布、国家版图、合作网络到学术主题迁移，展示诺贝尔奖科学成果背后的科研组织结构。
+              从机构排行榜与国家版图两个层面，观察诺奖科研活动集中在哪些机构和地区。
             </p>
           </div>
         </div>
 
         <div class="institution-hero card">
           <div class="institution-hero-text">
-            <div class="panel-title">科研机构与学术迁移合作网络</div>
+            <div class="panel-title">科研机构与国家分布看板</div>
             <div class="panel-note">
-              观察哪些机构和国家构成诺奖科研中心，机构之间如何合作，以及学术主题如何随时间演化。
+              观察哪些机构和国家构成诺奖科研中心，并比较不同学科下的机构影响力与国家分布。
             </div>
           </div>
 
@@ -262,25 +271,18 @@
               <div class="metric-value" id="metric-paper-count">--</div>
               <div class="metric-label">论文数量</div>
             </div>
-            <div class="metric-card">
-              <div class="metric-value" id="metric-edge-count">--</div>
-              <div class="metric-label">合作关系</div>
-            </div>
           </div>
         </div>
 
         <nav class="institution-subnav card">
           <a href="#institution-overview-block">机构概览</a>
           <a href="#institution-country-block">国家分布</a>
-          <a href="#institution-network-block">合作网络</a>
-          <a href="#institution-sankey-block">机构-学科</a>
-          <a href="#topic-migration-block">主题迁移</a>
         </nav>
 
         <div id="institution-overview-block" class="institution-block">
           <div class="section-header compact">
             <div>
-              <h3>4.1 机构影响力概览</h3>
+              <h3>3.1 机构影响力概览</h3>
               <p>哪些机构在诺奖科学家的发表记录中最常出现？哪些机构在论文数、关键论文和引用影响力上更突出？</p>
             </div>
           </div>
@@ -329,7 +331,7 @@
         <div id="institution-country-block" class="institution-block">
           <div class="section-header compact">
             <div>
-              <h3>4.2 国家 / 地区分布图</h3>
+              <h3>3.2 国家 / 地区分布图</h3>
               <p>诺奖科研机构主要分布在哪些国家或地区？不同国家是否具有不同的学科结构？</p>
             </div>
           </div>
@@ -374,11 +376,28 @@
           </div>
 
         </div>
+      </section>
+
+      <section id="section-network" class="section section-institution">
+        <div class="section-header">
+          <div>
+            <h2>4. 合作网络与知识迁移</h2>
+            <p>
+              从机构合作关系、机构—学科结构和关键论文知识路径三个角度，观察诺奖成果背后的连接与扩散。
+            </p>
+          </div>
+        </div>
+
+        <nav class="institution-subnav card">
+          <a href="#institution-network-block">合作网络</a>
+          <a href="#institution-sankey-block">机构-学科</a>
+          <a href="#topic-migration-block">主题迁移</a>
+        </nav>
 
         <div id="institution-network-block" class="institution-block">
           <div class="section-header compact">
             <div>
-              <h3>4.3 机构合作网络图</h3>
+              <h3>4.1 机构合作网络图</h3>
               <p>哪些机构之间形成了高频合作关系？哪些机构位于诺奖科研合作网络的中心？</p>
             </div>
           </div>
@@ -416,7 +435,7 @@
         <div id="institution-sankey-block" class="institution-block">
           <div class="section-header compact">
             <div>
-              <h3>4.4 机构—学科关系图</h3>
+              <h3>4.2 机构—学科关系图</h3>
               <p>不同学科的诺奖科研活动是否集中在不同机构？哪些机构是综合型科研中心？</p>
             </div>
           </div>
@@ -465,7 +484,7 @@
         <div id="topic-migration-block" class="institution-block">
           <div class="section-header compact">
             <div>
-              <h3>4.5 学术主题迁移与知识路径图</h3>
+              <h3>4.3 学术主题迁移与知识路径图</h3>
               <p>
                 基于诺奖关键论文的一跳引文关系，观察知识如何流入获奖论文，又如何从获奖论文向后续研究扩散。
               </p>
