@@ -38,6 +38,31 @@ export function initCountryMap() {
         });
     svgMap.call(zoom);
 
+    // 初始化渐变图例容器
+    const legendWidth = 250;
+    const legendHeight = 10;
+    const legendG = svgMap.append("g")
+        .attr("class", "map-legend")
+        .attr("transform", `translate(${width - legendWidth - 30}, ${height - 40})`);
+
+    const defs = svgMap.append("defs");
+    // 【修改点】图例的线性渐变移除了硬编码的初始 stops，改为在更新函数中动态渲染
+    const linearGradient = defs.append("linearGradient")
+        .attr("id", "map-gradient")
+        .attr("x1", "0%").attr("y1", "0%")
+        .attr("x2", "100%").attr("y2", "0%");
+
+    legendG.append("rect")
+        .attr("width", legendWidth)
+        .attr("height", legendHeight)
+        .style("fill", "url(#map-gradient)")
+        .style("stroke", "#cbd5e1")
+        .style("stroke-width", 0.5);
+
+    const legendAxisG = legendG.append("g")
+        .attr("class", "legend-axis")
+        .attr("transform", `translate(0, ${legendHeight})`);
+
     // ==========================================
     // 2. 初始化排行榜画布
     // ==========================================
@@ -62,7 +87,6 @@ export function initCountryMap() {
         yRankAxisG = svgRank.append("g").attr("class", "y-axis");
     }
 
-    // 国家代码与中文映射
     const countryNameMap = {
         "US": "美国", "GB": "英国", "DE": "德国", "FR": "法国", "SE": "瑞典", 
         "CH": "瑞士", "JP": "日本", "NL": "荷兰", "RU": "俄罗斯", "CA": "加拿大", 
@@ -94,9 +118,6 @@ export function initCountryMap() {
         "m3": "诺奖获奖科学家数"
     };
 
-    // ==========================================
-    // 3. 数据清洗助手函数
-    // ==========================================
     function cleanCountryCode(rawCode) {
         let code = (rawCode || "").trim();
         if (code === "United States") code = "US";
@@ -104,9 +125,6 @@ export function initCountryMap() {
         return code.toUpperCase() || null;
     }
 
-    // ==========================================
-    // 4. 加载数据并渲染
-    // ==========================================
     Promise.all([
         d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json"),
         d3.csv("data/nobel_prize_institution_summary.csv"),
@@ -128,7 +146,6 @@ export function initCountryMap() {
             return countryMetrics.get(cc);
         }
 
-        // --- M1: 机构数目 ---
         summaryData.forEach(d => {
             const cc = cleanCountryCode(d.country_code);
             if (!cc) return;
@@ -136,7 +153,6 @@ export function initCountryMap() {
             cm.m1 += 1; 
         });
 
-        // --- M2 & M3: 精确去重 ---
         authorCountryData.forEach(d => {
             const cc = cleanCountryCode(d.country_code);
             if (!cc) return;
@@ -159,7 +175,6 @@ export function initCountryMap() {
 
         d3.select("#metric-country-count").text(combinedData.length);
 
-        // --- 绘制地图板块 ---
         const countries = topojson.feature(worldData, worldData.objects.countries).features;
         const mapPaths = mapZoomGroup.append("g")
             .selectAll("path")
@@ -184,27 +199,74 @@ export function initCountryMap() {
             .style("position", "absolute")
             .style("z-index", "9999");
 
-        // ==========================================
-        // 5. 更新图表与事件绑定
-        // ==========================================
         let currentMetric = "m1"; 
 
         d3.select("#country-sort-select").on("change", function() {
             currentMetric = this.value;
+            
+            // 【新增】切换指标时，强制收起并隐藏底部的国家科研档案面板
+            d3.select("#country-detail-panel").style("display", "none");
+            
             updateDashboard();
         });
 
         function updateDashboard() {
             const maxVal = d3.max(combinedData, d => d[currentMetric]) || 1;
-            const colorScale = d3.scaleSequential(d3.interpolateReds).domain([0, Math.sqrt(maxVal)]); 
+            
+            // 【修改点】手动指定纯正的蓝色系渐变，避免内置色阶发紫或发绿
+            let currentInterpolator;
+            if (currentMetric === "m1") {
+                // 深邃海蓝 (Ocean Blue: 浅青 -> 湖蓝)
+                currentInterpolator = d3.interpolate("#f0f9ff", "#0369a1"); 
+            } else if (currentMetric === "m2") {
+                // 经典科技蓝 (Tech Blue: 浅蓝 -> 宝蓝)
+                currentInterpolator = d3.interpolate("#eff6ff", "#1d4ed8");  
+            } else {
+                // 高级藏青/灰蓝 (Slate/Navy Blue: 浅灰白 -> 深藏青)
+                currentInterpolator = d3.interpolate("#f8fafc", "#1e293b");  
+            }
 
+            const colorScale = d3.scaleSequential(currentInterpolator).domain([0, Math.log1p(maxVal)]); 
+            // 提取出悬浮时的高亮颜色（取当前渐变条的最深色）
+            const activeHoverColor = currentInterpolator(1);
+
+            // 【修改点 2】动态更新右下角图例的渐变条颜色
+            const stops = linearGradient.selectAll("stop").data(d3.range(0, 1.05, 0.05));
+            stops.enter().append("stop")
+                .merge(stops)
+                .transition().duration(750) // 同步添加过渡动画
+                .attr("offset", d => `${d * 100}%`)
+                .attr("stop-color", d => currentInterpolator(d));
+
+            // 更新地图颜色
             mapPaths.transition("color").duration(750).attr("fill", d => {
                 const cc = nameToAlpha2[d.properties.name];
                 if (!cc || !countryMetrics.has(cc)) return "#ffffff"; 
                 const val = countryMetrics.get(cc)[currentMetric];
-                return val === 0 ? "#ffffff" : colorScale(Math.sqrt(val));
+                return val === 0 ? "#ffffff" : colorScale(Math.log1p(val));
             });
 
+            // 更新右下角对数图例坐标轴
+            const axisScale = d3.scaleSymlog()
+                .constant(1)
+                .domain([0, maxVal])
+                .range([0, legendWidth]);
+
+            // 【修改点】借用线性比例尺的 ticks 方法，自动生成 3~4 个规整的数值（如 100, 200）
+            // 过滤掉带有小数的数值，并且把大于当前最大值的溢出刻度也过滤掉
+            let tickValues = d3.scaleLinear().domain([0, maxVal]).ticks(4)
+                               .filter(Number.isInteger)
+                               .filter(v => v <= maxVal);
+
+            const legendAxis = d3.axisBottom(axisScale)
+                .tickValues(tickValues) 
+                .tickFormat(d3.format(".0f"));
+
+            legendAxisG.transition("layout").duration(600).call(legendAxis);
+            legendAxisG.selectAll("text").style("font-size", "10px").style("fill", "#64748b");
+            legendAxisG.selectAll("path, line").style("stroke", "#cbd5e1");
+
+            // 更新右侧国家排行榜 Top 10
             const sortedList = [...combinedData].sort((a, b) => b[currentMetric] - a[currentMetric]);
             const top10 = sortedList.slice(0, 10);
 
@@ -227,13 +289,14 @@ export function initCountryMap() {
                 .attr("width", 0)
                 .attr("rx", 3)
                 .style("cursor", "pointer")
-                .attr("fill", "#e15759"); 
+                .attr("fill", d => colorScale(Math.log1p(d[currentMetric]))); 
             
             barsEnter.merge(bars)
                 .transition("layout").duration(600)
                 .attr("y", d => yRank(d.name))
                 .attr("height", yRank.bandwidth())
-                .attr("width", d => xRank(d[currentMetric]));
+                .attr("width", d => xRank(d[currentMetric]))
+                .attr("fill", d => colorScale(Math.log1p(d[currentMetric]))); 
 
             // --- 绑定交互 ---
             mapPaths.on("mouseover", function(event, d) {
@@ -243,7 +306,8 @@ export function initCountryMap() {
                 if (cData[currentMetric] === 0) return; 
 
                 d3.select(this).raise().attr("stroke", "#0f172a").attr("stroke-width", 1.5);
-                d3.selectAll(`.rank-bar-${cc}`).transition("hover").duration(150).attr("fill", "#991b1b");
+                // 【修改点 3】Hover色也使用当前渐变的最深色
+                d3.selectAll(`.rank-bar-${cc}`).transition("hover").duration(150).attr("fill", activeHoverColor);
                 showTooltip(event, cData);
             })
             .on("mousemove", function(event) {
@@ -252,7 +316,12 @@ export function initCountryMap() {
             .on("mouseout", function(event, d) {
                 const cc = nameToAlpha2[d.properties.name];
                 d3.select(this).attr("stroke", "#cbd5e1").attr("stroke-width", 0.5);
-                d3.selectAll(`.rank-bar-${cc}`).transition("hover").duration(150).attr("fill", "#e15759");
+                
+                if (cc && countryMetrics.has(cc)) {
+                    const cData = countryMetrics.get(cc);
+                    d3.selectAll(`.rank-bar-${cc}`).transition("hover").duration(150)
+                      .attr("fill", colorScale(Math.log1p(cData[currentMetric])));
+                }
                 tooltip.style("opacity", 0).style("display", "none");
             })
             .on("click", function(event, d) {
@@ -262,7 +331,8 @@ export function initCountryMap() {
             });
 
             barsEnter.merge(bars).on("mouseover", function(event, d) {
-                d3.select(this).transition("hover").duration(150).attr("fill", "#991b1b");
+                // 【修改点 3】同理更新柱状图的 Hover 色
+                d3.select(this).transition("hover").duration(150).attr("fill", activeHoverColor); 
                 d3.selectAll(`.map-path-${d.code}`).raise().attr("stroke", "#0f172a").attr("stroke-width", 1.5);
                 showTooltip(event, d); 
             })
@@ -270,7 +340,7 @@ export function initCountryMap() {
                 tooltip.style("left", (event.pageX + 15) + "px").style("top", (event.pageY - 15) + "px");
             })
             .on("mouseout", function(event, d) {
-                d3.select(this).transition("hover").duration(150).attr("fill", "#e15759");
+                d3.select(this).transition("hover").duration(150).attr("fill", colorScale(Math.log1p(d[currentMetric])));
                 d3.selectAll(`.map-path-${d.code}`).attr("stroke", "#cbd5e1").attr("stroke-width", 0.5);
                 tooltip.style("opacity", 0).style("display", "none");
             })
@@ -285,8 +355,8 @@ export function initCountryMap() {
             const activeMetricName = metricConfig[currentMetric];
             tooltip.style("display", "block").style("opacity", 1)
                    .html(`
-                       <div class="tooltip-title" style="font-size: 14px; margin-bottom: 8px;">🌍 ${d.name} (${d.code})</div>
-                       <div style="font-size: 12px; color: #cbd5e1; margin-bottom: 4px;">当前渲染指标: <span style="color: #fff; font-weight: bold;">${activeMetricName}</span></div>
+                       <div class="tooltip-title" style="font-size: 14px; margin-bottom: 8px;"> ${d.name} (${d.code})</div>
+                       <div style="font-size: 12px; color: #cbd5e1; margin-bottom: 4px;">当前指标: <span style="color: #fff; font-weight: bold;">${activeMetricName}</span></div>
                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.2);">
                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                                <span style="color: #cbd5e1;">诺奖关联机构数:</span>
@@ -305,15 +375,14 @@ export function initCountryMap() {
         }
 
         // ==========================================
-        // 6. 国家数据下钻渲染函数 (已加“获奖年份：”标注)
+        // 6. 国家数据下钻渲染函数
         // ==========================================
         function renderCountryDetail(cc, countryName, rawSummary, rawAuthorCountry) {
             d3.select("#country-detail-panel").style("display", "block");
-            d3.select("#detail-country-name").text(countryName);
+            d3.select("#detail-country-name").text(countryName).style("color", "#3b82f6");
             const container = d3.select("#country-detail-content");
             container.html(""); 
 
-            // 6.1 获取并处理该国机构列表
             const instsForCountry = rawSummary
                 .filter(d => cleanCountryCode(d.country_code) === cc)
                 .sort((a, b) => (+b.prize_paper_count || 0) - (+a.prize_paper_count || 0));
@@ -321,16 +390,15 @@ export function initCountryMap() {
             let instHtml = instsForCountry.length ? instsForCountry.map(inst => `
                 <div style="padding: 8px 0; border-bottom: 1px dashed rgba(129,115,97,0.15);">
                     <div style="font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 3px;">
-                        🏢 ${inst.institution_display_name || inst.institution_id}
+                         ${inst.institution_display_name || inst.institution_id}
                     </div>
                     <div style="font-size: 11px; color: #64748b;">
-                        关联诺奖论文: <span style="color: #e15759; font-weight: bold;">${inst.prize_paper_count || 0}</span> 篇 | 
-                        诺奖得主: <span style="color: #e15759; font-weight: bold;">${inst.associated_laureate_count || 0}</span> 位
+                        关联诺奖论文: <span style="color: #3b82f6; font-weight: bold;">${inst.prize_paper_count || 0}</span> 篇 | 
+                        诺奖得主: <span style="color: #3b82f6; font-weight: bold;">${inst.associated_laureate_count || 0}</span> 位
                     </div>
                 </div>
             `).join("") : `<div style="padding: 15px; color: #94a3b8; font-size: 12px; text-align: center; font-style: italic;">该国暂无直接登录的诺奖关联机构</div>`;
 
-            // 6.2 获取该国的论文和诺奖得主
             const papersForCountry = rawAuthorCountry.filter(d => cleanCountryCode(d.country_code) === cc);
             const uniquePapers = new Map();
             const uniqueLaureates = new Map();
@@ -356,19 +424,17 @@ export function initCountryMap() {
             const paperArray = Array.from(uniquePapers.values());
             const laureateArray = Array.from(uniqueLaureates.values());
 
-            // 拼接得主 HTML (加了获奖年份标签)
             let laureateHtml = laureateArray.length ? laureateArray.map(l => `
                 <div style="padding: 8px 0; border-bottom: 1px dashed rgba(129,115,97,0.15); display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-size: 13px; font-weight: 600; color: #1e293b;">👤 ${l.name}</div>
+                    <div style="font-size: 13px; font-weight: 600; color: #1e293b;"> ${l.name}</div>
                     ${l.year ? `<div style="font-size: 10px; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">获奖年份：${l.year}</div>` : ""}
                 </div>
             `).join("") : `<div style="padding: 15px; color: #94a3b8; font-size: 12px; text-align: center; font-style: italic;">该国暂无诺奖得主直属记录</div>`;
 
-            // 拼接论文 HTML (加了获奖年份标签)
             let paperHtml = paperArray.length ? paperArray.map(p => `
                 <div style="padding: 10px 0; border-bottom: 1px dashed rgba(129,115,97,0.15);">
                     <div style="font-size: 12px; font-weight: 600; color: #1e293b; line-height: 1.4; margin-bottom: 4px;">
-                        📄 ${p.title}
+                         ${p.title}
                     </div>
                     <div style="font-size: 11px; color: #64748b;">
                         获奖者: <strong style="color: #426b8f;">${p.laureate}</strong> 
@@ -377,21 +443,20 @@ export function initCountryMap() {
                 </div>
             `).join("") : `<div style="padding: 15px; color: #94a3b8; font-size: 12px; text-align: center; font-style: italic;">该国暂无代表性获奖论文数据</div>`;
 
-            // 6.3 将三列内容注入到容器中
             const colStyle = "background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; max-height: 380px; overflow-y: auto; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);";
             const headerStyle = "font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 12px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; position: sticky; top: -16px; background: #f8fafc; z-index: 10;";
 
             container.html(`
                 <div style="${colStyle}">
-                    <div style="${headerStyle}">🏫 顶尖关联机构 (${instsForCountry.length})</div>
+                    <div style="${headerStyle}"> 顶尖关联机构 (${instsForCountry.length})</div>
                     ${instHtml}
                 </div>
                 <div style="${colStyle}">
-                    <div style="${headerStyle}">🏅 诺奖得主名录 (${laureateArray.length})</div>
+                    <div style="${headerStyle}"> 诺奖得主名录 (${laureateArray.length})</div>
                     ${laureateHtml}
                 </div>
                 <div style="${colStyle}">
-                    <div style="${headerStyle}">📚 代表获奖论文 (${paperArray.length})</div>
+                    <div style="${headerStyle}"> 代表获奖论文 (${paperArray.length})</div>
                     ${paperHtml}
                 </div>
             `);

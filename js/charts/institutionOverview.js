@@ -7,7 +7,7 @@ export function initInstitutionOverview() {
     if (container.empty()) return;
     container.html(""); 
 
-    const margin = { top: 30, right: 40, bottom: 40, left: 280 }; 
+    const margin = { top: 30, right: 60, bottom: 40, left: 280 }; 
     const width = 960 - margin.left - margin.right;
     const height = 750 - margin.top - margin.bottom;
 
@@ -21,6 +21,7 @@ export function initInstitutionOverview() {
 
     let currentMetric = "prize_paper_count"; 
     let currentField = "all";          
+    let selectedInstitutionId = null; // 【新增】用于跟踪当前点击选中的机构 ID
 
     const metricNameMap = {
         "prize_paper_count": "参与获奖论文数量",
@@ -55,7 +56,6 @@ export function initInstitutionOverview() {
         let validSummary = summaryData.filter(d => d.institution_id).map(d => {
             const totalWorks = +d.institution_total_works_count || 0;
             const totalCited = +d.institution_total_cited_by_count || 0;
-            // 计算平均被引，并加入除零保护
             const avgCitations = totalWorks > 0 ? (totalCited / totalWorks) : 0;
 
             return {
@@ -67,7 +67,7 @@ export function initInstitutionOverview() {
                 associated_scientist_count: +d.associated_scientist_count || 0,
                 institution_total_works_count: totalWorks,
                 median_prize_paper_cited_by_count: +d.median_prize_paper_cited_by_count || 0,
-                avg_citations_per_work: avgCitations // 派生新指标存入数据对象
+                avg_citations_per_work: avgCitations 
             };
         });
 
@@ -93,13 +93,28 @@ export function initInstitutionOverview() {
         const xAxisG = svg.append("g").attr("transform", `translate(0,${height})`);
         const yAxisG = svg.append("g").attr("class", "y-axis");
 
+        const xAxisLabel = svg.append("text")
+            .attr("class", "x-axis-label")
+            .attr("x", width)
+            .attr("y", height + margin.bottom - 5)
+            .style("text-anchor", "end")
+            .style("font-size", "13px")
+            .style("fill", "#64748b")
+            .style("font-weight", "600");
+
+        // 【修改】当切换排序指标时，重置选中状态与右侧面板
         d3.select("#institution-sort-select").on("change", function() {
             currentMetric = this.value;
+            selectedInstitutionId = null; 
+            d3.select("#institution-detail-content").html(`<div class="placeholder">机构详情面板位置</div>`);
             updateChart();
         });
 
+        // 【修改】当切换学科时，重置选中状态与右侧面板
         d3.select("#institution-field-filter").on("change", function() {
             currentField = this.value;
+            selectedInstitutionId = null;
+            d3.select("#institution-detail-content").html(`<div class="placeholder">机构详情面板位置</div>`);
             updateChart();
         });
 
@@ -124,11 +139,23 @@ export function initInstitutionOverview() {
             x.domain([0, maxMetricVal]);
             y.domain(top20.map(d => d.id));
 
-            const colorScale = d3.scaleSequential(d3.interpolateBlues)
+            let colorInterpolator;
+            if (currentField === "Physics") {
+                colorInterpolator = d3.interpolatePurples; 
+            } else if (currentField === "Chemistry") {
+                colorInterpolator = d3.interpolateGreens; 
+            } else if (currentField === "Medicine") {
+                colorInterpolator = d3.interpolateOranges;  
+            } else {
+                colorInterpolator = d3.interpolateBlues;   
+            }
+            
+            const colorScale = d3.scaleSequential(colorInterpolator)
                                  .domain([0, maxMetricVal * 1.1]);
 
             xAxisG.transition("axis").duration(600).call(d3.axisBottom(x).ticks(6));
-            
+            xAxisLabel.text(`➤ ${metricNameMap[currentMetric]}`);
+
             const nameMap = new Map(top20.map(d => [d.id, d.name]));
             yAxisG.transition("axis").duration(600).call(
                 d3.axisLeft(y).tickFormat(id => {
@@ -164,14 +191,13 @@ export function initInstitutionOverview() {
                     const displayField = fieldNameMap[currentField] || currentField;
                     const displayMetric = metricNameMap[currentMetric] || currentMetric;
                     
-                    // 数值美化处理，如果是小数（平均被引），只保留两位小数
                     const rawValue = d[currentMetric];
                     const displayValue = Number.isInteger(rawValue) ? rawValue : rawValue.toFixed(2);
 
                     tooltip.style("display", "block")
                            .style("opacity", 1) 
                            .html(`
-                               <div class="tooltip-title" style="font-size: 14px; margin-bottom: 8px;">🏢 ${d.name}</div>
+                               <div class="tooltip-title" style="font-size: 14px; margin-bottom: 8px;"> ${d.name}</div>
                                <div style="font-size: 12px; color: #cbd5e1; margin-bottom: 4px;">
                                    筛选学科: <span style="color: #fff; font-weight: bold;">${displayField}</span>
                                </div>
@@ -187,21 +213,75 @@ export function initInstitutionOverview() {
                     tooltip.style("left", (event.pageX + 15) + "px").style("top", (event.pageY - 15) + "px");
                 })
                 .on("mouseout", function(event, d) {
-                    d3.select(this).transition("hover").duration(150).attr("fill", colorScale(d[currentMetric]));
+                    // 【修改】移出时判断：若当前柱子是被选中的那个，保持红色；否则恢复成对应的标尺渐变色
+                    const targetColor = (d.id === selectedInstitutionId) ? "#e15759" : colorScale(d[currentMetric]);
+                    d3.select(this).transition("hover").duration(150).attr("fill", targetColor);
                     tooltip.style("opacity", 0).style("display", "none");
                 })
                 .on("click", function(event, d) {
-                    svg.selectAll(".bar").transition("click").duration(200).style("opacity", 0.4);
-                    d3.select(this).transition("click").duration(200).style("opacity", 1).attr("fill", "#e15759");
-                    
-                    renderDetailPanel(d, institutionFieldsMap, authorCountryData);
+                    // 【修改】实现开关（Toggle）切换逻辑
+                    if (selectedInstitutionId === d.id) {
+                        // 1. 如果点击的是当前已选中的柱子 -> 取消选择
+                        selectedInstitutionId = null;
+                        
+                        // 恢复所有柱子的正常透明度与色彩
+                        svg.selectAll(".bar").transition("click").duration(200)
+                            .style("opacity", 1)
+                            .attr("fill", d => colorScale(d[currentMetric]));
+                        
+                        // 右侧详情面板退回空白占位状态
+                        d3.select("#institution-detail-content")
+                            .html(`<div class="placeholder">机构详情面板位置</div>`);
+                    } else {
+                        // 2. 如果点击的是其他柱子 -> 变更选中项
+                        selectedInstitutionId = d.id;
+                        
+                        // 其他柱子变淡，当前柱子高亮为红色
+                        svg.selectAll(".bar").transition("click").duration(200)
+                            .style("opacity", barData => barData.id === selectedInstitutionId ? 1 : 0.4)
+                            .attr("fill", barData => barData.id === selectedInstitutionId ? "#e15759" : colorScale(barData[currentMetric]));
+                        
+                        // 渲染右侧内容
+                        renderDetailPanel(d, institutionFieldsMap, authorCountryData);
+                    }
                 })
+                // 利用 D3 统一生命周期管理：重绘时根据全局 selectedInstitutionId 自动校准样式
                 .transition("layout").duration(600)
                 .attr("y", d => y(d.id))
                 .attr("height", y.bandwidth())
                 .attr("width", d => x(d[currentMetric]))
-                .attr("fill", d => colorScale(d[currentMetric]))
-                .style("opacity", 1); 
+                .attr("fill", d => d.id === selectedInstitutionId ? "#e15759" : colorScale(d[currentMetric]))
+                .style("opacity", d => selectedInstitutionId === null ? 1 : (d.id === selectedInstitutionId ? 1 : 0.4)); 
+
+            const labels = svg.selectAll(".bar-label").data(top20, d => d.id);
+
+            labels.exit()
+                  .transition("exit").duration(400)
+                  .style("opacity", 0)
+                  .remove();
+
+            const labelsEnter = labels.enter()
+                  .append("text")
+                  .attr("class", "bar-label")
+                  .attr("y", d => y(d.id) + y.bandwidth() / 2) 
+                  .attr("x", 0)
+                  .attr("dy", ".35em") 
+                  .style("font-size", "12px")
+                  .style("fill", "#475569")
+                  .style("font-weight", "600")
+                  .style("opacity", 0)
+                  .style("pointer-events", "none");
+
+            labelsEnter.merge(labels)
+                  .transition("layout").duration(600)
+                  .attr("y", d => y(d.id) + y.bandwidth() / 2)
+                  .attr("x", d => x(d[currentMetric]) + 6) 
+                  .text(d => {
+                      const val = d[currentMetric];
+                      return Number.isInteger(val) ? val : val.toFixed(2);
+                  })
+                  // 数值的显隐透明度也跟柱子保持一致联动
+                  .style("opacity", d => selectedInstitutionId === null ? 1 : (d.id === selectedInstitutionId ? 1 : 0.4));
         }
 
         // ==========================================
