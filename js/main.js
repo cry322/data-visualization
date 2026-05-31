@@ -1,6 +1,5 @@
 import { initCareerModule } from "./charts/overview.js";
 import { initWaitTimeModule } from "./charts/waitTime.js";
-import { initSpecialAuthorsModule } from "./charts/specialAuthors.js";
 import { initCountryMap } from "./charts/countryMap.js";
 import { initInstitutionDetail } from "./charts/institutionDetail.js";
 import { initInstitutionNetwork } from "./charts/institutionNetwork.js";
@@ -11,7 +10,6 @@ import { initTopicMigration } from "./charts/topicMigration.js";
 const modules = [
   ["career", initCareerModule],
   ["waittime", initWaitTimeModule],
-  ["special-authors", initSpecialAuthorsModule],
   ["institution-overview", initInstitutionOverview],
   ["country-map", initCountryMap],
   ["institution-detail", initInstitutionDetail],
