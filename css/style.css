@@ -5,7 +5,7 @@
 
 :root {
   --font-body: "Times New Roman", "SimSun", "Songti SC", "STSong", serif;
-  --font-title: "Times New Roman", "SimHei", "Microsoft YaHei", "Heiti SC", sans-serif;
+  --font-title: "SimSun", "Songti SC", "STSong", serif;
   --font-note: "Times New Roman", "KaiTi", "STKaiti", "KaiTi_GB2312", cursive;
   --ink: #111827;
   --muted: #5b6472;
@@ -31,11 +31,24 @@ h4,
 h5,
 h6 {
   font-family: var(--font-title);
+  font-weight: 700;
 }
 
 select,
 select option {
   font-family: "Times New Roman", "SimSun", "Songti SC", "STSong", serif;
+}
+
+.term-chart-title,
+.tooltip-title,
+.sankey-detail-title,
+.insight-title,
+.topic-column-title,
+.topic-card-title,
+.career-stage-overview .career-left-section-label,
+.career-stage-overview .career-right-title {
+  font-family: var(--font-title);
+  font-weight: 700;
 }
 
 /* 页面顶部引导区样式 */
@@ -58,6 +71,46 @@ select option {
   font-family: var(--font-note);
   font-size: 17px;
   color: #d1d5db; /* 文字柔和白色 */
+}
+
+.global-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.global-subnav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  text-decoration: none;
+  font-family: var(--font-title);
+  font-size: 15px;
+  font-weight: 700;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.global-subnav a:hover {
+  background: rgba(255, 255, 255, 0.24);
+  transform: translateY(-1px);
+}
+
+.global-subnav span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.88);
+  color: #1f2933;
+  font-family: "Times New Roman", serif;
+  font-size: 14px;
 }
 
 /* 主内容区域宽度和居中 */
@@ -571,7 +624,7 @@ footer {
 .institution-metrics {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -984,6 +1037,23 @@ body {
   z-index: 1;
 }
 
+.hero .global-subnav a {
+  background: rgba(148, 163, 184, 0.16);
+  color: #334155;
+  box-shadow: 0 8px 18px rgba(86, 67, 45, 0.08);
+}
+
+.hero .global-subnav a:hover {
+  background: rgba(66, 107, 143, 0.14);
+  color: #244865;
+}
+
+.hero .global-subnav span {
+  background: #fffefa;
+  color: #244865;
+  border: 1px solid rgba(129, 115, 97, 0.18);
+}
+
 .hero p,
 .section p,
 .panel-note,
@@ -1238,7 +1308,6 @@ footer {
   }
 }
 
-<<<<<<< HEAD
 .network-story-card {
   padding: 24px;
   border-radius: 22px;
@@ -1256,7 +1325,11 @@ footer {
 }
 
 .network-field-pills {
-=======
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 /* ========== Career Stage Overview ========== */
 
 .career-stage-overview {
@@ -1354,13 +1427,11 @@ footer {
 }
 
 .career-stage-overview .trajectory-row-scientists {
->>>>>>> 9c2e5446ea877a04d5da23ebb68f81bccb5d3f71
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-<<<<<<< HEAD
 .network-field-btn {
   padding: 8px 14px;
   border: 1px solid #d8e0e8;
@@ -1809,8 +1880,10 @@ footer {
   .topic-metric-strip,
   .topic-case-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 
-    .career-stage-overview .scientist-chip {
+.career-stage-overview .scientist-chip {
   display: inline-flex;
   align-items: center;
   border: 1px solid rgba(129, 115, 97, 0.18);
@@ -2009,7 +2082,6 @@ footer {
 
   .career-stage-overview .panel-detail {
     overflow-y: visible;
->>>>>>> 9c2e5446ea877a04d5da23ebb68f81bccb5d3f71
   }
 }
 
@@ -2122,7 +2194,9 @@ footer {
   line-height: 1.6;
   pointer-events: none;
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.22);
-=======
+}
+
+@media (max-width: 640px) {
   .career-stage-overview .career-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
