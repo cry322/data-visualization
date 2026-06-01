@@ -409,19 +409,19 @@
             <div class="panel-controls network-controls">
               <label for="network-field-filter">学科筛选：</label>
               <select id="network-field-filter">
-                <option value="all">All</option>
+                <option value="all">全部学科</option>
                 <option value="Physics">Physics</option>
                 <option value="Chemistry">Chemistry</option>
                 <option value="Medicine">Medicine</option>
               </select>
 
               <label for="network-topn-range">Top N 机构：</label>
-              <input id="network-topn-range" type="range" min="20" max="100" value="50" step="10" />
-              <span id="network-topn-value">50</span>
+              <input id="network-topn-range" type="range" min="10" max="50" value="20" step="10" />
+              <span id="network-topn-value">20</span>
 
               <label for="network-weight-range">最小边权重：</label>
-              <input id="network-weight-range" type="range" min="1" max="20" value="5" step="1" />
-              <span id="network-weight-value">5</span>
+              <input id="network-weight-range" type="range" min="5" max="20" value="10" step="1" />
+              <span id="network-weight-value">10</span>
 
               <button id="network-reset-btn" type="button">重置布局</button>
             </div>
@@ -442,27 +442,15 @@
 
           <div class="sankey-layout">
             <div class="card panel">
-              <div class="panel-title">机构 → 学科 / 主题 桑基图</div>
-              <div class="panel-note">展示 Top 机构与 Physics、Chemistry、Medicine 及主题之间的关系。</div>
+              <div class="panel-title">机构 → 学科桑基图</div>
+              <div class="panel-note">展示 Top 机构与 Physics、Chemistry、Medicine 三个诺奖学科之间的关联强度。</div>
 
               <div class="panel-controls sankey-controls">
-                <label for="sankey-mode-select">显示层级：</label>
-                <select id="sankey-mode-select">
-                  <option value="field">机构 → 学科</option>
-                  <option value="field-topic">机构 → 学科 → 主题（探索版）</option>
-                </select>
-
                 <label for="sankey-topn-select">机构范围：</label>
                 <select id="sankey-topn-select">
                   <option value="10">Top 10</option>
                   <option value="20" selected>Top 20</option>
                   <option value="30">Top 30</option>
-                </select>
-
-                <label for="sankey-mapping-select">数据口径：</label>
-                <select id="sankey-mapping-select">
-                  <option value="field_exact" selected>精确映射：只看 field 直接对应</option>
-                  <option value="all">扩展映射：加入 subfield/topic 关键词</option>
                 </select>
               </div>
 
@@ -472,8 +460,8 @@
             </div>
 
             <aside class="card panel">
-              <div class="panel-title">获奖领域与研究集中度</div>
-              <div class="panel-note">点击机构、学科或连线后，在此查看该机构的研究最集中领域、实际获奖关联领域，以及二者是否一致。</div>
+              <div class="panel-title">图表说明</div>
+              <div class="panel-note">颜色区分机构的研究集中领域与获奖关联领域是否一致；点击节点可查看机构详情。</div>
               <div id="sankey-insight-card" class="detail-content">
                 <div class="placeholder">桑基图解读卡片位置</div>
               </div>
@@ -516,12 +504,14 @@
                 <option value="arc">引用路径弧线图</option>
               </select>
 
-              <label for="topic-arc-topn-select">弧线图 Top N：</label>
-              <select id="topic-arc-topn-select">
-                <option value="10">Top 10</option>
-                <option value="15" selected>Top 15</option>
-                <option value="20">Top 20</option>
-              </select>
+              <span id="topic-arc-topn-control" class="topic-arc-topn-control" style="display: none;">
+                <label for="topic-arc-topn-select">弧线图 Top N：</label>
+                <select id="topic-arc-topn-select">
+                  <option value="10" selected>Top 10</option>
+                  <option value="15">Top 15</option>
+                  <option value="20">Top 20</option>
+                </select>
+              </span>
             </div>
 
             <div class="topic-metric-strip">
@@ -548,29 +538,6 @@
 
             <div id="topic-migration-chart" class="chart placeholder-box large-chart">
               <div class="placeholder">知识路径 Sankey / 引用路径弧线图位置</div>
-            </div>
-
-            <div id="topic-case-cards" class="topic-case-cards">
-              <div class="card mini-card">
-                <div class="panel-title">读图方式</div>
-                <div class="panel-note">
-                  Sankey 中，左侧为知识来源，中间为诺奖论文主题，右侧为后续扩散方向；弧线图中，横轴分为知识来源、诺奖核心和后续扩散，上方弧线表示诺奖引用，下方弧线表示诺奖被引。
-                </div>
-              </div>
-
-              <div class="card mini-card">
-                <div class="panel-title">知识来源</div>
-                <div class="panel-note">
-                  表示诺奖关键论文引用过的前置论文或前置学科主题，用来理解获奖成果建立在哪些知识基础之上。
-                </div>
-              </div>
-
-              <div class="card mini-card">
-                <div class="panel-title">后续扩散</div>
-                <div class="panel-note">
-                  表示后续论文对诺奖关键论文的引用，用来观察获奖成果如何继续影响其他研究方向。
-                </div>
-              </div>
             </div>
           </div>
         </div>
