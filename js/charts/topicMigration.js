@@ -176,6 +176,10 @@ export async function initTopicMigration() {
     const colorByType = d3.scaleOrdinal()
       .domain(["source", "prize", "target"])
       .range(["#7aa6c2", "#b8a7d9", "#d9a66a"]);
+    // 按 domain 上色：优先使用数据中 link.domain（已在 prepareSankeyData 中计算）
+    const domains = Array.from(new Set((data.links || []).map(d => d.domain))).sort();
+    const palette = d3.schemeCategory10 || ["#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd","#8c564b","#e377c2","#7f7f7f","#bcbd22","#17becf"];
+    const colorByDomain = d3.scaleOrdinal().domain(domains).range(palette);
 
     const linkWidth = d3.scaleSqrt()
       .domain([1, d3.max(layout.links, d => d.value) || 1])
@@ -186,7 +190,7 @@ export async function initTopicMigration() {
       .data(layout.links, d => d.key)
       .join("path")
       .attr("fill", "none")
-      .attr("stroke", d => d.source.type === "source" ? "#7aa6c2" : "#d9a66a")
+      .attr("stroke", d => colorByDomain(d.domain) || (d.source.type === "source" ? "#7aa6c2" : "#d9a66a"))
       .attr("stroke-opacity", 0.28)
       .attr("stroke-linecap", "round")
       .attr("stroke-width", d => linkWidth(d.value))
@@ -207,6 +211,7 @@ export async function initTopicMigration() {
             <strong>${safeText(d.source.name)}</strong><br>
             <span style="color:#cbd5e1;">→ ${safeText(d.target.name)}</span><br>
             路径数量：${formatNumber(d.value)}<br>
+            领域：${safeText(d.domain || 'Unknown')}<br>
             ${d.source.type === "source"
               ? "含义：前置知识进入诺奖论文主题"
               : "含义：诺奖论文主题向后续研究扩散"}
@@ -287,6 +292,51 @@ export async function initTopicMigration() {
       .attr("stroke-linejoin", "round")
       .attr("pointer-events", "none")
       .text(d => shortenText(d.name, d.type === "prize" ? 22 : 24));
+
+    // 在右侧绘制域（domain）颜色图例
+    if (domains && domains.length) {
+      const legendX = width - margin.right + 16;
+      const legendY = 72;
+      const maxItems = 12; // 最多显示前若干个域，防止溢出
+      const legend = svg.append("g").attr("class", "domain-legend").attr("transform", `translate(${legendX}, ${legendY})`);
+
+      legend.append("text")
+        .attr("x", 0)
+        .attr("y", -12)
+        .attr("fill", "#475569")
+        .attr("font-size", 12)
+        .attr("font-weight", 700)
+        .text("领域 (Domain)");
+
+      domains.slice(0, maxItems).forEach((dom, i) => {
+        const y = i * 20;
+        legend.append("rect")
+          .attr("x", 0)
+          .attr("y", y - 10)
+          .attr("width", 12)
+          .attr("height", 12)
+          .attr("rx", 2)
+          .attr("fill", colorByDomain(dom));
+
+        legend.append("text")
+          .attr("x", 18)
+          .attr("y", y)
+          .attr("fill", "#334155")
+          .attr("font-size", 11)
+          .attr("font-weight", 600)
+          .attr("dominant-baseline", "middle")
+          .text(shortenText(dom, 26));
+      });
+
+      if (domains.length > maxItems) {
+        legend.append("text")
+          .attr("x", 0)
+          .attr("y", maxItems * 20)
+          .attr("fill", "#94a3b8")
+          .attr("font-size", 11)
+          .text(`共 ${domains.length} 个领域，显示前 ${maxItems} 项`);
+      }
+    }
 
     svg.append("text")
       .attr("x", width / 2)
@@ -988,9 +1038,11 @@ function prepareRecords(rows, state) {
       prize_paper_title: cleanText(d.prize_paper_title),
       prize_paper_field: cleanText(d.prize_paper_field),
       prizeTopic,
+      prize_paper_domain: cleanText(d.prize_paper_domain),
       citation_paper_id: citationPaperId,
       citation_paper_title: cleanText(d.citation_paper_title),
       citation_paper_field: cleanText(d.citation_paper_field),
+      citation_paper_domain: cleanText(d.citation_paper_domain),
       citationTopic,
       direction,
       isInput
@@ -1071,6 +1123,19 @@ function prepareSankeyData(records, state) {
   const links = Array.from(linkMap.values())
     .filter(d => d.value > 0)
     .sort((a, b) => d3.descending(a.value, b.value));
+
+  // 为每条链接推断一个主域(domain)，用于按域着色（优先使用 citation_paper_domain / prize_paper_domain）
+  links.forEach(link => {
+    const counts = new Map();
+    (link.samples || []).forEach(s => {
+      const k = cleanText(s.citation_paper_domain) || cleanText(s.prize_paper_domain) || "Unknown";
+      if (!k) return;
+      counts.set(k, (counts.get(k) || 0) + 1);
+    });
+
+    const sorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+    link.domain = sorted.length ? sorted[0][0] : "Unknown";
+  });
 
   const nodeMap = new Map();
 
