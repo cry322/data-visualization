@@ -134,7 +134,7 @@ function renderCareerStageLeft(containerSelector, data) {
 
     svg.append("g")
       .attr("class", "career-left-axis")
-      .attr("transform", `translate(0,${height / 2})`)
+      .attr("transform", `translate(0,${y(0)})`)
       .call(d3.axisBottom(x).ticks(12));
 
     svg.append("g")
@@ -162,43 +162,43 @@ function renderCareerStageLeft(containerSelector, data) {
     svg.append("text")
       .attr("class", "career-left-section-label")
       .attr("x", margin.left + 8)
-      .attr("y", margin.top - 12)
+      .attr("y", margin.top)
       .text("诺奖论文出现");
 
     svg.append("text")
       .attr("class", "career-left-section-label")
       .attr("x", margin.left + 8)
-      .attr("y", height - margin.bottom + 45)
+      .attr("y", height - margin.bottom)
       .text("获得诺奖认可");
 
     svg.append("line")
       .attr("class", "career-left-reference-line")
       .attr("x1", margin.left)
       .attr("x2", width - margin.right)
-      .attr("y1", height / 2)
-      .attr("y2", height / 2);
+      .attr("y1", y(0))
+      .attr("y2", y(0));
 
     const topArea = d3.area()
-      .x(d => x(d.x0))
-      .y0(height / 2)
+      .x(d => x(d.x))
+      .y0(y(0))
       .y1(d => y(d.value))
-      .curve(d3.curveBasis);
+      .curve(d3.curveMonotoneX);
 
     const bottomArea = d3.area()
-      .x(d => x(d.x0))
-      .y0(height / 2)
+      .x(d => x(d.x))
+      .y0(y(0))
       .y1(d => y(-d.value))
-      .curve(d3.curveBasis);
+      .curve(d3.curveMonotoneX);
 
     const topLine = d3.line()
-      .x(d => x(d.x0))
+      .x(d => x(d.x))
       .y(d => y(d.value))
-      .curve(d3.curveBasis);
+      .curve(d3.curveMonotoneX);
 
     const bottomLine = d3.line()
-      .x(d => x(d.x0))
+      .x(d => x(d.x))
       .y(d => y(-d.value))
-      .curve(d3.curveBasis);
+      .curve(d3.curveMonotoneX);
 
     if (showOverall) {
       svg.append("path")
@@ -530,21 +530,22 @@ function updateSummary(rows, overview) {
 }
 
 function createBins(values) {
-  const filtered = values.filter(Number.isFinite);
+
   const bins = d3.bin()
     .domain([0, 60])
-    .thresholds(24)(filtered);
+    .thresholds(24)
+    (values);
 
-  const maxCount = d3.max(bins, d => d.length) || 1;
+  const maxCount =
+    d3.max(bins, d => d.length);
 
   return bins.map(d => ({
-    x0: d.x0,
+    x: d.x0,  // 改回左边界
     value: d.length / maxCount
   }));
 }
-
 function getBinValue(bins, year) {
-  const bin = bins.find(d => year >= d.x0 && year < d.x0 + 2.5);
+  const bin = bins.find(  d =>Math.abs(year - d.x) < 1.25);
   return bin ? bin.value : 0;
 }
 
