@@ -6,6 +6,26 @@
 
 # Local project files and data.
 data/
+!data/
+!data/topic_migration_field_domain_agg.csv
+!data/topic_migration_subfield_domain_agg.csv
+
+# Section 4.3 reduced datasets used by the browser.
+!data/
+!data/topic_migration_field_domain_agg.csv
+!data/topic_migration_subfield_domain_agg.csv
+!data/topic_migration_field_domain_agg.csv
+!data/topic_migration_subfield_domain_agg.csv
+
+# Deployable reduced datasets.
+!data_final/
+data_final/*
+!data_final/section1/
+!data_final/section1/*.csv
+!data_final/section2/
+!data_final/section2/*.json
+!data_final/section3/
+!data_final/section3/*.json
 direction3-prototype/
 docx_render_check/
 docx_render_front_four/
@@ -28,3 +48,6 @@ Thumbs.db
 .env
 .env.*
 data/
+!data/
+!data/topic_migration_field_domain_agg.csv
+!data/topic_migration_subfield_domain_agg.csv
