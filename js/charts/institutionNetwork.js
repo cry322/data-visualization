@@ -106,8 +106,8 @@ export async function initInstitutionNetwork() {
 
   const state = {
     field: "all",
-    topN: getInitialNumber("#network-topn-range", 50),
-    minWeight: getInitialNumber("#network-weight-range", 2)
+    topN: getInitialNumber("#network-topn-range", 20),
+    minWeight: getInitialNumber("#network-weight-range", 10)
   };
 
   updateControlText();
@@ -945,8 +945,8 @@ function getInitialNumber(selector, fallback) {
 }
 
 function updateControlText() {
-  setText("#network-topn-value", stateSafeNumber("#network-topn-range", 50));
-  setText("#network-weight-value", stateSafeNumber("#network-weight-range", 2));
+  setText("#network-topn-value", stateSafeNumber("#network-topn-range", 20));
+  setText("#network-weight-value", stateSafeNumber("#network-weight-range", 10));
 }
 
 function stateSafeNumber(selector, fallback) {

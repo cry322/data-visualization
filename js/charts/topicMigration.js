@@ -10,16 +10,17 @@ export async function initTopicMigration() {
   const fieldSelect = d3.select("#topic-field-filter");
   const viewSelect = d3.select("#topic-view-select");
   const arcTopNSelect = d3.select("#topic-arc-topn-select");
+  const arcTopNControl = d3.select("#topic-arc-topn-control");
   const caseCards = d3.select("#topic-case-cards");
 
   const state = {
     field: fieldSelect.empty() ? "all" : normalizeSelectedField(fieldSelect.property("value")),
     view: viewSelect.empty() ? "sankey" : normalizeView(viewSelect.property("value")),
 
-    // 只作用于“引用路径弧线图”，不影响 Sankey
-    arcTopN: arcTopNSelect.empty() ? 15 : Number(arcTopNSelect.property("value")),
+    // 只作用于引用路径弧线图，不影响 Sankey
+    arcTopN: arcTopNSelect.empty() ? 10 : Number(arcTopNSelect.property("value")),
 
-    // Sankey 仍然用原来的参数
+    // Sankey 仍然使用原来的参数，不动
     topSource: 14,
     topPrize: 14,
     topTarget: 14,
@@ -58,6 +59,7 @@ export async function initTopicMigration() {
   state.field = fieldSelect.empty() ? "all" : normalizeSelectedField(fieldSelect.property("value"));
 
   bindControls();
+  updateArcTopNVisibility();
   render();
 
   function bindControls() {
@@ -71,17 +73,22 @@ export async function initTopicMigration() {
     if (!viewSelect.empty()) {
       viewSelect.on("change", function () {
         state.view = normalizeView(this.value || "sankey");
+        updateArcTopNVisibility();
         render();
       });
     }
 
-    // 只控制引用路径弧线图，不影响 Sankey 的数据处理
     if (!arcTopNSelect.empty()) {
       arcTopNSelect.on("change", function () {
-        state.arcTopN = Number(this.value) || 15;
+        state.arcTopN = Number(this.value) || 10;
         render();
       });
     }
+  }
+
+  function updateArcTopNVisibility() {
+    if (arcTopNControl.empty()) return;
+    arcTopNControl.style("display", state.view === "arc" ? "inline-flex" : "none");
   }
 
   function render() {
@@ -1566,11 +1573,28 @@ function moveTooltip(event) {
     .style("top", `${event.pageY + 14}px`);
 }
 
+function normalizeSelectedField(value) {
+  const text = cleanText(value);
+
+  if (text === "all" || text === "全部学科") {
+    return "all";
+  }
+
+  const field = normalizeFieldName(text);
+
+  if (["Physics", "Chemistry", "Medicine"].includes(field)) {
+    return field;
+  }
+
+  return "all";
+}
+
 function prepareCitationArcData(rows, state) {
   const selectedField = normalizeSelectedField(state.field);
-  const topN = state.arcTopN || 15;
+  const topN = state.arcTopN || 10;
+  const maxSamples = state.maxSamples || 8;
 
-  const records = [];
+  const rawRecords = [];
 
   rows.forEach(d => {
     const direction = cleanText(d.direction);
@@ -1579,235 +1603,252 @@ function prepareCitationArcData(rows, state) {
 
     if (!isInput && !isOutput) return;
 
-    const prizeTopic = firstMeaningful(
-      splitMultiValue(d.prize_paper_subfield),
-      normalizeFieldName(d.prize_paper_field),
-      "Unknown Nobel Core"
-    );
+    const prizeField = normalizeFieldName(d.prize_paper_field);
+    const citationField = normalizeFieldName(d.citation_paper_field);
 
-    const citationTopic = firstMeaningful(
-      splitMultiValue(d.citation_paper_subfield),
-      normalizeFieldName(d.citation_paper_field),
-      "Unknown Citation Field"
-    );
+    // 仍然按诺奖论文所属大类 field 做筛选
+    if (selectedField !== "all" && prizeField !== selectedField) return;
 
-    if (!prizeTopic || !citationTopic) return;
+    // 这里改回只使用 subfield
+    const prizeSubfield = extractPrimarySubfield(d.prize_paper_subfield);
+    const citationSubfield = extractPrimarySubfield(d.citation_paper_subfield);
 
-    const prizeMajorField = inferRecordMajorField(
-      d.prize_paper_field,
-      d.prize_paper_subfield
-    );
+    if (!prizeSubfield || !citationSubfield) return;
 
-    const citationMajorField = inferRecordMajorField(
-      d.citation_paper_field,
-      d.citation_paper_subfield
-    );
+    rawRecords.push({
+      direction,
+      isInput,
+      isOutput,
 
-    // 学科筛选只根据诺奖论文自身所属领域过滤；选择 all 时不过滤
-    if (selectedField !== "all") {
-      const matched =
-        prizeMajorField === selectedField ||
-        fieldMatches(d.prize_paper_field, selectedField) ||
-        fieldMatches(d.prize_paper_subfield, selectedField);
-
-      if (!matched) return;
-    }
-
-    records.push({
       prize_paper_id: cleanText(d.prize_paper_id),
       prize_paper_title: cleanText(d.prize_paper_title),
       citation_paper_id: cleanText(d.citation_paper_id),
       citation_paper_title: cleanText(d.citation_paper_title),
 
-      prizeTopic,
-      citationTopic,
-      prizeMajorField,
-      citationMajorField,
-
-      direction,
-      isInput,
-      isOutput
+      prizeField,
+      citationField,
+      prizeSubfield,
+      citationSubfield
     });
   });
 
+  // ===== 先统计每一侧的 subfield 频次 =====
   const sourceCounts = countBy(
-    records.filter(d => d.isInput),
-    d => d.citationTopic
+    rawRecords.filter(d => d.isInput),
+    d => d.citationSubfield
   );
 
   const prizeCounts = countBy(
-    records,
-    d => d.prizeTopic
+    rawRecords,
+    d => d.prizeSubfield
   );
 
   const targetCounts = countBy(
-    records.filter(d => d.isOutput),
-    d => d.citationTopic
+    rawRecords.filter(d => d.isOutput),
+    d => d.citationSubfield
   );
 
   const topSources = topKeys(sourceCounts, topN);
-  const topPrizes = topKeys(prizeCounts, topN);
-  const topTargetsRaw = topKeys(targetCounts, topN);
+const topPrizes = topKeys(prizeCounts, topN);
 
-  // 后续扩散如果已经出现在知识来源 Top N 中，则不再放到右侧重复出现
-  const topTargets = new Set(
-    Array.from(topTargetsRaw).filter(name => !topSources.has(name))
-  );
+// 先取后续扩散原始 Top N
+const rawTopTargets = topKeys(targetCounts, topN);
 
+// 如果后续扩散 subfield 已经在左侧知识来源里出现，就不再单独放到右边
+const topTargets = new Set(
+  [...rawTopTargets].filter(name => !topSources.has(name))
+);
+
+  // ===== 建节点 / 边 =====
   const nodeMap = new Map();
   const linkMap = new Map();
 
-  function ensureNode(id, name, axisRole, colorField) {
+  function ensureNode(id, name, axisRole) {
     if (!nodeMap.has(id)) {
       nodeMap.set(id, {
         id,
         name,
         axisRole,
-        colorField,
+
         value: 0,
         sourceValue: 0,
         prizeValue: 0,
         targetValue: 0,
-        samples: []
+
+        samples: [],
+        colorVotes: {}
       });
     }
-
     return nodeMap.get(id);
   }
 
-  function addNodeSample(node, record) {
+  function addNodeContribution(node, roleField, majorField, record) {
     node.value += 1;
-    pushSample(node.samples, record, state.maxSamples);
+    node[roleField] += 1;
+    addFieldVote(node.colorVotes, majorField);
+    pushSample(node.samples, record, maxSamples);
   }
 
-  records.forEach(record => {
-    const prizeName = topPrizes.has(record.prizeTopic)
-      ? record.prizeTopic
-      : "其他诺奖核心";
-
-    const prizeNodeId = `prize|${prizeName}`;
-
-    const prizeNode = ensureNode(
-      prizeNodeId,
-      prizeName,
-      "prize",
-      selectedField === "all" ? record.prizeMajorField : selectedField
-    );
-
-    prizeNode.prizeValue += 1;
-    addNodeSample(prizeNode, record);
+  rawRecords.forEach(record => {
+    const prizeBucket = bucketToTopOrOthers(record.prizeSubfield, topPrizes);
+    const prizeNodeId = `prize|${prizeBucket}`;
+    const prizeNode = ensureNode(prizeNodeId, prizeBucket, "prize");
+    addNodeContribution(prizeNode, "prizeValue", record.prizeField, record);
 
     if (record.isInput) {
-      const sourceName = topSources.has(record.citationTopic)
-        ? record.citationTopic
-        : "其他知识来源";
+      const sourceBucket = bucketToTopOrOthers(record.citationSubfield, topSources);
+      const sourceNodeId = `source|${sourceBucket}`;
+      const sourceNode = ensureNode(sourceNodeId, sourceBucket, "source");
+      addNodeContribution(sourceNode, "sourceValue", record.citationField, record);
 
-      const sourceNodeId = `source|${sourceName}`;
-
-      const sourceNode = ensureNode(
-        sourceNodeId,
-        sourceName,
-        "source",
-        record.citationMajorField
-      );
-
-      sourceNode.sourceValue += 1;
-      addNodeSample(sourceNode, record);
-
-      // 上方弧线：诺奖核心 → 知识来源
-      const key = `upper|${prizeNodeId}---${sourceNodeId}`;
-
-      if (!linkMap.has(key)) {
-        linkMap.set(key, {
-          key,
+      // 上方：诺奖核心 -> 知识来源
+      const linkKey = `upper|${prizeNodeId}---${sourceNodeId}`;
+      if (!linkMap.has(linkKey)) {
+        linkMap.set(linkKey, {
+          key: linkKey,
           source: prizeNodeId,
           target: sourceNodeId,
-          sourceName: prizeName,
-          targetName: sourceName,
+          sourceName: prizeBucket,
+          targetName: sourceBucket,
           role: "nobel_references_source",
           value: 0,
-          samples: []
+          samples: [],
+          colorVotes: {}
         });
       }
 
-      const link = linkMap.get(key);
+      const link = linkMap.get(linkKey);
       link.value += 1;
-      pushSample(link.samples, record, state.maxSamples);
+      addFieldVote(link.colorVotes, record.prizeField);
+      pushSample(link.samples, record, maxSamples);
     }
 
     if (record.isOutput) {
-      let targetName;
-      let targetNodeId;
-      let targetAxisRole;
+      // 先看这个后续扩散 subfield 是否已经出现在左侧知识来源 Top N 里
+      const sourceSideBucket = bucketToTopOrOthers(record.citationSubfield, topSources);
 
-      if (topSources.has(record.citationTopic)) {
-        // 后续扩散 field 与知识来源重叠：复用左侧知识来源节点
-        targetName = record.citationTopic;
-        targetNodeId = `source|${targetName}`;
-        targetAxisRole = "source";
+      // 再看它是否应该出现在右侧后续扩散区域
+      const targetSideBucket = bucketToTopOrOthers(record.citationSubfield, topTargets);
+
+      // 规则：
+      // 如果它已经在左侧知识来源里出现了，就不在右边重复建点，
+      // 而是复用左侧节点，并从“诺奖核心”往左侧知识来源画下方弧线
+      const overlapsWithSource = sourceSideBucket !== "Others";
+
+      if (overlapsWithSource) {
+        const sourceNodeId = `source|${sourceSideBucket}`;
+        const sourceNode = ensureNode(sourceNodeId, sourceSideBucket, "source");
+
+        // 虽然这个点显示在左边，但它同时承担“后续扩散”的统计角色
+        addNodeContribution(sourceNode, "targetValue", record.citationField, record);
+
+        const linkKey = `lower|${prizeNodeId}---${sourceNodeId}`;
+
+        if (!linkMap.has(linkKey)) {
+          linkMap.set(linkKey, {
+            key: linkKey,
+            source: prizeNodeId,
+            target: sourceNodeId,
+            sourceName: prizeBucket,
+            targetName: sourceSideBucket,
+            role: "future_cites_nobel",
+            overlapToSource: true,
+            value: 0,
+            samples: [],
+            colorVotes: {}
+          });
+        }
+
+        const link = linkMap.get(linkKey);
+        link.value += 1;
+        addFieldVote(link.colorVotes, record.citationField);
+        pushSample(link.samples, record, maxSamples);
+
       } else {
-        targetName = topTargets.has(record.citationTopic)
-          ? record.citationTopic
-          : "其他后续扩散";
+        // 不和左侧重合的，才放到右边
+        const targetNodeId = `target|${targetSideBucket}`;
+        const targetNode = ensureNode(targetNodeId, targetSideBucket, "target");
 
-        targetNodeId = `target|${targetName}`;
-        targetAxisRole = "target";
+        addNodeContribution(targetNode, "targetValue", record.citationField, record);
+
+        const linkKey = `lower|${targetNodeId}---${prizeNodeId}`;
+
+        if (!linkMap.has(linkKey)) {
+          linkMap.set(linkKey, {
+            key: linkKey,
+            source: targetNodeId,
+            target: prizeNodeId,
+            sourceName: targetSideBucket,
+            targetName: prizeBucket,
+            role: "future_cites_nobel",
+            overlapToSource: false,
+            value: 0,
+            samples: [],
+            colorVotes: {}
+          });
+        }
+
+        const link = linkMap.get(linkKey);
+        link.value += 1;
+        addFieldVote(link.colorVotes, record.citationField);
+        pushSample(link.samples, record, maxSamples);
       }
-
-      const targetNode = ensureNode(
-        targetNodeId,
-        targetName,
-        targetAxisRole,
-        record.citationMajorField
-      );
-
-      targetNode.targetValue += 1;
-      addNodeSample(targetNode, record);
-
-      // 下方弧线：后续扩散 → 诺奖核心
-      const key = `lower|${targetNodeId}---${prizeNodeId}`;
-
-      if (!linkMap.has(key)) {
-        linkMap.set(key, {
-          key,
-          source: targetNodeId,
-          target: prizeNodeId,
-          sourceName: targetName,
-          targetName: prizeName,
-          role: "future_cites_nobel",
-          value: 0,
-          samples: []
-        });
-      }
-
-      const link = linkMap.get(key);
-      link.value += 1;
-      pushSample(link.samples, record, state.maxSamples);
     }
   });
 
-  const nodes = Array.from(nodeMap.values())
-    .sort((a, b) => {
-      const roleOrder = {
-        source: 0,
-        prize: 1,
-        target: 2
-      };
+  const nodes = Array.from(nodeMap.values()).map(node => {
+    node.colorField = chooseDominantField(node.colorVotes);
+    return node;
+  });
 
-      return d3.ascending(roleOrder[a.axisRole], roleOrder[b.axisRole]) ||
-        d3.descending(a.value, b.value);
-    });
+  // 每组内排序：先按 value 降序，Others 固定放最后
+  const roleOrder = { source: 0, prize: 1, target: 2 };
+  nodes.sort((a, b) => {
+    if (a.axisRole !== b.axisRole) {
+      return d3.ascending(roleOrder[a.axisRole], roleOrder[b.axisRole]);
+    }
 
-  const links = Array.from(linkMap.values())
-    .filter(d => d.value > 0)
+    if (a.name === "Others" && b.name !== "Others") return 1;
+    if (a.name !== "Others" && b.name === "Others") return -1;
+
+    return d3.descending(a.value, b.value);
+  });
+
+  const allLinks = Array.from(linkMap.values())
+    .map(link => {
+      link.colorField = chooseDominantField(link.colorVotes);
+      return link;
+    })
+    .filter(link => link.value > 0);
+
+  // 为了不让线太炸，只显示每一侧最强的一部分弧线
+  const upperLinks = allLinks
+    .filter(d => d.role === "nobel_references_source")
     .sort((a, b) => d3.descending(a.value, b.value));
+
+  const lowerLinks = allLinks
+    .filter(d => d.role === "future_cites_nobel")
+    .sort((a, b) => d3.descending(a.value, b.value));
+
+  const maxLinksPerSide =
+    topN === 20 ? 34 :
+    topN === 15 ? 26 :
+    18;
+
+  const keptUpper = upperLinks.slice(0, maxLinksPerSide);
+  const keptLower = lowerLinks.slice(0, maxLinksPerSide);
+
+  keptUpper.forEach((d, i) => { d.arcRank = i; });
+  keptLower.forEach((d, i) => { d.arcRank = i; });
 
   return {
     selectedField,
     topN,
+    totalPathCount: rawRecords.length,
+
     nodes,
-    links,
-    totalPathCount: records.length,
+    links: [...keptUpper, ...keptLower],
+
     sourceCount: nodes.filter(d => d.axisRole === "source").length,
     prizeCount: nodes.filter(d => d.axisRole === "prize").length,
     targetCount: nodes.filter(d => d.axisRole === "target").length
@@ -1817,17 +1858,17 @@ function prepareCitationArcData(rows, state) {
 function drawCitationArcDiagram(data) {
   const container = d3.select("#topic-migration-chart");
   const node = container.node();
-  const width = node.clientWidth || 980;
-  const height = 650;
+  const width = node.clientWidth || 1100;
+  const height = 760;
 
   const margin = {
-    top: 90,
-    right: 80,
-    bottom: 110,
-    left: 80
+    top: 95,
+    right: 40,
+    bottom: 105,
+    left: 40
   };
 
-  const axisY = height / 2;
+  const axisY = height / 2 + 18;
 
   const svg = container
     .append("svg")
@@ -1839,16 +1880,16 @@ function drawCitationArcDiagram(data) {
   const defs = svg.append("defs");
 
   defs.append("marker")
-    .attr("id", "arc-arrow")
+    .attr("id", "arc-arrow-soft")
     .attr("viewBox", "0 -5 10 10")
     .attr("refX", 9)
     .attr("refY", 0)
-    .attr("markerWidth", 6)
-    .attr("markerHeight", 6)
+    .attr("markerWidth", 4.8)
+    .attr("markerHeight", 4.8)
     .attr("orient", "auto")
     .append("path")
     .attr("d", "M0,-5L10,0L0,5")
-    .attr("fill", "rgba(100, 116, 139, 0.78)");
+    .attr("fill", "rgba(100, 116, 139, 0.55)");
 
   const title = data.selectedField === "all"
     ? "全部学科引用路径弧线图"
@@ -1856,36 +1897,55 @@ function drawCitationArcDiagram(data) {
 
   svg.append("text")
     .attr("x", width / 2)
-    .attr("y", 30)
+    .attr("y", 28)
     .attr("text-anchor", "middle")
     .attr("fill", "#0f172a")
-    .attr("font-size", 15)
+    .attr("font-size", 16)
     .attr("font-weight", 800)
     .text(title);
 
   svg.append("text")
     .attr("x", width / 2)
-    .attr("y", 53)
+    .attr("y", 50)
     .attr("text-anchor", "middle")
     .attr("fill", "#64748b")
     .attr("font-size", 12)
-    .text(`每组展示 Top ${data.topN}：知识来源、诺奖核心、后续扩散。上方为诺奖引用，下方为诺奖被引。`);
+    .text(`节点使用 subfield；每侧保留 Top ${data.topN}，其余合并为 Others；上方为前置知识来源，下方为后续扩散路径；若后续扩散与知识来源重合，则复用左侧节点。`);
 
+    // 轴拉长一点
   svg.append("line")
-    .attr("x1", margin.left)
-    .attr("x2", width - margin.right)
+    .attr("x1", margin.left - 20)
+    .attr("x2", width - margin.right + 20)
     .attr("y1", axisY)
     .attr("y2", axisY)
     .attr("stroke", "#cbd5e1")
-    .attr("stroke-width", 1.4);
+    .attr("stroke-width", 1.2);
 
   const sourceNodes = data.nodes.filter(d => d.axisRole === "source");
   const prizeNodes = data.nodes.filter(d => d.axisRole === "prize");
   const targetNodes = data.nodes.filter(d => d.axisRole === "target");
 
-  assignArcNodePositions(sourceNodes, margin.left, width * 0.34, axisY);
-  assignArcNodePositions(prizeNodes, width * 0.40, width * 0.60, axisY);
-  assignArcNodePositions(targetNodes, width * 0.66, width - margin.right, axisY);
+  // 三段拉开一点
+  assignArcNodePositions(
+    sourceNodes,
+    margin.left + 30,
+    width * 0.36,
+    axisY
+  );
+
+  assignArcNodePositions(
+    prizeNodes,
+    width * 0.44,
+    width * 0.66,
+    axisY
+  );
+
+  assignArcNodePositions(
+    targetNodes,
+    width * 0.76,
+    width - margin.right - 30,
+    axisY
+  );
 
   const nodeById = new Map(data.nodes.map(d => [d.id, d]));
 
@@ -1894,76 +1954,37 @@ function drawCitationArcDiagram(data) {
 
   const radius = d3.scaleSqrt()
     .domain([1, maxNodeValue])
-    .range([7, 23]);
+    .range([6, 17]);
 
   const linkWidth = d3.scaleSqrt()
     .domain([1, maxLinkValue])
-    .range([1.3, 8]);
+    .range([1.2, 8.2]);
 
-  data.nodes.forEach(d => {
-    d.r = radius(d.value);
-  });
+    data.nodes.forEach(d => {
+      d.r = radius(d.value);
+    });
 
-  const upperLinks = data.links
-    .filter(d => d.role === "nobel_references_source")
-    .sort((a, b) => d3.descending(a.value, b.value));
+  const tooltip = d3.select(".topic-tooltip");
 
-  const lowerLinks = data.links
-    .filter(d => d.role === "future_cites_nobel")
-    .sort((a, b) => d3.descending(a.value, b.value));
-
-  upperLinks.forEach((d, i) => {
-    d.arcRank = i;
-  });
-
-  lowerLinks.forEach((d, i) => {
-    d.arcRank = i;
-  });
-
-  const tooltip = d3.select(".topic-tooltip").empty()
-    ? d3.select("body")
-        .append("div")
-        .attr("class", "topic-tooltip")
-        .style("position", "absolute")
-        .style("z-index", 9999)
-        .style("max-width", "360px")
-        .style("padding", "10px 12px")
-        .style("border-radius", "10px")
-        .style("background", "rgba(15, 23, 42, 0.94)")
-        .style("color", "#ffffff")
-        .style("font-size", "12px")
-        .style("line-height", "1.6")
-        .style("pointer-events", "none")
-        .style("box-shadow", "0 10px 28px rgba(15, 23, 42, 0.22)")
-        .style("opacity", 0)
-    : d3.select(".topic-tooltip");
+  drawArcGroupTitle(svg, (margin.left + 10 + width * 0.31) / 2, axisY + 82, "知识来源 subfield");
+  drawArcGroupTitle(svg, width / 2, axisY + 82, "诺奖核心 subfield");
+  drawArcGroupTitle(svg, (width * 0.69 + width - margin.right - 10) / 2, axisY + 82, "后续扩散 subfield");
 
   svg.append("text")
-    .attr("x", (margin.left + width * 0.34) / 2)
-    .attr("y", axisY + 78)
-    .attr("text-anchor", "middle")
+    .attr("x", margin.left + 4)
+    .attr("y", axisY - 220)
     .attr("fill", "#64748b")
     .attr("font-size", 12)
-    .attr("font-weight", 800)
-    .text("知识来源");
+    .attr("font-weight", 700)
+    .text("上方：诺奖核心引用前置知识");
 
   svg.append("text")
-    .attr("x", width / 2)
-    .attr("y", axisY + 78)
-    .attr("text-anchor", "middle")
+    .attr("x", margin.left + 4)
+    .attr("y", axisY + 226)
     .attr("fill", "#64748b")
     .attr("font-size", 12)
-    .attr("font-weight", 800)
-    .text("诺奖核心");
-
-  svg.append("text")
-    .attr("x", (width * 0.66 + width - margin.right) / 2)
-    .attr("y", axisY + 78)
-    .attr("text-anchor", "middle")
-    .attr("fill", "#64748b")
-    .attr("font-size", 12)
-    .attr("font-weight", 800)
-    .text("后续扩散");
+    .attr("font-weight", 700)
+    .text("下方：后续研究引用诺奖核心");
 
   const linkLayer = svg.append("g");
   const nodeLayer = svg.append("g");
@@ -1974,20 +1995,13 @@ function drawCitationArcDiagram(data) {
     .data(data.links, d => d.key)
     .join("path")
     .attr("fill", "none")
-    .attr("stroke", d => {
-      const source = nodeById.get(d.source);
-      return topicFieldColor(
-        source?.colorField || data.selectedField,
-        d.role === "nobel_references_source" ? 0.44 : 0.60
-      );
-    })
+    .attr("stroke", d => arcStrokeColor(d.role, d.colorField, d.arcRank || 0))
     .attr("stroke-width", d => linkWidth(d.value))
     .attr("stroke-linecap", "round")
-    .attr("marker-end", "url(#arc-arrow)")
+    .attr("stroke-opacity", 0.95)
     .attr("d", d => {
       const source = nodeById.get(d.source);
       const target = nodeById.get(d.target);
-
       if (!source || !target) return "";
 
       return citationArcPath({
@@ -1998,9 +2012,13 @@ function drawCitationArcDiagram(data) {
         rank: d.arcRank || 0
       });
     })
-    .on("mouseover", function (event, d) {
-      d3.select(this)
-        .attr("stroke-width", Math.max(2.5, linkWidth(d.value) + 1.6));
+        .on("mouseover", function (event, d) {
+      links
+        .attr("stroke-opacity", x => x.key === d.key ? 1 : 0.08)
+        .attr("stroke-width", x => x.key === d.key ? Math.max(2.6, linkWidth(x.value) + 1.2) : linkWidth(x.value));
+
+      nodes.style("opacity", n => (n.id === d.source || n.id === d.target) ? 1 : 0.22);
+      labels.style("opacity", n => (n.id === d.source || n.id === d.target) ? 1 : 0.15);
 
       tooltip
         .style("opacity", 1)
@@ -2008,14 +2026,17 @@ function drawCitationArcDiagram(data) {
           <strong>${safeText(d.sourceName)} → ${safeText(d.targetName)}</strong><br>
           类型：${safeText(arcRoleLabel(d.role))}<br>
           路径数量：${formatNumber(d.value)}<br>
-          方向解释：${safeText(arcDirectionExplain(d.role))}
+          说明：${safeText(arcDirectionExplain(d.role))}
         `);
     })
     .on("mousemove", moveTooltip)
-    .on("mouseout", function (event, d) {
-      d3.select(this)
-        .attr("stroke-width", linkWidth(d.value));
+    .on("mouseout", function () {
+      links
+        .attr("stroke-opacity", 0.86)
+        .attr("stroke-width", d => linkWidth(d.value));
 
+      nodes.style("opacity", 1);
+      labels.style("opacity", d => d.__showLabel ? 1 : 0);
       tooltip.style("opacity", 0);
     })
     .on("click", function (event, d) {
@@ -2029,19 +2050,35 @@ function drawCitationArcDiagram(data) {
     .attr("transform", d => `translate(${d.x},${d.y})`)
     .style("cursor", "pointer")
     .on("mouseover", function (event, d) {
+      links
+        .attr("stroke-opacity", link => (link.source === d.id || link.target === d.id) ? 1 : 0.08)
+        .attr("stroke-width", link => (link.source === d.id || link.target === d.id)
+          ? Math.max(2.3, linkWidth(link.value) + 1.1)
+          : linkWidth(link.value));
+
+      nodes.style("opacity", n => n.id === d.id ? 1 : 0.24);
+      labels.style("opacity", n => n.id === d.id ? 1 : 0.18);
+
       tooltip
         .style("opacity", 1)
         .html(`
           <strong>${safeText(d.name)}</strong><br>
-          轴上位置：${safeText(arcNodeRoleLabel(d.axisRole))}<br>
+          角色：${safeText(arcNodeRoleLabel(d.axisRole))}<br>
           相关路径：${formatNumber(d.value)}<br>
           作为知识来源：${formatNumber(d.sourceValue)}<br>
           作为诺奖核心：${formatNumber(d.prizeValue)}<br>
-          作为后续扩散：${formatNumber(d.targetValue)}
+          作为后续扩散：${formatNumber(d.targetValue)}<br>
+          主颜色归属：${safeText(d.colorField || "Unknown")}
         `);
     })
     .on("mousemove", moveTooltip)
     .on("mouseout", function () {
+      links
+        .attr("stroke-opacity", 0.86)
+        .attr("stroke-width", d => linkWidth(d.value));
+
+      nodes.style("opacity", 1);
+      labels.style("opacity", d => d.__showLabel ? 1 : 0);
       tooltip.style("opacity", 0);
     })
     .on("click", function (event, d) {
@@ -2050,53 +2087,55 @@ function drawCitationArcDiagram(data) {
 
   nodes.append("circle")
     .attr("r", d => radius(d.value))
-    .attr("fill", d => topicFieldColor(d.colorField || data.selectedField, 0.72))
-    .attr("stroke", "#ffffff")
-    .attr("stroke-width", 1.5);
+    .attr("fill", d => nodeFieldColor(d.colorField, 0.92))
+    .attr("stroke", "rgba(255,255,255,0.95)")
+    .attr("stroke-width", 1.8);
 
   nodes.append("circle")
-    .attr("r", d => Math.max(3, radius(d.value) * 0.38))
-    .attr("fill", "rgba(255,255,255,0.38)")
+    .attr("r", d => Math.max(2.2, radius(d.value) * 0.34))
+    .attr("fill", "rgba(255,255,255,0.28)")
     .attr("pointer-events", "none");
 
-  labelLayer
-    .selectAll("text.field-label")
+  // 标签只显示每组前几个 + Others，避免太挤
+  const labelShowSet = getArcLabelShowSet(sourceNodes, prizeNodes, targetNodes);
+
+  data.nodes.forEach(d => {
+    d.__showLabel = labelShowSet.has(d.id);
+  });
+
+  const labels = labelLayer
+    .selectAll("text.arc-label")
     .data(data.nodes, d => d.id)
     .join("text")
-    .attr("class", "field-label")
+    .attr("class", "arc-label")
     .attr("x", d => d.x)
-    .attr("y", d => axisY + 42)
+    .attr("y", d => axisY + 36)
     .attr("text-anchor", "middle")
     .attr("fill", "#334155")
-    .attr("font-size", 11)
-    .attr("font-weight", 800)
+    .attr("font-size", 10.5)
+    .attr("font-weight", 700)
     .attr("paint-order", "stroke")
     .attr("stroke", "#ffffff")
     .attr("stroke-width", 3)
-    .text(d => shortenText(d.name, 22));
+    .style("opacity", d => d.__showLabel ? 1 : 0)
+    .text(d => d.name === "Others" ? "Others" : shortenText(d.name, 12));
 
   svg.append("text")
-    .attr("x", margin.left)
-    .attr("y", axisY - 230)
-    .attr("fill", "#64748b")
-    .attr("font-size", 12)
-    .attr("font-weight", 700)
-    .text("上方：诺奖核心引用前置知识");
+    .attr("x", width / 2)
+    .attr("y", height - 18)
+    .attr("text-anchor", "middle")
+    .attr("fill", "#94a3b8")
+    .attr("font-size", 11)
+    .text("每侧仅保留 Top N subfield，其余合并为 Others；点击节点或弧线可查看代表论文。");
 
-  svg.append("text")
-    .attr("x", margin.left)
-    .attr("y", axisY + 235)
-    .attr("fill", "#64748b")
-    .attr("font-size", 12)
-    .attr("font-weight", 700)
-    .text("下方：后续研究引用诺奖核心");
+  renderArcDefaultCards(data);
 }
 
 function assignArcNodePositions(nodes, startX, endX, axisY) {
   const scale = d3.scalePoint()
     .domain(nodes.map(d => d.id))
     .range([startX, endX])
-    .padding(0.5);
+    .padding(0.9);
 
   nodes.forEach(d => {
     d.x = scale(d.id) || (startX + endX) / 2;
@@ -2106,8 +2145,10 @@ function assignArcNodePositions(nodes, startX, endX, axisY) {
 
 function citationArcPath({ sourceX, targetX, axisY, role, rank }) {
   const distance = Math.abs(targetX - sourceX);
-  const baseHeight = Math.max(60, distance * 0.35);
-  const extraHeight = Math.min(120, rank * 18);
+
+  // 弧线幅度明显加大
+  const baseHeight = Math.max(110, distance * 0.52);
+  const extraHeight = Math.min(150, rank * 11);
   const arcHeight = baseHeight + extraHeight;
 
   const sign = role === "nobel_references_source" ? -1 : 1;
@@ -2115,10 +2156,10 @@ function citationArcPath({ sourceX, targetX, axisY, role, rank }) {
   const controlY = axisY + sign * arcHeight;
 
   if (Math.abs(sourceX - targetX) < 2) {
-    const loopWidth = 42;
+    const loopWidth = 40;
     return `
       M${sourceX - loopWidth / 2},${axisY}
-      Q${sourceX},${axisY + sign * 86}
+      Q${sourceX},${axisY + sign * 92}
       ${sourceX + loopWidth / 2},${axisY}
     `;
   }
@@ -2126,204 +2167,109 @@ function citationArcPath({ sourceX, targetX, axisY, role, rank }) {
   return `M${sourceX},${axisY} Q${midX},${controlY} ${targetX},${axisY}`;
 }
 
-function renderArcDefaultCards(data) {
-  const caseCards = d3.select("#topic-case-cards");
-  if (caseCards.empty()) return;
-
-  const topUpper = data.links
-    .filter(d => d.role === "nobel_references_source")
-    .sort((a, b) => d3.descending(a.value, b.value))[0];
-
-  const topLower = data.links
-    .filter(d => d.role === "future_cites_nobel")
-    .sort((a, b) => d3.descending(a.value, b.value))[0];
-
-  caseCards.html(`
-    <div class="card mini-card">
-      <div class="topic-badge">读图方式</div>
-      <div class="topic-card-title">横轴 + 上下弧线</div>
-      <div class="topic-card-note">
-        横轴分为知识来源、诺奖核心、后续扩散三段。上方弧线表示诺奖论文引用前置知识，下方弧线表示后续论文引用诺奖论文。
-      </div>
-    </div>
-
-    <div class="card mini-card">
-      <div class="topic-badge">上方最强路径</div>
-      <div class="topic-card-title">
-        ${
-          topUpper
-            ? `${safeText(topUpper.sourceName)} → ${safeText(topUpper.targetName)}`
-            : "暂无"
-        }
-      </div>
-      <div class="topic-card-note">
-        ${
-          topUpper
-            ? `该路径共 ${formatNumber(topUpper.value)} 条。`
-            : "当前筛选条件下暂无上方路径。"
-        }
-      </div>
-    </div>
-
-    <div class="card mini-card">
-      <div class="topic-badge">下方最强路径</div>
-      <div class="topic-card-title">
-        ${
-          topLower
-            ? `${safeText(topLower.sourceName)} → ${safeText(topLower.targetName)}`
-            : "暂无"
-        }
-      </div>
-      <div class="topic-card-note">
-        ${
-          topLower
-            ? `该路径共 ${formatNumber(topLower.value)} 条。`
-            : "当前筛选条件下暂无下方路径。"
-        }
-      </div>
-    </div>
-  `);
+function drawArcGroupTitle(svg, x, y, text) {
+  svg.append("text")
+    .attr("x", x)
+    .attr("y", y)
+    .attr("text-anchor", "middle")
+    .attr("fill", "#64748b")
+    .attr("font-size", 12)
+    .attr("font-weight", 800)
+    .text(text);
 }
 
-function renderArcNodeCards(node) {
-  const caseCards = d3.select("#topic-case-cards");
-  if (caseCards.empty()) return;
-
-  const prizePapers = uniqueBy(node.samples || [], d => d.prize_paper_id).slice(0, 5);
-  const citationPapers = uniqueBy(node.samples || [], d => d.citation_paper_id).slice(0, 5);
-
-  caseCards.html(`
-    <div class="card mini-card">
-      <div class="topic-badge">${arcNodeRoleLabel(node.axisRole)}</div>
-      <div class="topic-card-title">${safeText(node.name)}</div>
-      <div class="topic-card-note">
-        相关路径：${formatNumber(node.value)}；
-        作为知识来源：${formatNumber(node.sourceValue)}；
-        作为诺奖核心：${formatNumber(node.prizeValue)}；
-        作为后续扩散：${formatNumber(node.targetValue)}。
-      </div>
-    </div>
-
-    <div class="card mini-card">
-      <div class="topic-badge">代表诺奖论文</div>
-      <div class="topic-card-title">相关 Nobel 关键论文</div>
-      <ol class="topic-card-list">
-        ${
-          prizePapers.length
-            ? prizePapers.map(d => `<li>${safeText(shortenText(d.prize_paper_title || d.prize_paper_id, 88))}</li>`).join("")
-            : "<li>暂无可展示论文</li>"
-        }
-      </ol>
-    </div>
-
-    <div class="card mini-card">
-      <div class="topic-badge">代表引文论文</div>
-      <div class="topic-card-title">引用 / 被引论文样例</div>
-      <ol class="topic-card-list">
-        ${
-          citationPapers.length
-            ? citationPapers.map(d => `<li>${safeText(shortenText(d.citation_paper_title || d.citation_paper_id, 88))}</li>`).join("")
-            : "<li>暂无可展示论文</li>"
-        }
-      </ol>
-    </div>
-  `);
+function extractPrimarySubfield(value) {
+  const items = splitMultiValue(value).map(d => cleanText(d)).filter(Boolean);
+  return items.length ? items[0] : cleanText(value);
 }
 
-function renderArcLinkCards(link) {
-  const caseCards = d3.select("#topic-case-cards");
-  if (caseCards.empty()) return;
-
-  const prizePapers = uniqueBy(link.samples || [], d => d.prize_paper_id).slice(0, 5);
-  const citationPapers = uniqueBy(link.samples || [], d => d.citation_paper_id).slice(0, 5);
-
-  caseCards.html(`
-    <div class="card mini-card">
-      <div class="topic-badge">${arcRoleLabel(link.role)}</div>
-      <div class="topic-card-title">${safeText(link.sourceName)} → ${safeText(link.targetName)}</div>
-      <div class="topic-card-note">
-        该路径共 ${formatNumber(link.value)} 条。${safeText(arcDirectionExplain(link.role))}
-      </div>
-    </div>
-
-    <div class="card mini-card">
-      <div class="topic-badge">代表诺奖论文</div>
-      <div class="topic-card-title">路径中的 Nobel 关键论文</div>
-      <ol class="topic-card-list">
-        ${
-          prizePapers.length
-            ? prizePapers.map(d => `<li>${safeText(shortenText(d.prize_paper_title || d.prize_paper_id, 88))}</li>`).join("")
-            : "<li>暂无可展示论文</li>"
-        }
-      </ol>
-    </div>
-
-    <div class="card mini-card">
-      <div class="topic-badge">代表引文论文</div>
-      <div class="topic-card-title">相关引用关系样例</div>
-      <ol class="topic-card-list">
-        ${
-          citationPapers.length
-            ? citationPapers.map(d => `<li>${safeText(shortenText(d.citation_paper_title || d.citation_paper_id, 88))}</li>`).join("")
-            : "<li>暂无可展示论文</li>"
-        }
-      </ol>
-    </div>
-  `);
+function bucketToTopOrOthers(name, topSet) {
+  return topSet.has(name) ? name : "Others";
 }
 
-function inferRecordMajorField(fieldValue, subfieldValue) {
-  const field = normalizeFieldName(fieldValue);
-  if (["Physics", "Chemistry", "Medicine"].includes(field)) return field;
-
-  const subfield = normalizeFieldName(subfieldValue);
-  if (["Physics", "Chemistry", "Medicine"].includes(subfield)) return subfield;
-
-  return "Unknown";
+function addFieldVote(voteObj, field) {
+  const key = normalizeFieldName(field) || "Other";
+  voteObj[key] = (voteObj[key] || 0) + 1;
 }
 
-function normalizeSelectedField(value) {
-  const text = cleanText(value);
+function chooseDominantField(voteObj) {
+  const entries = Object.entries(voteObj || {});
+  if (!entries.length) return "Other";
+  entries.sort((a, b) => d3.descending(a[1], b[1]));
+  return entries[0][0];
+}
 
-  if (text === "all" || text === "全部学科") return "all";
+function getArcLabelShowSet(sourceNodes, prizeNodes, targetNodes) {
+  const set = new Set();
 
-  const field = normalizeFieldName(text);
+  function addGroup(nodes, normalCount = 4) {
+    const normal = nodes
+      .filter(d => d.name !== "Others")
+      .slice(0, normalCount);
 
-  if (["Physics", "Chemistry", "Medicine"].includes(field)) {
-    return field;
+    normal.forEach(d => set.add(d.id));
+
+    const others = nodes.find(d => d.name === "Others");
+    if (others) set.add(others.id);
   }
 
-  return "all";
+  addGroup(sourceNodes, 4);
+  addGroup(prizeNodes, 4);
+  addGroup(targetNodes, 4);
+
+  return set;
 }
 
-function topicFieldColor(field, alpha = 0.72) {
-  if (field === "Physics") return `rgba(37, 99, 235, ${alpha})`;
-  if (field === "Chemistry") return `rgba(5, 150, 105, ${alpha})`;
-  if (field === "Medicine") return `rgba(220, 38, 38, ${alpha})`;
-  return `rgba(148, 163, 184, ${alpha})`;
+function nodeFieldColor(field, alpha = 0.88) {
+  if (field === "Physics") {
+    return `rgba(96, 124, 191, ${alpha})`;      // 雾蓝
+  }
+  if (field === "Chemistry") {
+    return `rgba(79, 164, 138, ${alpha})`;      // 青绿
+  }
+  if (field === "Medicine") {
+    return `rgba(216, 120, 110, ${alpha})`;     // 暖珊瑚红
+  }
+  return `rgba(163, 172, 184, ${alpha})`;       // Unknown / Others 灰色
+}
+
+function arcStrokeColor(role, colorField, rank = 0) {
+  // unknown 仍然保留灰色
+  if (!colorField || colorField === "Other" || colorField === "Unknown") {
+    const alpha = Math.max(0.22, 0.42 - rank * 0.012);
+    return `rgba(170, 178, 188, ${alpha})`;
+  }
+
+  // 上方：诺奖引用前置知识 —— 冷色系
+  if (role === "nobel_references_source") {
+    const alpha = Math.max(0.16, 0.38 - rank * 0.010);
+    return `rgba(122, 156, 196, ${alpha})`;   // 冷蓝灰
+  }
+
+  // 下方：后续研究引用诺奖核心 —— 暖色系
+  const alpha = Math.max(0.18, 0.42 - rank * 0.010);
+  return `rgba(196, 139, 153, ${alpha})`;     // 柔和粉棕 / 豆沙色
 }
 
 function arcRoleLabel(role) {
-  if (role === "nobel_references_source") return "上方弧线：诺奖引用前置知识";
-  if (role === "future_cites_nobel") return "下方弧线：后续引用诺奖论文";
+  if (role === "nobel_references_source") return "上方弧线：诺奖核心引用前置知识";
+  if (role === "future_cites_nobel") return "下方弧线：后续研究引用诺奖核心";
   return "引用路径";
 }
 
 function arcDirectionExplain(role) {
   if (role === "nobel_references_source") {
-    return "方向为诺奖核心指向知识来源，表示诺奖论文参考了该领域的前置知识。";
+    return "方向为“诺奖核心 subfield → 知识来源 subfield”，表示诺奖论文参考了该前置知识。";
   }
-
   if (role === "future_cites_nobel") {
-    return "方向为后续扩散指向诺奖核心，表示该领域后续论文引用了诺奖论文。";
+    return "方向为“后续扩散 subfield → 诺奖核心 subfield”，表示后续论文引用了诺奖论文。";
   }
-
   return "";
 }
 
 function arcNodeRoleLabel(role) {
-  if (role === "source") return "知识来源";
-  if (role === "prize") return "诺奖核心";
-  if (role === "target") return "后续扩散";
-  return "field";
+  if (role === "source") return "知识来源 subfield";
+  if (role === "prize") return "诺奖核心 subfield";
+  if (role === "target") return "后续扩散 subfield";
+  return "subfield";
 }

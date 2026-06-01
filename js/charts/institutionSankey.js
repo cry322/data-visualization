@@ -22,7 +22,6 @@ const LINK_COLORS = {
   prizeOnly: "#c77c7c",  // 参与获奖领域，但不是研究最集中领域
   mainOnly: "#7aa6c2",   // 研究最集中领域，但不是获奖领域
   normal: "#d7dde5",     // 其他一般关联
-  topic: "#b8a6cf",      // 探索性主题层级
 };
 
 function toNumber(value, fallback = 0) {
@@ -118,7 +117,7 @@ function buildPrizeFieldMap(authorRows, prizeRows) {
   return instToPrizeFields;
 }
 
-function aggregateRows(fieldRows, summaryRows, mappingMode) {
+function aggregateRows(fieldRows, summaryRows) {
   const summaryByInst = new Map();
 
   summaryRows.forEach((row) => {
@@ -159,7 +158,7 @@ function aggregateRows(fieldRows, summaryRows, mappingMode) {
       if (!d.institutionKey) return false;
       if (!FIELD_ORDER.includes(d.field)) return false;
       if (d.worksCount <= 0) return false;
-      if (mappingMode === "field_exact" && !d.mappingMethods.includes("field_exact")) return false;
+      if (!d.mappingMethods.includes("field_exact")) return false;
       return true;
     });
 
@@ -181,12 +180,8 @@ function aggregateRows(fieldRows, summaryRows, mappingMode) {
   });
 }
 
-function prepareData({ fieldRows, summaryRows, authorRows, prizeRows, topN, mappingMode, viewMode }) {
-  let rows = aggregateRows(fieldRows, summaryRows, mappingMode);
-
-  if (rows.length === 0 && mappingMode === "field_exact") {
-    rows = aggregateRows(fieldRows, summaryRows, "all");
-  }
+function prepareData({ fieldRows, summaryRows, authorRows, prizeRows, topN }) {
+  let rows = aggregateRows(fieldRows, summaryRows);
 
   const prizeFieldsByInst = buildPrizeFieldMap(authorRows, prizeRows);
 
@@ -262,56 +257,8 @@ function prepareData({ fieldRows, summaryRows, authorRows, prizeRows, topN, mapp
       isPrizeField,
       isMainField,
       isConsistent,
-      approximate: false,
     });
   });
-
-  if (viewMode === "field-topic") {
-    const topicWeights = new Map();
-
-    rows.forEach((d) => {
-      const topics = d.topicNames.slice(0, 10);
-      if (!topics.length) return;
-
-      const eachWeight = d.worksCount / topics.length;
-      topics.forEach((topic) => {
-        const key = `${d.field}||${topic}`;
-        topicWeights.set(key, (topicWeights.get(key) || 0) + eachWeight);
-      });
-    });
-
-    const topTopicEntries = Array.from(topicWeights.entries())
-      .sort((a, b) => d3.descending(a[1], b[1]))
-      .slice(0, 12);
-
-    topTopicEntries.forEach(([key]) => {
-      const [field, topic] = key.split("||");
-      addNode(`topic:${field}:${topic}`, topic, "topic", { field, approximate: true });
-    });
-
-    topTopicEntries.forEach(([key, value]) => {
-      const [field, topic] = key.split("||");
-      const source = nodeIndex.get(`field:${field}`);
-      const target = nodeIndex.get(`topic:${field}:${topic}`);
-
-      if (source === undefined || target === undefined) return;
-
-      links.push({
-        source,
-        target,
-        value,
-        raw: {
-          field,
-          topicNames: [topic],
-          institutionName: field,
-          worksCount: value,
-        },
-        linkType: "topic",
-        approximate: true,
-        topicName: topic,
-      });
-    });
-  }
 
   const institutionIds = Array.from(groupedByInst.keys());
 
@@ -341,8 +288,6 @@ function prepareData({ fieldRows, summaryRows, authorRows, prizeRows, topN, mapp
       inconsistentInstitutionCount,
       unknownPrizeFieldCount,
       totalWorks: d3.sum(rows, (d) => d.worksCount),
-      viewMode,
-      mappingMode,
     },
   };
 }
@@ -367,16 +312,11 @@ function renderInsightPanel(container, stats, selected = null) {
         </div>
       </div>
       <p class="sankey-explain">
-        本图用于判断：一个机构实际参与诺奖的领域，是否也是它在 OpenAlex 主题产出中最集中的领域。
-        左侧为机构，右侧为诺奖学科；连线越宽，表示该机构在该学科相关主题上的产出强度越高。
+        左侧是机构，右侧是诺奖学科；连线越宽，表示该机构在对应学科上的产出越多。
       </p>
       <p class="sankey-explain">
-        颜色含义：黄色表示“研究最集中领域与获奖关联领域一致”；红色表示“参与过该领域获奖论文，但该领域不是最集中方向”；
-        蓝色表示“该领域是最集中方向，但不是获奖关联领域”；灰色表示其他一般关联。
-      </p>
-      <p class="sankey-explain">
-        数据口径：“精确映射”只保留 OpenAlex field 直接对应三大诺奖学科的记录，适合正式展示；
-        “扩展映射”还加入 subfield/topic 关键词映射，信息更丰富，但解释上更偏探索。
+        黄色表示机构最集中的研究领域与获奖关联领域一致；红色表示参与过该学科获奖论文，但它不是最集中方向；
+        蓝色表示该学科是最集中方向但不是获奖关联领域；灰色表示其他一般关联。
       </p>
     `;
     return;
@@ -400,31 +340,25 @@ function renderInsightPanel(container, stats, selected = null) {
   container.innerHTML = `
     <div class="sankey-detail-title">${selected.name}</div>
     <p class="sankey-explain">
-      当前选择的是${selected.type === "field" ? "学科节点" : "主题节点"}。
-      可以 hover 连线查看具体机构、产出强度与代表主题。
+      当前选择的是学科节点。可以将鼠标移到连线上，查看对应机构和产出强度。
     </p>
   `;
 }
 
 function showLinkTooltip(event, link, tooltip) {
   const d = link.raw || {};
-  const title = link.approximate
-    ? `${d.field} → ${link.topicName || "Topic"}`
-    : `${d.institutionName} → ${d.field}`;
+  const title = `${d.institutionName} → ${d.field}`;
 
   tooltip
     .style("opacity", 1)
     .html(`
       <div class="tooltip-title">${title}</div>
       <div>产出强度：<strong>${formatNumber(link.value)}</strong></div>
-      ${link.approximate ? `<div>说明：主题层级为探索性展开，权重为近似分配</div>` : ""}
       ${link.isPrizeField !== undefined ? `<div>获奖关联领域：<strong>${link.isPrizeField ? "是" : "否"}</strong></div>` : ""}
       ${link.isMainField !== undefined ? `<div>研究最集中领域：<strong>${link.isMainField ? "是" : "否"}</strong></div>` : ""}
       <div>总被引量：${formatNumber(d.citedByCount)}</div>
       <div>Topic 数：${formatNumber(d.topicCount)}</div>
-      <div>代表 subfield：${truncate(d.subfieldNames?.slice(0, 3).join(" / ") || "暂无", 88)}</div>
       <div>代表 topic：${truncate(d.topicNames?.slice(0, 3).join(" / ") || "暂无", 88)}</div>
-      <div>映射方法：${truncate(d.mappingMethods || "暂无", 88)}</div>
     `)
     .style("left", `${event.pageX + 14}px`)
     .style("top", `${event.pageY + 14}px`);
@@ -435,7 +369,7 @@ function showNodeTooltip(event, node, tooltip) {
     .style("opacity", 1)
     .html(`
       <div class="tooltip-title">${node.name}</div>
-      <div>节点类型：${node.type}</div>
+      <div>节点类型：${node.type === "institution" ? "机构" : "学科"}</div>
       ${node.countryCode ? `<div>国家 / 地区：${node.countryCode}</div>` : ""}
       ${node.mainField ? `<div>研究最集中领域：${node.mainField}</div>` : ""}
       ${node.prizeFields ? `<div>获奖关联领域：${node.prizeFields.length ? node.prizeFields.join(" / ") : "暂无"}</div>` : ""}
@@ -472,7 +406,7 @@ function renderSankey(data, containerSelector) {
 
   const graph = sankey()
     .nodeWidth(16)
-    .nodePadding(stats.viewMode === "field-topic" ? 9 : 14)
+    .nodePadding(14)
     .extent([
       [margin.left, margin.top],
       [width - margin.right, height - margin.bottom],
@@ -495,11 +429,7 @@ function renderSankey(data, containerSelector) {
     .attr("d", sankeyLinkHorizontal())
     .attr("stroke", (d) => LINK_COLORS[d.linkType] || LINK_COLORS.normal)
     .attr("stroke-width", (d) => Math.max(1, d.width))
-    .attr("stroke-opacity", (d) => {
-      if (d.linkType === "topic") return 0.18;
-      if (d.linkType === "normal") return 0.26;
-      return 0.58;
-    })
+    .attr("stroke-opacity", (d) => (d.linkType === "normal" ? 0.26 : 0.58))
     .on("mouseenter", function (event, d) {
       d3.select(this).attr("stroke-opacity", 0.96);
       showLinkTooltip(event, d, tooltip);
@@ -508,7 +438,7 @@ function renderSankey(data, containerSelector) {
       showLinkTooltip(event, d, tooltip);
     })
     .on("mouseleave", function (event, d) {
-      d3.select(this).attr("stroke-opacity", d.linkType === "topic" ? 0.18 : d.linkType === "normal" ? 0.26 : 0.58);
+      d3.select(this).attr("stroke-opacity", d.linkType === "normal" ? 0.26 : 0.58);
       hideTooltip(tooltip);
     });
 
@@ -532,7 +462,7 @@ function renderSankey(data, containerSelector) {
       d3.select(this).select("rect").attr("stroke", "#ffffff").attr("stroke-width", 1);
       hideTooltip(tooltip);
 
-      link.attr("stroke-opacity", (l) => (l.linkType === "topic" ? 0.18 : l.linkType === "normal" ? 0.26 : 0.58));
+      link.attr("stroke-opacity", (l) => (l.linkType === "normal" ? 0.26 : 0.58));
     })
     .on("click", function (event, d) {
       renderInsightPanel(insightContainer, stats, d);
@@ -545,7 +475,6 @@ function renderSankey(data, containerSelector) {
     .attr("rx", 5)
     .attr("fill", (d) => {
       if (d.type === "field") return FIELD_COLORS[d.name] || "#64748b";
-      if (d.type === "topic") return "#8b5cf6";
       if (d.isConsistent) return "#f59e0b";
       return "#475569";
     })
@@ -558,15 +487,10 @@ function renderSankey(data, containerSelector) {
     .attr("y", (d) => (d.y1 - d.y0) / 2)
     .attr("dy", "0.35em")
     .attr("text-anchor", (d) => (d.x0 < width / 2 ? "start" : "end"))
-    .attr("font-size", (d) => {
-      if (d.type === "field") return 13;
-      if (d.type === "topic") return 10;
-      return 10.5;
-    })
+    .attr("font-size", (d) => (d.type === "field" ? 13 : 10.5))
     .attr("font-weight", (d) => (d.type === "field" ? 700 : 500))
     .attr("fill", "#334155")
     .text((d) => {
-      if (d.type === "topic") return truncate(d.name, 24);
       if (d.type === "institution") return truncate(d.name, stats.institutionCount <= 10 ? 28 : 22);
       return d.name;
     });
@@ -577,11 +501,11 @@ function renderSankey(data, containerSelector) {
     .attr("transform", `translate(${margin.left}, ${height - 15})`);
 
   const items = [
-  [LINK_COLORS.consistent, "最集中领域 = 获奖领域"],
-  [LINK_COLORS.prizeOnly, "获奖领域但非最集中"],
-  [LINK_COLORS.mainOnly, "最集中但非获奖领域"],
-  [LINK_COLORS.normal, "其他关联"],
-];
+    [LINK_COLORS.consistent, "最集中领域 = 获奖领域"],
+    [LINK_COLORS.prizeOnly, "获奖领域但非最集中"],
+    [LINK_COLORS.mainOnly, "最集中但非获奖领域"],
+    [LINK_COLORS.normal, "其他关联"],
+  ];
 
   let x = 0;
   items.forEach(([color, label]) => {
@@ -596,9 +520,7 @@ export async function initInstitutionSankey() {
   const container = d3.select("#institution-sankey-chart");
   if (container.empty()) return;
 
-  const modeSelect = document.querySelector("#sankey-mode-select");
   const topNSelect = document.querySelector("#sankey-topn-select");
-  const mappingSelect = document.querySelector("#sankey-mapping-select");
 
   try {
     const [fieldRows, summaryRows, authorRows, prizeRows] = await Promise.all([
@@ -609,9 +531,7 @@ export async function initInstitutionSankey() {
     ]);
 
     function update() {
-      const viewMode = modeSelect?.value || "field";
       const topN = topNSelect?.value || "20";
-      const mappingMode = mappingSelect?.value || "field_exact";
 
       const prepared = prepareData({
         fieldRows,
@@ -619,16 +539,12 @@ export async function initInstitutionSankey() {
         authorRows,
         prizeRows,
         topN,
-        mappingMode,
-        viewMode,
       });
 
       renderSankey(prepared, "#institution-sankey-chart");
     }
 
-    modeSelect?.addEventListener("change", update);
     topNSelect?.addEventListener("change", update);
-    mappingSelect?.addEventListener("change", update);
 
     update();
 
