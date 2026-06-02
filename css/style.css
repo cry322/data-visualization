@@ -445,7 +445,8 @@ main {
 .waittime-axis-label,
 .waittime-reference-label,
 .waittime-legend text {
-  font-family: var(--font-note);
+  font-family: var(--font-title);
+  font-weight: 700;
   fill: #263244;
   font-size: 11px;
 }
@@ -1207,7 +1208,7 @@ footer {
 
 .waittime-axis text {
   fill: #334155;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .waittime-grid line {
@@ -1218,23 +1219,25 @@ footer {
 .waittime-axis-label,
 .waittime-reference-label,
 .waittime-legend text {
-  fill: #243447;
-  font-size: 15px;
+  font-family: var(--font-title);
+  font-weight: 700;
+  fill: #334155;
+  font-size: 12px;
 }
 
 .waittime-axis-label {
-  font-size: 16px;
+  font-size: 12px;
 }
 
 .waittime-reference-label {
-  font-family: var(--font-note);
-  font-size: 16px;
-  font-weight: 400;
-  fill: #243447;
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 700;
+  fill: #334155;
 }
 
 .waittime-legend text {
-  font-size: 15px;
+  font-size: 12px;
 }
 
 .waittime-reference {

@@ -39,18 +39,18 @@ export function initCountryMap() {
     svgMap.call(zoom);
 
     // 鍒濆鍖栨笎鍙樺浘渚嬪鍣?
-    const legendWidth = 250;
-    const legendHeight = 10;
+    const legendWidth = 12;
+    const legendHeight = 170;
     const legendG = svgMap.append("g")
         .attr("class", "map-legend")
-        .attr("transform", `translate(${width - legendWidth - 30}, ${height - 40})`);
+        .attr("transform", `translate(28, ${height / 2 - legendHeight / 2})`);
 
     const defs = svgMap.append("defs");
     // 銆愪慨鏀圭偣銆戝浘渚嬬殑绾挎€ф笎鍙樼Щ闄や簡纭紪鐮佺殑鍒濆 stops锛屾敼涓哄湪鏇存柊鍑芥暟涓姩鎬佹覆鏌?
     const linearGradient = defs.append("linearGradient")
         .attr("id", "map-gradient")
-        .attr("x1", "0%").attr("y1", "0%")
-        .attr("x2", "100%").attr("y2", "0%");
+        .attr("x1", "0%").attr("y1", "100%")
+        .attr("x2", "0%").attr("y2", "0%");
 
     legendG.append("rect")
         .attr("width", legendWidth)
@@ -61,7 +61,7 @@ export function initCountryMap() {
 
     const legendAxisG = legendG.append("g")
         .attr("class", "legend-axis")
-        .attr("transform", `translate(0, ${legendHeight})`);
+        .attr("transform", `translate(${legendWidth}, 0)`);
 
     // ==========================================
     // 2. 鍒濆鍖栨帓琛屾鐢诲竷
@@ -196,7 +196,7 @@ export function initCountryMap() {
                 currentInterpolator = d3.interpolate("#eff6ff", "#1d4ed8");  
             } else {
                 // 楂樼骇钘忛潚/鐏拌摑 (Slate/Navy Blue: 娴呯伆鐧?-> 娣辫棌闈?
-                currentInterpolator = d3.interpolate("#f8fafc", "#1e293b");  
+                currentInterpolator = d3.interpolate("#f8fafc", "#426b8f");  
             }
 
             const colorScale = d3.scaleSequential(currentInterpolator).domain([0, Math.log1p(maxVal)]); 
@@ -223,7 +223,7 @@ export function initCountryMap() {
             const axisScale = d3.scaleSymlog()
                 .constant(1)
                 .domain([0, maxVal])
-                .range([0, legendWidth]);
+                .range([legendHeight, 0]);
 
             // 銆愪慨鏀圭偣銆戝€熺敤绾挎€ф瘮渚嬪昂鐨?ticks 鏂规硶锛岃嚜鍔ㄧ敓鎴?3~4 涓鏁寸殑鏁板€硷紙濡?100, 200锛?
             // 杩囨护鎺夊甫鏈夊皬鏁扮殑鏁板€硷紝骞朵笖鎶婂ぇ浜庡綋鍓嶆渶澶у€肩殑婧㈠嚭鍒诲害涔熻繃婊ゆ帀
@@ -231,7 +231,7 @@ export function initCountryMap() {
                                .filter(Number.isInteger)
                                .filter(v => v <= maxVal);
 
-            const legendAxis = d3.axisBottom(axisScale)
+            const legendAxis = d3.axisRight(axisScale)
                 .tickValues(tickValues) 
                 .tickFormat(d3.format(".0f"));
 

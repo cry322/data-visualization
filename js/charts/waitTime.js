@@ -250,7 +250,7 @@ function renderSidePanel(row, rows) {
     appendPanelTitle(
       panel,
       "样本概览",
-      "悬浮或键盘聚焦任意散点查看记录详情；右侧面板固定在图外，不遮挡主图。"
+      "悬浮或键盘聚焦任意散点查看记录详情"
     );
     appendDetailRow(panel, "当前记录", formatCount(rows.length));
     appendDetailRow(panel, "等待时间中位数", formatMaybe(medianWait, " 年"));
@@ -387,7 +387,7 @@ function renderScatter(config, rows) {
     return;
   }
 
-  const margin = { top: 40, right: 156, bottom: 76, left: 90 };
+  const margin = { top: 40, right: 230, bottom: 76, left: 90 };
   const bounds = container.node().getBoundingClientRect();
   const outerWidth = Math.max(720, bounds.width || 720);
   const chartHeight = 570;

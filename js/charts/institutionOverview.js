@@ -21,7 +21,7 @@ export function initInstitutionOverview() {
 
     let currentMetric = "prize_paper_count"; 
     let currentField = "all";          
-    let selectedInstitutionId = null; // 銆愭柊澧炪€戠敤浜庤窡韪綋鍓嶇偣鍑婚€変腑鐨勬満鏋?ID
+    let selectedInstitutionId = null; 
 
     const metricNameMap = {
         "prize_paper_count": "参与获奖论文数量",
@@ -82,7 +82,7 @@ export function initInstitutionOverview() {
             .style("fill", "#64748b")
             .style("font-weight", "600");
 
-        // 銆愪慨鏀广€戝綋鍒囨崲鎺掑簭鎸囨爣鏃讹紝閲嶇疆閫変腑鐘舵€佷笌鍙充晶闈㈡澘
+        
         d3.select("#institution-sort-select").on("change", function() {
             currentMetric = this.value;
             selectedInstitutionId = null; 
@@ -90,7 +90,7 @@ export function initInstitutionOverview() {
             updateChart();
         });
 
-        // 銆愪慨鏀广€戝綋鍒囨崲瀛︾鏃讹紝閲嶇疆閫変腑鐘舵€佷笌鍙充晶闈㈡澘
+        
         d3.select("#institution-field-filter").on("change", function() {
             currentField = this.value;
             selectedInstitutionId = null;
@@ -134,7 +134,7 @@ export function initInstitutionOverview() {
                                  .domain([0, maxMetricVal * 1.1]);
 
             xAxisG.transition("axis").duration(600).call(d3.axisBottom(x).ticks(6));
-            xAxisLabel.text(`鉃?${metricNameMap[currentMetric]}`);
+            xAxisLabel.text(metricNameMap[currentMetric]);
 
             const nameMap = new Map(top20.map(d => [d.id, d.name]));
             yAxisG.transition("axis").duration(600).call(
@@ -193,18 +193,17 @@ export function initInstitutionOverview() {
                     tooltip.style("left", (event.pageX + 15) + "px").style("top", (event.pageY - 15) + "px");
                 })
                 .on("mouseout", function(event, d) {
-                    // 銆愪慨鏀广€戠Щ鍑烘椂鍒ゆ柇锛氳嫢褰撳墠鏌卞瓙鏄閫変腑鐨勯偅涓紝淇濇寔绾㈣壊锛涘惁鍒欐仮澶嶆垚瀵瑰簲鐨勬爣灏烘笎鍙樿壊
+                    
                     const targetColor = (d.id === selectedInstitutionId) ? "#e15759" : colorScale(d[currentMetric]);
                     d3.select(this).transition("hover").duration(150).attr("fill", targetColor);
                     tooltip.style("opacity", 0).style("display", "none");
                 })
                 .on("click", function(event, d) {
-                    // 銆愪慨鏀广€戝疄鐜板紑鍏筹紙Toggle锛夊垏鎹㈤€昏緫
+                    
                     if (selectedInstitutionId === d.id) {
-                        // 1. 濡傛灉鐐瑰嚮鐨勬槸褰撳墠宸查€変腑鐨勬煴瀛?-> 鍙栨秷閫夋嫨
+                        
                         selectedInstitutionId = null;
                         
-                        // 鎭㈠鎵€鏈夋煴瀛愮殑姝ｅ父閫忔槑搴︿笌鑹插僵
                         svg.selectAll(".bar").transition("click").duration(200)
                             .style("opacity", 1)
                             .attr("fill", d => colorScale(d[currentMetric]));
