@@ -4,7 +4,7 @@ export async function initInstitutionNetwork() {
   const container = d3.select("#institution-network-chart");
   if (container.empty()) return;
 
-  const DATA_PATH = "data/";
+  const DATA_PATH = "data_final/section4/institution_network.json";
 
   const chartNode = container.node();
   const width = chartNode.clientWidth || 900;
@@ -86,23 +86,8 @@ export async function initInstitutionNetwork() {
     .style("line-height", "1.6")
     .style("box-shadow", "0 10px 28px rgba(15, 23, 42, 0.22)");
 
-  const color = d3
-    .scaleOrdinal()
-    .domain(["Physics", "Chemistry", "Medicine", "Mixed", "Unknown"])
-    .range([
-      "rgba(37, 99, 235, 0.72)",   // Physics
-      "rgba(5, 150, 105, 0.72)",   // Chemistry
-      "rgba(220, 38, 38, 0.72)",   // Medicine
-      "rgba(139, 92, 246, 0.72)",  // Mixed
-      "rgba(148, 163, 184, 0.72)"  // Unknown
-    ]);
-
-  function edgeColorByField(field) {
-    if (field === "Physics") return "rgba(37, 99, 235, 0.28)";
-    if (field === "Chemistry") return "rgba(5, 150, 105, 0.28)";
-    if (field === "Medicine") return "rgba(220, 38, 38, 0.28)";
-    return "rgba(148, 163, 184, 0.28)";
-  }
+  const defaultLinkColor = "rgba(215, 221, 229, 0.88)";
+  const activeLinkColor = "rgba(102, 112, 133, 0.78)";
 
   const state = {
     field: "all",
@@ -112,28 +97,17 @@ export async function initInstitutionNetwork() {
 
   updateControlText();
 
-  let rawEdges;
-  let institutionSummary;
-  let authorships;
-  let matchedPapers;
-
   try {
-    [rawEdges, institutionSummary, authorships, matchedPapers] = await Promise.all([
-      d3.csv(`${DATA_PATH}nobel_institution_edges.csv`),
-      d3.csv(`${DATA_PATH}nobel_prize_institution_summary.csv`),
-      d3.csv(`${DATA_PATH}nobel_paper_authorships.csv`),
-      d3.csv(`${DATA_PATH}matched_all_publications.csv`)
-    ]);
+    var dataset = await d3.json(DATA_PATH);
   } catch (error) {
     showLoadError(error);
     return;
   }
 
-  const nodeInfo = buildNodeInfo(institutionSummary);
-  const paperMeta = buildPaperMeta(matchedPapers);
-  const institutionStats = buildInstitutionStats(authorships, paperMeta);
-  const allEdges = buildAllEdges(rawEdges);
-  const fieldEdges = buildFieldEdges(authorships, paperMeta);
+  const nodeInfo = new Map((dataset.nodeInfo || []).map((d) => [d.id, d]));
+  const institutionStats = restoreInstitutionStats(dataset.institutionStats);
+  const allEdges = dataset.allEdges || [];
+  const fieldEdges = dataset.fieldEdges || {};
 
   const simulation = d3
     .forceSimulation()
@@ -256,14 +230,14 @@ export async function initInstitutionNetwork() {
       .join("path")
       .attr("class", "network-link")
       .attr("fill", "none")
-      .attr("stroke", edgeColorByField(state.field))
+      .attr("stroke", defaultLinkColor)
       .attr("stroke-opacity", 1)
       .attr("stroke-linecap", "round")
       .attr("stroke-width", (d) => linkWidth(d.weight))
       .on("mouseover", function (event, d) {
         d3.select(this)
           .attr("stroke-opacity", 0.72)
-          .attr("stroke", edgeColorByField(state.field));
+          .attr("stroke", activeLinkColor);
         tooltip
           .style("opacity", 1)
           .html(`
@@ -276,7 +250,7 @@ export async function initInstitutionNetwork() {
       .on("mouseout", function () {
         d3.select(this)
           .attr("stroke-opacity", 0.34)
-          .attr("stroke", "#94a3b8");
+          .attr("stroke", defaultLinkColor);
 
         tooltip.style("opacity", 0);
       });
@@ -292,11 +266,11 @@ export async function initInstitutionNetwork() {
       .append("circle")
       .attr("class", "network-node")
       .attr("r", d => d.radius)
-      .attr("fill", d => color(d.main_field || "Unknown"))
+      .attr("fill", d => getCountryColor(d.country))
       .attr("fill-opacity", 1)
       .attr("stroke", "#ffffff")
       .attr("stroke-width", 1.6)
-      .attr("filter", "url(#institution-node-shadow)")
+      .attr("filter", "url(#network-node-shadow)")
       .on("mouseover", function (event, d) {
         highlightNeighborhood(d, true);
 
@@ -351,6 +325,7 @@ export async function initInstitutionNetwork() {
 
     simulation.on("tick", ticked);
     simulation.alpha(1).restart();
+    renderCountryLegend(nodes);
 
     function ticked() {
       link.attr("d", (d) => curvedPath(d));
@@ -369,7 +344,7 @@ export async function initInstitutionNetwork() {
     function highlightNeighborhood(selectedNode, active) {
       if (!active) {
         nodeGroup.style("opacity", 1);
-        link.style("opacity", 1).attr("stroke", "#94a3b8");
+        link.style("opacity", 1).attr("stroke", defaultLinkColor);
         labels.style("opacity", 1);
         return;
       }
@@ -398,12 +373,54 @@ export async function initInstitutionNetwork() {
           const sourceId = getId(d.source);
           const targetId = getId(d.target);
           return sourceId === selectedNode.id || targetId === selectedNode.id
-            ? "#334155"
-            : "#94a3b8";
+            ? activeLinkColor
+            : defaultLinkColor;
         });
 
       labels.style("opacity", (d) => (neighbors.has(d.id) ? 1 : 0.16));
     }
+  }
+
+  function renderCountryLegend(nodes) {
+    svg.selectAll(".network-country-legend").remove();
+
+    const items = getTopCountryLegendItems(
+      nodes.map((d) => d.country),
+      10
+    );
+
+    if (!items.length) return;
+
+    const legend = svg
+      .append("g")
+      .attr("class", "network-country-legend")
+      .attr("transform", "translate(18, 18)");
+
+    const itemWidth = 68;
+
+    items.forEach((item, index) => {
+      const x = (index % 5) * itemWidth;
+      const y = Math.floor(index / 5) * 22;
+      const group = legend.append("g").attr("transform", `translate(${x}, ${y})`);
+
+      group
+        .append("circle")
+        .attr("cx", 6)
+        .attr("cy", 6)
+        .attr("r", 5.5)
+        .attr("fill", item.color)
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 1);
+
+      group
+        .append("text")
+        .attr("x", 16)
+        .attr("y", 10)
+        .attr("font-size", 11)
+        .attr("font-weight", 700)
+        .attr("fill", "#475569")
+        .text(item.code);
+    });
   }
 
   function updateMetricCards(nodes, links) {
@@ -563,6 +580,16 @@ function buildNodeInfo(rows) {
   });
 
   return map;
+}
+
+function restoreInstitutionStats(rawStats = {}) {
+  const stats = {};
+
+  Object.entries(rawStats).forEach(([field, rows]) => {
+    stats[field] = new Map((rows || []).map((row) => [row.id, row]));
+  });
+
+  return stats;
 }
 
 function buildPaperMeta(rows) {
@@ -1025,4 +1052,111 @@ function moveTooltip(event) {
   d3.select(".network-tooltip")
     .style("left", `${event.pageX + 14}px`)
     .style("top", `${event.pageY + 14}px`);
+}
+
+const COUNTRY_COLOR_MAP = new Map(
+  Object.entries({
+    US: "#7aa6c2",
+    GB: "#d8a24a",
+    DE: "#6b8f71",
+    FR: "#c77c7c",
+    JP: "#8ba7a0",
+    CA: "#b69b5b",
+    CH: "#9b6a6c",
+    SE: "#667085",
+    AU: "#a98973",
+    RU: "#9ca3af",
+    NL: "#86a77d",
+    DK: "#b77e94",
+    BE: "#9bbf8f",
+    IT: "#c59a9f",
+    CL: "#79706e",
+    NO: "#9bb8cc",
+    MY: "#caa46b",
+    ES: "#a99557",
+    IL: "#6f9f99",
+    Unknown: "#94a3b8"
+  })
+);
+
+const FALLBACK_COUNTRY_COLORS = [
+  "#7aa6c2",
+  "#d8a24a",
+  "#6b8f71",
+  "#c77c7c",
+  "#667085",
+  "#9b6a6c",
+  "#8ba7a0",
+  "#b69b5b",
+  "#a98973",
+  "#9ca3af"
+];
+
+const COUNTRY_CODE_ALIASES = new Map(
+  Object.entries({
+    "UNITED STATES": "US",
+    "UNITED STATES OF AMERICA": "US",
+    USA: "US",
+    "U.S.": "US",
+    "U.S.A.": "US",
+    UK: "GB",
+    "UNITED KINGDOM": "GB",
+    ENGLAND: "GB",
+    SCOTLAND: "GB",
+    WALES: "GB",
+    "GREAT BRITAIN": "GB",
+    GERMANY: "DE",
+    FRANCE: "FR",
+    JAPAN: "JP",
+    CANADA: "CA",
+    SWITZERLAND: "CH",
+    SWEDEN: "SE",
+    AUSTRALIA: "AU",
+    RUSSIA: "RU",
+    "RUSSIAN FEDERATION": "RU",
+    NETHERLANDS: "NL",
+    DENMARK: "DK",
+    BELGIUM: "BE",
+    ITALY: "IT",
+    CHILE: "CL",
+    NORWAY: "NO",
+    MALAYSIA: "MY",
+    SPAIN: "ES",
+    ISRAEL: "IL"
+  })
+);
+
+function normalizeCountryCode(value) {
+  const text = String(value ?? "").trim().toUpperCase();
+  if (!text) return "Unknown";
+  return COUNTRY_CODE_ALIASES.get(text) || text;
+}
+
+function getCountryColor(value) {
+  const code = normalizeCountryCode(value);
+  if (COUNTRY_COLOR_MAP.has(code)) return COUNTRY_COLOR_MAP.get(code);
+
+  let hash = 0;
+  for (let i = 0; i < code.length; i += 1) {
+    hash = (hash * 31 + code.charCodeAt(i)) >>> 0;
+  }
+
+  return FALLBACK_COUNTRY_COLORS[hash % FALLBACK_COUNTRY_COLORS.length];
+}
+
+function getTopCountryLegendItems(values, limit = 10) {
+  const counts = new Map();
+
+  values.forEach((value) => {
+    const code = normalizeCountryCode(value);
+    counts.set(code, (counts.get(code) || 0) + 1);
+  });
+
+  return Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, limit)
+    .map(([code]) => ({
+      code,
+      color: getCountryColor(code)
+    }));
 }

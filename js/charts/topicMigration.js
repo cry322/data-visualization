@@ -4,8 +4,10 @@ export async function initTopicMigration() {
   const container = d3.select("#topic-migration-chart");
   if (container.empty()) return;
 
-  const DATA_PATH = "data/";
+  const DATA_PATH = "data_final/section4/";
   const DATA_FILE = "nobel_prize_paper_to_citation_paper_field_paths.csv";
+  const AGG_DATA_FILE = "topic_migration_field_domain_agg.csv";
+  const ARC_AGG_DATA_FILE = "topic_migration_subfield_domain_agg.csv";
 
   const fieldSelect = d3.select("#topic-field-filter");
   const viewSelect = d3.select("#topic-view-select");
@@ -17,13 +19,13 @@ export async function initTopicMigration() {
     field: fieldSelect.empty() ? "all" : normalizeSelectedField(fieldSelect.property("value")),
     view: viewSelect.empty() ? "sankey" : normalizeView(viewSelect.property("value")),
 
-    // 只作用于引用路径弧线图，不影响 Sankey
-    arcTopN: arcTopNSelect.empty() ? 10 : Number(arcTopNSelect.property("value")),
+    // Top N controls both Sankey and arc views in section 4.3.
+    sankeyTopN: arcTopNSelect.empty() ? 15 : Number(arcTopNSelect.property("value")),
+    arcTopN: arcTopNSelect.empty() ? 15 : Number(arcTopNSelect.property("value")),
 
-    // Sankey 仍然使用原来的参数，不动
-    topSource: 14,
-    topPrize: 14,
-    topTarget: 14,
+    topSource: 18,
+    topPrize: 24,
+    topTarget: 24,
     maxSamples: 8
   };
 
@@ -46,16 +48,19 @@ export async function initTopicMigration() {
     .style("box-shadow", "0 10px 28px rgba(15, 23, 42, 0.22)")
     .style("opacity", 0);
 
-  let rawRows = [];
+  let sankeyRows = [];
+  let arcRows = [];
 
   try {
-    rawRows = await d3.csv(`${DATA_PATH}${DATA_FILE}`);
+    showLoadingState();
+    sankeyRows = await loadTopicRows(DATA_PATH, AGG_DATA_FILE, DATA_FILE);
+    arcRows = await loadTopicRows(DATA_PATH, ARC_AGG_DATA_FILE, DATA_FILE);
   } catch (error) {
     showLoadError(error);
     return;
   }
 
-  populateFieldOptions(rawRows);
+  populateFieldOptions(sankeyRows);
   state.field = fieldSelect.empty() ? "all" : normalizeSelectedField(fieldSelect.property("value"));
 
   bindControls();
@@ -80,7 +85,8 @@ export async function initTopicMigration() {
 
     if (!arcTopNSelect.empty()) {
       arcTopNSelect.on("change", function () {
-        state.arcTopN = Number(this.value) || 10;
+        state.sankeyTopN = Number(this.value) || 15;
+        state.arcTopN = Number(this.value) || 15;
         render();
       });
     }
@@ -94,10 +100,10 @@ export async function initTopicMigration() {
   function render() {
     container.selectAll("*").remove();
 
-    const records = prepareRecords(rawRows, state);
+    const records = prepareRecords(sankeyRows, state);
 
     if (state.view === "arc") {
-      const data = prepareCitationArcData(rawRows, state);
+      const data = prepareCitationArcData(arcRows, state);
       updateMetrics(data);
 
       if (!data.nodes.length || !data.links.length) {
@@ -127,12 +133,12 @@ export async function initTopicMigration() {
   function drawSankey(data) {
     const node = container.node();
     const width = node.clientWidth || 980;
-    const height = 620;
+    const height = 700;
 
     const margin = {
       top: 58,
       right: 190,
-      bottom: 36,
+      bottom: 96,
       left: 190
     };
 
@@ -153,7 +159,7 @@ export async function initTopicMigration() {
       .attr("fill", "#475569")
       .attr("font-size", 13)
       .attr("font-weight", 800)
-      .text("知识来源");
+      .text("Knowledge source domains");
 
     svg.append("text")
       .attr("x", width / 2)
@@ -162,7 +168,7 @@ export async function initTopicMigration() {
       .attr("fill", "#475569")
       .attr("font-size", 13)
       .attr("font-weight", 800)
-      .text("诺奖关键论文主题");
+      .text("Nobel paper domains");
 
     svg.append("text")
       .attr("x", width - margin.right + 20)
@@ -171,7 +177,7 @@ export async function initTopicMigration() {
       .attr("fill", "#475569")
       .attr("font-size", 13)
       .attr("font-weight", 800)
-      .text("后续扩散");
+      .text("Impact domains");
 
     const layout = computeColumnLayout(data, {
       width,
@@ -180,23 +186,34 @@ export async function initTopicMigration() {
       nodeWidth
     });
 
-    const colorByType = d3.scaleOrdinal()
-      .domain(["source", "prize", "target"])
-      .range(["#7aa6c2", "#b8a7d9", "#d9a66a"]);
+    const inputLinkWidth = d3.scaleSqrt()
+      .domain([1, d3.max(layout.links.filter(d => d.flowType === "input"), d => d.value) || 1])
+      .range([1.4, 24]);
 
-    const linkWidth = d3.scaleSqrt()
-      .domain([1, d3.max(layout.links, d => d.value) || 1])
+    const outputLinkWidth = d3.scaleSqrt()
+      .domain([1, d3.max(layout.links.filter(d => d.flowType === "output"), d => d.value) || 1])
       .range([1.4, 26]);
+
+    const linkWidth = d => {
+      const scale = d.flowType === "output" ? outputLinkWidth : inputLinkWidth;
+      return scale(d.value);
+    };
+
+    const linkOpacity = d => d.isEmphasis ? 0.42 : 0.075;
+    const linkDisplayWidth = d => {
+      const width = linkWidth(d);
+      return d.isEmphasis ? width : Math.max(0.7, width * 0.42);
+    };
 
     const links = svg.append("g")
       .selectAll("path")
-      .data(layout.links, d => d.key)
+      .data(layout.links.slice().sort((a, b) => d3.ascending(Number(a.isEmphasis), Number(b.isEmphasis))), d => d.key)
       .join("path")
       .attr("fill", "none")
-      .attr("stroke", d => d.source.type === "source" ? "#7aa6c2" : "#d9a66a")
-      .attr("stroke-opacity", 0.28)
+      .attr("stroke", d => domainColor(getLinkColorDomain(d), 0.78))
+      .attr("stroke-opacity", linkOpacity)
       .attr("stroke-linecap", "round")
-      .attr("stroke-width", d => linkWidth(d.value))
+      .attr("stroke-width", linkDisplayWidth)
       .attr("d", d => curvedHorizontalPath(
         d.source.x + nodeWidth,
         d.source.linkY,
@@ -205,15 +222,16 @@ export async function initTopicMigration() {
       ))
       .on("mouseover", function (event, d) {
         d3.select(this)
-          .attr("stroke-opacity", 0.82)
-          .attr("stroke-width", Math.max(2.5, linkWidth(d.value) + 1.5));
+          .attr("stroke-opacity", 0.86)
+          .attr("stroke-width", Math.max(2.5, linkWidth(d) + 1.5));
 
         tooltip
           .style("opacity", 1)
           .html(`
             <strong>${safeText(d.source.name)}</strong><br>
             <span style="color:#cbd5e1;">→ ${safeText(d.target.name)}</span><br>
-            路径数量：${formatNumber(d.value)}<br>
+            Path count: ${formatNumber(d.value)}<br>
+            Flow type: ${safeText(propagationLabel(d.flowType))}<br>
             ${d.source.type === "source"
               ? "含义：前置知识进入诺奖论文主题"
               : "含义：诺奖论文主题向后续研究扩散"}
@@ -222,8 +240,8 @@ export async function initTopicMigration() {
       .on("mousemove", moveTooltip)
       .on("mouseout", function (event, d) {
         d3.select(this)
-          .attr("stroke-opacity", 0.28)
-          .attr("stroke-width", linkWidth(d.value));
+          .attr("stroke-opacity", linkOpacity(d))
+          .attr("stroke-width", linkDisplayWidth(d));
 
         tooltip.style("opacity", 0);
       })
@@ -240,35 +258,45 @@ export async function initTopicMigration() {
       .attr("width", nodeWidth)
       .attr("height", d => d.height)
       .attr("rx", 7)
-      .attr("fill", d => colorByType(d.type))
+      .attr("fill", d => domainColor(d.domain, 0.9))
       .attr("fill-opacity", 0.88)
       .attr("stroke", "#ffffff")
       .attr("stroke-width", 1.2)
       .style("cursor", "pointer")
       .on("mouseover", function (event, d) {
-        highlightPathNode(d, nodes, links);
+        highlightPathNode(d, nodes, links, {
+          linkOpacity,
+          linkDisplayWidth,
+          linkColor: link => domainColor(getLinkColorDomain(link), 0.78)
+        });
 
         tooltip
           .style("opacity", 1)
           .html(`
             <strong>${safeText(d.name)}</strong><br>
             类型：${roleLabel(d.type)}<br>
-            相关路径：${formatNumber(d.value)}
+            ${nodePathMetricHtml(d)}
           `);
       })
       .on("mousemove", moveTooltip)
       .on("mouseout", function () {
-        nodes.style("opacity", 1);
+        nodes
+          .interrupt()
+          .style("opacity", 1)
+          .attr("stroke", "#ffffff")
+          .attr("stroke-width", 1.2);
         links
-          .attr("stroke-opacity", 0.28)
-          .attr("stroke-width", d => linkWidth(d.value));
+          .interrupt()
+          .attr("stroke", d => domainColor(getLinkColorDomain(d), 0.78))
+          .attr("stroke-opacity", linkOpacity)
+          .attr("stroke-width", linkDisplayWidth);
         tooltip.style("opacity", 0);
       })
       .on("click", function (event, d) {
         renderPathNodeCards(d);
       });
 
-    const labelNodes = buildBalancedLabelNodes(layout.nodes, 14);
+    const labelNodes = layout.nodes;
 
     svg.append("g")
       .selectAll("text")
@@ -295,13 +323,18 @@ export async function initTopicMigration() {
       .attr("pointer-events", "none")
       .text(d => shortenText(d.name, d.type === "prize" ? 22 : 24));
 
+    drawDomainLegend(svg, {
+      x: margin.left,
+      y: height - 54
+    });
+
     svg.append("text")
       .attr("x", width / 2)
-      .attr("y", height - 10)
+      .attr("y", height - 18)
       .attr("text-anchor", "middle")
       .attr("fill", "#94a3b8")
       .attr("font-size", 12)
-      .text("Sankey 强调路径规模：线越粗，表示该主题路径出现次数越多。");
+      .text("Sankey 左右两段分别缩放：线越粗，表示该阶段内部该路径出现次数越多。");
   }
 
   function drawForceNetwork(data) {
@@ -425,7 +458,8 @@ export async function initTopicMigration() {
           .html(`
             <strong>${safeText(getNodeName(d.source))}</strong><br>
             <span style="color:#cbd5e1;">→ ${safeText(getNodeName(d.target))}</span><br>
-            路径数量：${formatNumber(d.value)}<br>
+            Path count: ${formatNumber(d.value)}<br>
+            Flow type: ${safeText(propagationLabel(d.flowType))}<br>
             类型：${safeText(edgeTypeLabel(d.edgeRole))}
           `);
       })
@@ -628,6 +662,15 @@ export async function initTopicMigration() {
       .attr("class", "placeholder")
       .style("padding", "48px")
       .html("当前筛选条件下没有可展示的知识路径。可以切换到“全部学科”查看整体结构。");
+  }
+
+  function showLoadingState() {
+    container.selectAll("*").remove();
+    container
+      .append("div")
+      .attr("class", "placeholder")
+      .style("padding", "48px")
+      .html("Loading topic migration paths...");
   }
 
   function showLoadError(error) {
@@ -958,19 +1001,35 @@ function populateFieldOptions(rows) {
   fieldSelect.property("value", existingValue);
 }
 
+async function loadTopicRows(dataPath, aggregateFile, rawFile) {
+  try {
+    const rows = await d3.csv(`${dataPath}${aggregateFile}`);
+    if (rows.length && rows.columns?.includes("count")) {
+      rows.isAggregated = true;
+      return rows;
+    }
+  } catch (error) {
+    console.warn("Topic aggregate file not available; falling back to raw CSV.", error);
+  }
+
+  const rows = await d3.csv(`${dataPath}${rawFile}`);
+  rows.isAggregated = false;
+  return rows;
+}
+
 function prepareRecords(rows, state) {
   const records = [];
 
   rows.forEach(d => {
-    const prizePaperId = cleanText(d.prize_paper_id);
-    const citationPaperId = cleanText(d.citation_paper_id);
+    const prizePaperId = cleanText(d.prize_paper_id || d.sample_prize_paper_id);
+    const citationPaperId = cleanText(d.citation_paper_id || d.sample_citation_paper_id);
     const direction = cleanText(d.direction);
 
     if (!prizePaperId || !citationPaperId || !direction) return;
 
     if (state.field !== "all") {
-      const prizeField = cleanText(d.prize_paper_field);
-      if (!fieldMatches(prizeField, state.field)) return;
+      const prizeField = cleanText(d.prize_paper_field || d.prize_topic);
+      if (!fieldMatches(prizeField, state.field) && !fieldMatches(d.prize_topic, state.field)) return;
     }
 
     const isInput = direction === "prize_paper_references_citation_paper";
@@ -978,29 +1037,35 @@ function prepareRecords(rows, state) {
 
     if (!isInput && !isOutput) return;
 
-    const prizeTopic = firstMeaningful(
-      splitMultiValue(d.prize_paper_subfield),
-      normalizeFieldName(d.prize_paper_field),
-      "Unknown Nobel Subfield"
-    );
+    const prizeTopic = getPrizeTopic(d);
+    const citationTopic = getCitationTopic(d);
+    const prizeDomain = getPrizeDomain(d);
+    const citationDomain = getCitationDomain(d);
+    const count = getRowCount(d);
 
-    const citationTopic = firstMeaningful(
-      splitMultiValue(d.citation_paper_subfield),
-      normalizeFieldName(d.citation_paper_field),
-      "Unknown Citation Subfield"
-    );
+    if (
+      isUnknownValue(prizeTopic) ||
+      isUnknownValue(citationTopic) ||
+      isUnknownValue(prizeDomain) ||
+      isUnknownValue(citationDomain)
+    ) {
+      return;
+    }
 
     records.push({
       prize_paper_id: prizePaperId,
-      prize_paper_title: cleanText(d.prize_paper_title),
+      prize_paper_title: cleanText(d.prize_paper_title || d.sample_prize_paper_title),
       prize_paper_field: cleanText(d.prize_paper_field),
+      prizeDomain,
       prizeTopic,
       citation_paper_id: citationPaperId,
-      citation_paper_title: cleanText(d.citation_paper_title),
+      citation_paper_title: cleanText(d.citation_paper_title || d.sample_citation_paper_title),
       citation_paper_field: cleanText(d.citation_paper_field),
+      citationDomain,
       citationTopic,
       direction,
-      isInput
+      isInput,
+      count
     });
   });
 
@@ -1008,52 +1073,64 @@ function prepareRecords(rows, state) {
 }
 
 function prepareSankeyData(records, state) {
-  const sourceCounts = countBy(
-    records.filter(d => d.isInput),
-    d => d.citationTopic
-  );
+  const minPathWeight = 3;
+  const topN = state.sankeyTopN || 15;
+  const sourceCountsAll = countByWeight(records.filter(d => d.isInput), d => d.citationTopic, d => d.count);
+  const prizeCountsAll = countByWeight(records, d => d.prizeTopic, d => d.count);
+  const targetCountsAll = countByWeight(records.filter(d => !d.isInput), d => d.citationTopic, d => d.count);
 
-  const prizeCounts = countBy(records, d => d.prizeTopic);
+  const filteredRecords = records.filter(d => {
+    if (d.count < minPathWeight) return false;
+    if ((prizeCountsAll.get(d.prizeTopic) || 0) < minPathWeight) return false;
+    const citationCounts = d.isInput ? sourceCountsAll : targetCountsAll;
+    return (citationCounts.get(d.citationTopic) || 0) >= minPathWeight;
+  });
 
-  const targetCounts = countBy(
-    records.filter(d => !d.isInput),
-    d => d.citationTopic
-  );
+  const sourceRecords = filteredRecords.filter(d => d.isInput);
+  const targetRecords = filteredRecords.filter(d => !d.isInput);
+  const sourceCounts = countByWeight(sourceRecords, d => d.citationTopic, d => d.count);
+  const prizeCounts = countByWeight(filteredRecords, d => d.prizeTopic, d => d.count);
+  const targetCounts = countByWeight(targetRecords, d => d.citationTopic, d => d.count);
+  const prizeDomainCounts = countByWeight(filteredRecords, d => d.prizeDomain, d => d.count);
 
-  const topSources = topKeys(sourceCounts, state.topSource);
-  const topPrizes = topKeys(prizeCounts, state.topPrize);
-  const topTargets = topKeys(targetCounts, state.topTarget);
-
+  const sourceDomainByTopic = buildTopicDomainMap(sourceRecords, d => d.citationTopic, d => d.citationDomain);
+  const prizeDomainByTopic = buildTopicDomainMap(filteredRecords, d => d.prizeTopic, d => d.prizeDomain);
+  const targetDomainByTopic = buildTopicDomainMap(targetRecords, d => d.citationTopic, d => d.citationDomain);
+  const topSources = selectTopFieldsWithOtherBudget(sourceCounts, sourceDomainByTopic, topN);
+  const topPrizes = selectTopFieldsWithOtherBudget(prizeCounts, prizeDomainByTopic, topN);
+  const topTargets = selectTopFieldsWithOtherBudget(targetCounts, targetDomainByTopic, topN);
+  const prizeOrder = buildOrderMap(prizeCounts);
+  const prizeDomainOrder = buildOrderMap(prizeDomainCounts);
   const linkMap = new Map();
 
-  records.forEach(d => {
-    const prizeName = topPrizes.has(d.prizeTopic)
-      ? d.prizeTopic
-      : "其他获奖论文主题";
+  filteredRecords.forEach(d => {
+    const prizeNode = resolveFieldNode({
+      type: "prize",
+      topic: d.prizeTopic,
+      domain: d.prizeDomain,
+      keepSet: topPrizes,
+      otherPrefix: "Other Nobel"
+    });
+    const citationNode = d.isInput
+      ? resolveFieldNode({
+          type: "source",
+          topic: d.citationTopic,
+          domain: d.citationDomain,
+          keepSet: topSources,
+          otherPrefix: "Other source"
+        })
+      : resolveFieldNode({
+          type: "target",
+          topic: d.citationTopic,
+          domain: d.citationDomain,
+          keepSet: topTargets,
+          otherPrefix: "Other impact"
+        });
 
-    let sourceName;
-    let targetName;
-    let sourceType;
-    let targetType;
-
-    if (d.isInput) {
-      sourceName = topSources.has(d.citationTopic)
-        ? d.citationTopic
-        : "其他知识来源";
-      targetName = prizeName;
-      sourceType = "source";
-      targetType = "prize";
-    } else {
-      sourceName = prizeName;
-      targetName = topTargets.has(d.citationTopic)
-        ? d.citationTopic
-        : "其他后续扩散";
-      sourceType = "prize";
-      targetType = "target";
-    }
-
-    const sourceId = `${sourceType}|${sourceName}`;
-    const targetId = `${targetType}|${targetName}`;
+    const sourceNode = d.isInput ? citationNode : prizeNode;
+    const targetNode = d.isInput ? prizeNode : citationNode;
+    const sourceId = sourceNode.id;
+    const targetId = targetNode.id;
     const key = `${sourceId}---${targetId}`;
 
     if (!linkMap.has(key)) {
@@ -1061,51 +1138,36 @@ function prepareSankeyData(records, state) {
         key,
         sourceId,
         targetId,
-        sourceName,
-        targetName,
-        sourceType,
-        targetType,
+        sourceName: sourceNode.name,
+        targetName: targetNode.name,
+        sourceType: sourceNode.type,
+        targetType: targetNode.type,
+        flowType: d.isInput ? "input" : "output",
         value: 0,
+        sourceDomain: sourceNode.domain,
+        targetDomain: targetNode.domain,
         samples: []
       });
     }
 
     const link = linkMap.get(key);
-    link.value += 1;
+    link.value += d.count;
     pushSample(link.samples, d, state.maxSamples);
   });
 
   const links = Array.from(linkMap.values())
-    .filter(d => d.value > 0)
+    .filter(d => d.value >= minPathWeight)
     .sort((a, b) => d3.descending(a.value, b.value));
 
   const nodeMap = new Map();
 
   links.forEach(link => {
     if (!nodeMap.has(link.sourceId)) {
-      nodeMap.set(link.sourceId, {
-        id: link.sourceId,
-        name: link.sourceName,
-        type: link.sourceType,
-        value: 0,
-        inValue: 0,
-        outValue: 0,
-        degree: 0,
-        samples: []
-      });
+      nodeMap.set(link.sourceId, createSankeyNode(link.sourceId, link.sourceName, link.sourceType, link.sourceDomain));
     }
 
     if (!nodeMap.has(link.targetId)) {
-      nodeMap.set(link.targetId, {
-        id: link.targetId,
-        name: link.targetName,
-        type: link.targetType,
-        value: 0,
-        inValue: 0,
-        outValue: 0,
-        degree: 0,
-        samples: []
-      });
+      nodeMap.set(link.targetId, createSankeyNode(link.targetId, link.targetName, link.targetType, link.targetDomain));
     }
 
     const sourceNode = nodeMap.get(link.sourceId);
@@ -1120,19 +1182,59 @@ function prepareSankeyData(records, state) {
     appendSamples(targetNode.samples, link.samples, state.maxSamples);
   });
 
-  const nodes = Array.from(nodeMap.values()).map(node => {
-    node.value = Math.max(node.inValue, node.outValue, 1);
-    return node;
-  });
+  const nodes = Array.from(nodeMap.values())
+    .map(node => {
+      node.value = Math.max(node.inValue, node.outValue, 1);
+      node.sortRank = getPrizeReferenceRank(node, prizeOrder, prizeDomainOrder);
+      return node;
+    })
+    .filter(node => node.value >= minPathWeight);
+
+  const keptNodeIds = new Set(nodes.map(d => d.id));
+  const keptLinks = links.filter(link => keptNodeIds.has(link.sourceId) && keptNodeIds.has(link.targetId));
+  markSankeyEmphasisLinks(keptLinks);
 
   return {
     nodes,
-    links,
-    totalPathCount: records.length,
+    links: keptLinks,
+    totalPathCount: d3.sum(filteredRecords, d => d.count),
     sourceCount: nodes.filter(d => d.type === "source").length,
     prizeCount: nodes.filter(d => d.type === "prize").length,
     targetCount: nodes.filter(d => d.type === "target").length
   };
+}
+
+function markSankeyEmphasisLinks(links) {
+  links.forEach(link => {
+    link.isEmphasis = false;
+  });
+
+  if (!links.length) return;
+
+  const sorted = links.slice().sort((a, b) => d3.descending(a.value, b.value));
+  const globalKeep = Math.max(8, Math.ceil(sorted.length * 0.18));
+  sorted.slice(0, globalKeep).forEach(link => {
+    link.isEmphasis = true;
+  });
+
+  const byNode = new Map();
+
+  links.forEach(link => {
+    [link.sourceId, link.targetId].forEach(id => {
+      if (!byNode.has(id)) byNode.set(id, []);
+      byNode.get(id).push(link);
+    });
+  });
+
+  byNode.forEach(nodeLinks => {
+    nodeLinks
+      .slice()
+      .sort((a, b) => d3.descending(a.value, b.value))
+      .slice(0, 2)
+      .forEach(link => {
+        link.isEmphasis = true;
+      });
+  });
 }
 
 function prepareForceNetworkData(records, state) {
@@ -1291,26 +1393,35 @@ function computeColumnLayout(data, config) {
   };
 
   Object.values(columns).forEach(nodes => {
-    nodes.sort((a, b) => d3.descending(a.value, b.value));
+    nodes.sort((a, b) =>
+      d3.ascending(domainRank(a.domain), domainRank(b.domain)) ||
+      d3.ascending(a.sortRank ?? 9999, b.sortRank ?? 9999) ||
+      d3.descending(a.value, b.value)
+    );
   });
 
-  const columnMaxTotal = d3.max(Object.values(columns), nodes => {
-    return d3.sum(nodes, d => d.value);
-  }) || 1;
-
-  const gap = 9;
-  const valueScale = d3.scaleLinear()
-    .domain([0, columnMaxTotal])
-    .range([0, innerHeight - 20]);
+  const gap = 8;
+  const domainGap = 22;
 
   Object.entries(columns).forEach(([type, nodes]) => {
+    const columnTotal = d3.sum(nodes, d => d.value) || 1;
+    const valueScale = d3.scaleLinear()
+      .domain([0, columnTotal])
+      .range([0, innerHeight - 20]);
     const rawHeights = nodes.map(d => Math.max(10, valueScale(d.value)));
-    const totalHeight = d3.sum(rawHeights) + Math.max(0, nodes.length - 1) * gap;
+    const groupBreaks = countDomainBreaks(nodes);
+    const totalHeight = d3.sum(rawHeights) +
+      Math.max(0, nodes.length - 1) * gap +
+      groupBreaks * domainGap;
     const shrink = totalHeight > innerHeight ? innerHeight / totalHeight : 1;
 
     let y = margin.top + Math.max(0, (innerHeight - totalHeight * shrink) / 2);
 
     nodes.forEach((node, i) => {
+      if (i > 0 && domainRank(nodes[i - 1].domain) !== domainRank(node.domain)) {
+        y += domainGap * shrink;
+      }
+
       node.x = xByType[type];
       node.y = y;
       node.height = rawHeights[i] * shrink;
@@ -1360,6 +1471,33 @@ function inferDominantRole(roleCounts) {
   return entries[0][0];
 }
 
+function domainRank(domain) {
+  const key = cleanText(domain).toLowerCase();
+  if (key.includes("physical")) return 0;
+  if (key.includes("life")) return 1;
+  if (key.includes("health")) return 2;
+  if (key.includes("social")) return 3;
+  return 4;
+}
+
+function getLinkColorDomain(link) {
+  if (link.flowType === "output") {
+    return link.target?.domain || link.targetDomain;
+  }
+
+  return link.source?.domain || link.sourceDomain;
+}
+
+function countDomainBreaks(nodes) {
+  let breaks = 0;
+
+  for (let i = 1; i < nodes.length; i += 1) {
+    if (domainRank(nodes[i - 1].domain) !== domainRank(nodes[i].domain)) breaks += 1;
+  }
+
+  return breaks;
+}
+
 function curvedHorizontalPath(x1, y1, x2, y2) {
   const midX = (x1 + x2) / 2;
   return `M${x1},${y1} C${midX},${y1} ${midX},${y2} ${x2},${y2}`;
@@ -1382,7 +1520,23 @@ function curvedLinkPath(x1, y1, x2, y2, offset = 0) {
   return `M${x1},${y1} Q${qx},${qy} ${x2},${y2}`;
 }
 
-function highlightPathNode(selected, nodes, links) {
+function highlightPathNode(selected, nodes, links, options = {}) {
+  const linkOpacity = options.linkOpacity || (() => 0.34);
+  const linkDisplayWidth = options.linkDisplayWidth || (() => 1.4);
+  const linkColor = options.linkColor || (() => "#94a3b8");
+
+  nodes.interrupt();
+  links.interrupt();
+
+  if (selected.type === "prize") {
+    highlightPrizeKnowledgeGap(selected, nodes, links, {
+      linkOpacity,
+      linkDisplayWidth,
+      linkColor
+    });
+    return;
+  }
+
   const neighborIds = new Set([selected.id]);
 
   links.each(function (link) {
@@ -1392,9 +1546,127 @@ function highlightPathNode(selected, nodes, links) {
 
   nodes.style("opacity", d => neighborIds.has(d.id) ? 1 : 0.18);
 
-  links.attr("stroke-opacity", d => {
-    return d.source.id === selected.id || d.target.id === selected.id ? 0.9 : 0.06;
+  links
+    .attr("stroke", linkColor)
+    .attr("stroke-opacity", d => {
+      return d.source.id === selected.id || d.target.id === selected.id ? 0.9 : 0.06;
+    })
+    .attr("stroke-width", d => {
+      return d.source.id === selected.id || d.target.id === selected.id
+        ? Math.max(2.4, linkDisplayWidth(d) + 1.2)
+        : Math.max(0.5, linkDisplayWidth(d) * 0.45);
+    });
+}
+
+function highlightPrizeKnowledgeGap(selected, nodes, links, options) {
+  const novelColor = "#dc2626";
+  const lostColor = "#0284c7";
+  const incoming = [];
+  const outgoing = [];
+
+  links.each(function (link) {
+    if (link.target.id === selected.id && link.source.type === "source") incoming.push(link);
+    if (link.source.id === selected.id && link.target.type === "target") outgoing.push(link);
   });
+
+  const sourceNames = new Set(incoming.map(link => link.source.name));
+  const targetNames = new Set(outgoing.map(link => link.target.name));
+  const novelTargetIds = new Set(
+    outgoing
+      .filter(link => !isOtherFieldNode(link.target) && !sourceNames.has(link.target.name))
+      .map(link => link.target.id)
+  );
+  const lostSourceIds = new Set(
+    incoming
+      .filter(link => !isOtherFieldNode(link.source) && !targetNames.has(link.source.name))
+      .map(link => link.source.id)
+  );
+  const connectedIds = new Set([selected.id]);
+
+  incoming.forEach(link => connectedIds.add(link.source.id));
+  outgoing.forEach(link => connectedIds.add(link.target.id));
+
+  nodes
+    .style("opacity", d => connectedIds.has(d.id) ? 1 : 0.13)
+    .attr("stroke", d => {
+      if (d.id === selected.id) return "#667085";
+      if (novelTargetIds.has(d.id)) return novelColor;
+      if (lostSourceIds.has(d.id)) return lostColor;
+      return "#ffffff";
+    })
+    .attr("stroke-width", d => {
+      if (d.id === selected.id) return 2.4;
+      if (novelTargetIds.has(d.id) || lostSourceIds.has(d.id)) return 2.8;
+      return 1.2;
+    });
+
+  links
+    .attr("stroke", d => {
+      if (d.source.id === selected.id && novelTargetIds.has(d.target.id)) return novelColor;
+      if (d.target.id === selected.id && lostSourceIds.has(d.source.id)) return lostColor;
+      if (d.source.id === selected.id || d.target.id === selected.id) return options.linkColor(d);
+      return "#d7dde5";
+    })
+    .attr("stroke-opacity", d => {
+      if (d.source.id === selected.id && novelTargetIds.has(d.target.id)) return 0.92;
+      if (d.target.id === selected.id && lostSourceIds.has(d.source.id)) return 0.92;
+      if (d.source.id === selected.id || d.target.id === selected.id) return Math.max(0.42, options.linkOpacity(d));
+      return 0.045;
+    })
+    .attr("stroke-width", d => {
+      if (
+        (d.source.id === selected.id && novelTargetIds.has(d.target.id)) ||
+        (d.target.id === selected.id && lostSourceIds.has(d.source.id))
+      ) {
+        return Math.max(2.8, options.linkDisplayWidth(d) + 1.8);
+      }
+
+      if (d.source.id === selected.id || d.target.id === selected.id) {
+        return Math.max(1.3, options.linkDisplayWidth(d));
+      }
+
+      return Math.max(0.45, options.linkDisplayWidth(d) * 0.35);
+    });
+
+  nodes
+    .filter(d => novelTargetIds.has(d.id) || lostSourceIds.has(d.id))
+    .transition()
+    .duration(150)
+    .attr("stroke-width", 5)
+    .transition()
+    .duration(360)
+    .attr("stroke-width", 2.8);
+
+  links
+    .filter(d =>
+      (d.source.id === selected.id && novelTargetIds.has(d.target.id)) ||
+      (d.target.id === selected.id && lostSourceIds.has(d.source.id))
+    )
+    .transition()
+    .duration(150)
+    .attr("stroke-opacity", 1)
+    .transition()
+    .duration(360)
+    .attr("stroke-opacity", 0.88);
+}
+
+function isOtherFieldNode(node) {
+  return cleanText(node?.name).toLowerCase().startsWith("other ");
+}
+
+function nodePathMetricHtml(node) {
+  if (node.type === "source") {
+    return `来源路径：${formatNumber(node.outValue || node.value || 0)}`;
+  }
+
+  if (node.type === "target") {
+    return `扩散路径：${formatNumber(node.inValue || node.value || 0)}`;
+  }
+
+  return [
+    `来源路径：${formatNumber(node.inValue || 0)}`,
+    `扩散路径：${formatNumber(node.outValue || 0)}`
+  ].join("<br>");
 }
 
 function normalizeView(value) {
@@ -1475,6 +1747,245 @@ function fieldMatches(value, field) {
   return false;
 }
 
+function getPrizeTopic(row) {
+  return cleanText(row.prize_topic) ||
+    normalizeFieldName(row.prize_paper_field) ||
+    firstMeaningful(splitMultiValue(row.prize_paper_subfield), "", "Unknown Nobel Field");
+}
+
+function getCitationTopic(row) {
+  return cleanText(row.citation_topic) ||
+    normalizeFieldName(row.citation_paper_field) ||
+    firstMeaningful(splitMultiValue(row.citation_paper_subfield), "", "Unknown Citation Field");
+}
+
+function getPrizeDomain(row) {
+  return cleanText(row.prize_domain || row.prize_paper_domain) || "Unknown Domain";
+}
+
+function getCitationDomain(row) {
+  return cleanText(row.citation_domain || row.citation_paper_domain) || "Unknown Domain";
+}
+
+function getRowCount(row) {
+  const count = Number(row.count);
+  return Number.isFinite(count) && count > 0 ? count : 1;
+}
+
+function isUnknownValue(value) {
+  const text = cleanText(value).toLowerCase();
+  return !text || text.includes("unknown") || text === "nan" || text === "none" || text === "null";
+}
+
+function selectReadableFields(countMap, { maxCount, minShare, coverage }) {
+  const entries = Array.from(countMap.entries())
+    .filter(([, value]) => value > 0)
+    .sort((a, b) => d3.descending(a[1], b[1]));
+  const total = d3.sum(entries, d => d[1]) || 1;
+  const result = new Set();
+  let running = 0;
+
+  entries.forEach(([key, value], index) => {
+    if (index >= maxCount) return;
+    const share = value / total;
+    if (share >= minShare || running / total < coverage) {
+      result.add(key);
+      running += value;
+    }
+  });
+
+  return result;
+}
+
+function selectTopFieldsWithOtherBudget(countMap, domainByTopic, topN) {
+  const entries = Array.from(countMap.entries())
+    .filter(([, value]) => value > 0)
+    .sort((a, b) => d3.descending(a[1], b[1]));
+  const keep = new Set(entries.slice(0, topN).map(([key]) => key));
+
+  while (keep.size + countOtherDomains(entries, keep, domainByTopic) > topN && keep.size > 0) {
+    const removable = Array.from(keep)
+      .sort((a, b) => d3.ascending(countMap.get(a) || 0, countMap.get(b) || 0))[0];
+    keep.delete(removable);
+  }
+
+  return keep;
+}
+
+function countOtherDomains(entries, keep, domainByTopic) {
+  const domains = new Set();
+
+  entries.forEach(([topic]) => {
+    if (keep.has(topic)) return;
+    const domain = domainByTopic.get(topic);
+    if (!isUnknownValue(domain)) domains.add(domain);
+  });
+
+  return domains.size;
+}
+
+function buildTopicDomainMap(rows, topicAccessor, domainAccessor) {
+  const domainCountsByTopic = new Map();
+
+  rows.forEach(row => {
+    const topic = topicAccessor(row);
+    const domain = domainAccessor(row);
+    if (!topic || isUnknownValue(domain)) return;
+    if (!domainCountsByTopic.has(topic)) domainCountsByTopic.set(topic, new Map());
+    const domainCounts = domainCountsByTopic.get(topic);
+    domainCounts.set(domain, (domainCounts.get(domain) || 0) + row.count);
+  });
+
+  const result = new Map();
+  domainCountsByTopic.forEach((domainCounts, topic) => {
+    result.set(topic, getDominantDomain(domainCounts));
+  });
+
+  return result;
+}
+
+function buildOrderMap(countMap) {
+  return new Map(
+    Array.from(countMap.entries())
+      .sort((a, b) => d3.descending(a[1], b[1]))
+      .map(([key], index) => [key, index])
+  );
+}
+
+function getPrizeReferenceRank(node, prizeOrder, prizeDomainOrder) {
+  if (prizeOrder.has(node.name)) return prizeOrder.get(node.name);
+
+  const domainRank = prizeDomainOrder.get(node.domain) ?? 99;
+  if (node.name.startsWith("Other ")) return 1000 + domainRank;
+
+  return 500 + domainRank;
+}
+
+function resolveFieldNode({ type, topic, domain, keepSet, otherPrefix }) {
+  const safeDomain = cleanText(domain) || "Unknown Domain";
+  const safeTopic = cleanText(topic) || "Unknown Field";
+  const isKept = keepSet.has(safeTopic);
+  const name = isKept ? safeTopic : `${otherPrefix} ${shortDomainName(safeDomain)}`;
+
+  return {
+    id: `${type}|${safeDomain}|${name}`,
+    name,
+    type,
+    domain: safeDomain
+  };
+}
+
+function shortDomainName(domain) {
+  const text = cleanText(domain);
+  if (text === "Physical Sciences") return "Physical";
+  if (text === "Life Sciences") return "Life";
+  if (text === "Health Sciences") return "Health";
+  if (text === "Social Sciences") return "Social";
+  return "Unknown";
+}
+
+function createSankeyNode(id, name, type, domain = "Unknown Domain") {
+  return {
+    id,
+    name,
+    type,
+    domain,
+    value: 0,
+    inValue: 0,
+    outValue: 0,
+    degree: 0,
+    domainCounts: new Map(),
+    samples: []
+  };
+}
+
+function addDomainCount(target, domain, value) {
+  const key = cleanText(domain) || "Unknown Domain";
+  if (!target.domainCounts) target.domainCounts = new Map();
+  target.domainCounts.set(key, (target.domainCounts.get(key) || 0) + (Number(value) || 0));
+}
+
+function getDominantDomain(domainCounts) {
+  if (!domainCounts || !domainCounts.size) return "Unknown Domain";
+  return Array.from(domainCounts.entries())
+    .sort((a, b) => d3.descending(a[1], b[1]))[0][0];
+}
+
+function drawDomainLegend(svg, { x, y }) {
+  const legend = svg
+    .append("g")
+    .attr("class", "sankey-legend")
+    .attr("transform", `translate(${x}, ${y})`);
+
+  const items = [
+    ["Physical Sciences", "Physical Sciences"],
+    ["Life Sciences", "Life Sciences"],
+    ["Health Sciences", "Health Sciences"],
+    ["Social Sciences", "Social Sciences"]
+  ];
+
+  let offset = 0;
+  items.forEach(([domain, label]) => {
+    const item = legend.append("g").attr("transform", `translate(${offset}, 0)`);
+
+    item.append("line")
+      .attr("x1", 0)
+      .attr("x2", 30)
+      .attr("y1", 0)
+      .attr("y2", 0)
+      .attr("stroke", domainColor(domain, 1))
+      .attr("stroke-width", 5)
+      .attr("stroke-linecap", "round");
+
+    item.append("text")
+      .attr("x", 38)
+      .attr("y", 4)
+      .attr("font-size", 12)
+      .attr("fill", "#64748b")
+      .text(label);
+
+    offset += label.length * 7 + 78;
+  });
+}
+
+function propagationLabel(type) {
+  if (type === "input") return "Input knowledge flow";
+  if (type === "output") return "Future impact diffusion";
+  return "Knowledge flow";
+}
+
+function propagationColor(type, alpha = 0.78) {
+  if (type === "input") return `rgba(122, 166, 194, ${alpha})`;
+  if (type === "output") return `rgba(216, 162, 74, ${alpha})`;
+  return `rgba(148, 163, 184, ${alpha})`;
+}
+
+function roleColor(type, alpha = 0.9) {
+  if (type === "source") return `rgba(122, 166, 194, ${alpha})`;
+  if (type === "prize") return `rgba(184, 166, 207, ${alpha})`;
+  if (type === "target") return `rgba(216, 162, 74, ${alpha})`;
+  return `rgba(148, 163, 184, ${alpha})`;
+}
+
+function domainColor(domain, alpha = 0.78) {
+  const key = cleanText(domain).toLowerCase();
+  const colors = {
+    physical: [216, 162, 74],
+    life: [122, 166, 194],
+    health: [199, 124, 124],
+    social: [184, 166, 207],
+    unknown: [215, 221, 229]
+  };
+
+  let rgb = colors.unknown;
+  if (key.includes("physical")) rgb = colors.physical;
+  else if (key.includes("life")) rgb = colors.life;
+  else if (key.includes("health")) rgb = colors.health;
+  else if (key.includes("social")) rgb = colors.social;
+
+  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
+}
+
 function countBy(rows, accessor) {
   const map = new Map();
 
@@ -1487,6 +1998,19 @@ function countBy(rows, accessor) {
   return map;
 }
 
+function countByWeight(rows, accessor, weightAccessor) {
+  const map = new Map();
+
+  rows.forEach(row => {
+    const key = accessor(row);
+    if (!key) return;
+    const weight = Number(weightAccessor(row)) || 0;
+    map.set(key, (map.get(key) || 0) + weight);
+  });
+
+  return map;
+}
+
 function topKeys(countMap, n) {
   return new Set(
     Array.from(countMap.entries())
@@ -1494,6 +2018,47 @@ function topKeys(countMap, n) {
       .slice(0, n)
       .map(d => d[0])
   );
+}
+
+function topKeysByCoverage(countMap, { minCount, maxCount, coverage }) {
+  const entries = Array.from(countMap.entries())
+    .filter(([, value]) => value > 0)
+    .sort((a, b) => d3.descending(a[1], b[1]));
+  const total = d3.sum(entries, d => d[1]) || 1;
+  const result = new Set();
+  let running = 0;
+
+  entries.forEach(([key, value], index) => {
+    if (index >= maxCount) return;
+    if (index < minCount || running / total < coverage) {
+      result.add(key);
+      running += value;
+    }
+  });
+
+  return result;
+}
+
+function mergeCountMaps(...maps) {
+  const result = new Map();
+
+  maps.forEach(map => {
+    map.forEach((value, key) => {
+      result.set(key, (result.get(key) || 0) + value);
+    });
+  });
+
+  return result;
+}
+
+function mergeTopKeys(primaryKeys, globalKeys, roleCounts) {
+  const result = new Set(primaryKeys);
+
+  globalKeys.forEach(key => {
+    if (roleCounts.has(key)) result.add(key);
+  });
+
+  return result;
 }
 
 function uniqueBy(rows, accessor) {
@@ -1593,6 +2158,7 @@ function prepareCitationArcData(rows, state) {
   const selectedField = normalizeSelectedField(state.field);
   const topN = state.arcTopN || 10;
   const maxSamples = state.maxSamples || 8;
+  const minArcWeight = 3;
 
   const rawRecords = [];
 
@@ -1621,15 +2187,19 @@ function prepareCitationArcData(rows, state) {
     if (!prizeSubfield || !citationSubfield) return;
     if (isUnknownArcSubfield(prizeSubfield) || isUnknownArcSubfield(citationSubfield)) return;
 
+    const count = getRowCount(d);
+    if (count < minArcWeight) return;
+
     rawRecords.push({
       direction,
       isInput,
       isOutput,
+      count,
 
-      prize_paper_id: cleanText(d.prize_paper_id),
-      prize_paper_title: cleanText(d.prize_paper_title),
-      citation_paper_id: cleanText(d.citation_paper_id),
-      citation_paper_title: cleanText(d.citation_paper_title),
+      prize_paper_id: cleanText(d.prize_paper_id || d.sample_prize_paper_id),
+      prize_paper_title: cleanText(d.prize_paper_title || d.sample_prize_paper_title),
+      citation_paper_id: cleanText(d.citation_paper_id || d.sample_citation_paper_id),
+      citation_paper_title: cleanText(d.citation_paper_title || d.sample_citation_paper_title),
 
       prizeField,
       citationField,
@@ -1643,19 +2213,22 @@ function prepareCitationArcData(rows, state) {
 
   const globalRoleStats = buildArcGlobalRoleStats(rawRecords);
 
-  const sourceCounts = countBy(
+  const sourceCounts = countByWeight(
     rawRecords.filter(d => d.isInput),
-    d => d.citationSubfield
+    d => d.citationSubfield,
+    d => d.count
   );
 
-  const prizeCounts = countBy(
+  const prizeCounts = countByWeight(
     rawRecords,
-    d => d.prizeSubfield
+    d => d.prizeSubfield,
+    d => d.count
   );
 
-  const targetCounts = countBy(
+  const targetCounts = countByWeight(
     rawRecords.filter(d => d.isOutput),
-    d => d.citationSubfield
+    d => d.citationSubfield,
+    d => d.count
   );
 
   const topSources = topKeys(sourceCounts, topN);
@@ -1693,8 +2266,8 @@ function prepareCitationArcData(rows, state) {
   }
 
   function addNodeContribution(node, roleField, domain, record) {
-    node.value += 1;
-    node[roleField] += 1;
+    node.value += record.count;
+    node[roleField] += record.count;
 
     // 只用 domain 投票决定颜色
     addDomainVote(node.colorVotes, domain);
@@ -1703,7 +2276,7 @@ function prepareCitationArcData(rows, state) {
   }
 
   rawRecords.forEach(record => {
-    const prizeBucket = bucketToTopOrOthers(record.prizeSubfield, topPrizes);
+    const prizeBucket = bucketToTopOrOthers(record.prizeSubfield, topPrizes, record.prizeDomain);
     const prizeNodeId = `prize|${prizeBucket}`;
     const prizeNode = ensureNode(prizeNodeId, prizeBucket, "prize");
 
@@ -1711,7 +2284,7 @@ function prepareCitationArcData(rows, state) {
     addNodeContribution(prizeNode, "prizeValue", record.prizeDomain, record);
 
     if (record.isInput) {
-      const sourceBucket = bucketToTopOrOthers(record.citationSubfield, topSources);
+      const sourceBucket = bucketToTopOrOthers(record.citationSubfield, topSources, record.citationDomain);
       const sourceNodeId = `source|${sourceBucket}`;
       const sourceNode = ensureNode(sourceNodeId, sourceBucket, "source");
 
@@ -1735,7 +2308,9 @@ function prepareCitationArcData(rows, state) {
       }
 
       const link = linkMap.get(linkKey);
-      link.value += 1;
+      link.value += record.count;
+      link.sourceDomain = record.prizeDomain;
+      link.targetDomain = record.citationDomain;
 
       // 弧线也可以按 citation domain 记录颜色归属，但实际颜色函数下面会统一低饱和处理
       addDomainVote(link.colorVotes, record.citationDomain);
@@ -1744,10 +2319,10 @@ function prepareCitationArcData(rows, state) {
     }
 
     if (record.isOutput) {
-      const sourceSideBucket = bucketToTopOrOthers(record.citationSubfield, topSources);
-      const targetSideBucket = bucketToTopOrOthers(record.citationSubfield, topTargets);
+      const sourceSideBucket = bucketToTopOrOthers(record.citationSubfield, topSources, record.citationDomain);
+      const targetSideBucket = bucketToTopOrOthers(record.citationSubfield, topTargets, record.citationDomain);
 
-      const overlapsWithSource = sourceSideBucket !== "Others";
+      const overlapsWithSource = !isArcOtherName(sourceSideBucket);
 
       if (overlapsWithSource) {
         const sourceNodeId = `source|${sourceSideBucket}`;
@@ -1774,7 +2349,9 @@ function prepareCitationArcData(rows, state) {
         }
 
         const link = linkMap.get(linkKey);
-        link.value += 1;
+        link.value += record.count;
+        link.sourceDomain = record.prizeDomain;
+        link.targetDomain = record.citationDomain;
         addDomainVote(link.colorVotes, record.citationDomain);
         pushSample(link.samples, record, maxSamples);
 
@@ -1803,7 +2380,9 @@ function prepareCitationArcData(rows, state) {
         }
 
         const link = linkMap.get(linkKey);
-        link.value += 1;
+        link.value += record.count;
+        link.sourceDomain = record.citationDomain;
+        link.targetDomain = record.prizeDomain;
         addDomainVote(link.colorVotes, record.citationDomain);
         pushSample(link.samples, record, maxSamples);
       }
@@ -1814,7 +2393,7 @@ function prepareCitationArcData(rows, state) {
     // colorField 这里实际存的是 domain
     node.colorField = chooseDominantField(node.colorVotes);
 
-    node.globalRoleStats = node.name === "Others"
+    node.globalRoleStats = isArcOtherName(node.name)
       ? null
       : (globalRoleStats.get(node.name) || { source: 0, prize: 0, target: 0 });
 
@@ -1828,8 +2407,8 @@ function prepareCitationArcData(rows, state) {
       return d3.ascending(roleOrder[a.axisRole], roleOrder[b.axisRole]);
     }
 
-    if (a.name === "Others" && b.name !== "Others") return 1;
-    if (a.name !== "Others" && b.name === "Others") return -1;
+    if (isArcOtherName(a.name) && !isArcOtherName(b.name)) return 1;
+    if (!isArcOtherName(a.name) && isArcOtherName(b.name)) return -1;
 
     return d3.descending(a.value, b.value);
   });
@@ -1863,7 +2442,7 @@ function prepareCitationArcData(rows, state) {
   return {
     selectedField,
     topN,
-    totalPathCount: rawRecords.length,
+    totalPathCount: d3.sum(rawRecords, d => d.count),
 
     nodes,
     links: [...keptUpper, ...keptLower],
@@ -1943,6 +2522,10 @@ function drawCitationArcDiagram(data) {
   const prizeNodes = data.nodes.filter(d => d.axisRole === "prize");
   const targetNodes = data.nodes.filter(d => d.axisRole === "target");
 
+  sortArcNodes(sourceNodes);
+  sortArcNodes(prizeNodes);
+  sortArcNodes(targetNodes);
+
   assignArcNodePositions(
     sourceNodes,
     margin.left + 30,
@@ -2012,10 +2595,10 @@ function drawCitationArcDiagram(data) {
     .data(data.links, d => d.key)
     .join("path")
     .attr("fill", "none")
-    .attr("stroke", d => arcStrokeColor(d.role, d.colorField, d.arcRank || 0))
-    .attr("stroke-width", d => linkWidth(d.value))
+    .attr("stroke", d => arcStrokeColor(d, d.arcRank || 0))
+    .attr("stroke-width", d => arcLinkWidth(d, linkWidth))
     .attr("stroke-linecap", "round")
-    .attr("stroke-opacity", 1)
+    .attr("stroke-opacity", d => arcLinkOpacity(d, d.arcRank || 0))
     .attr("d", d => {
       const source = nodeById.get(d.source);
       const target = nodeById.get(d.target);
@@ -2032,7 +2615,7 @@ function drawCitationArcDiagram(data) {
     .on("mouseover", function (event, d) {
       links
         .attr("stroke-opacity", x => x.key === d.key ? 1 : 0.08)
-        .attr("stroke-width", x => x.key === d.key ? Math.max(2.6, linkWidth(x.value) + 1.2) : linkWidth(x.value));
+        .attr("stroke-width", x => x.key === d.key ? Math.max(2.6, arcLinkWidth(x, linkWidth) + 1.2) : arcLinkWidth(x, linkWidth));
 
       nodes.style("opacity", n => (n.id === d.source || n.id === d.target) ? 1 : 0.22);
       labels.style("opacity", n => (n.id === d.source || n.id === d.target) ? 1 : 0.15);
@@ -2049,8 +2632,8 @@ function drawCitationArcDiagram(data) {
     .on("mousemove", moveTooltip)
     .on("mouseout", function () {
       links
-        .attr("stroke-opacity", 1)
-        .attr("stroke-width", d => linkWidth(d.value));
+        .attr("stroke-opacity", d => arcLinkOpacity(d, d.arcRank || 0))
+        .attr("stroke-width", d => arcLinkWidth(d, linkWidth));
 
       nodes.style("opacity", 1);
       labels.style("opacity", d => d.__showLabel ? 1 : 0);
@@ -2076,9 +2659,9 @@ function drawCitationArcDiagram(data) {
       nodes.style("opacity", n => n.id === d.id ? 1 : 0.24);
       labels.style("opacity", n => n.id === d.id ? 1 : 0.18);
 
-      const globalStatsHtml = d.name === "Others"
+      const globalStatsHtml = isArcOtherName(d.name)
         ? `
-          该节点为 Others 合并节点。<br>
+          该节点为按 domain 分组的 Others 合并节点。<br>
           它包含未进入 Top N 的多个 subfield，因此不展示单一 subfield 的全局角色统计。
         `
         : `
@@ -2145,7 +2728,7 @@ function drawCitationArcDiagram(data) {
     .attr("stroke", "#ffffff")
     .attr("stroke-width", 3)
     .style("opacity", d => d.__showLabel ? 1 : 0)
-    .text(d => d.name === "Others" ? "Others" : shortenText(d.name, 12));
+    .text(d => isArcOtherName(d.name) ? "" : shortenText(d.name, 12));
 
   svg.append("text")
     .attr("x", width / 2)
@@ -2154,6 +2737,11 @@ function drawCitationArcDiagram(data) {
     .attr("fill", "#94a3b8")
     .attr("font-size", 11)
     .text("节点颜色表示 domain；每侧仅保留 Top N subfield，其余合并为 Others；已删除 Unknown；点击节点或弧线可查看代表论文。");
+
+  drawArcLegend(svg, {
+    x: margin.left + 8,
+    y: height - 62
+  });
 
   renderArcDefaultCards(data);
 }
@@ -2168,6 +2756,14 @@ function assignArcNodePositions(nodes, startX, endX, axisY) {
     d.x = scale(d.id) || (startX + endX) / 2;
     d.y = axisY;
   });
+}
+
+function sortArcNodes(nodes) {
+  nodes.sort((a, b) =>
+    d3.ascending(domainRank(a.colorField), domainRank(b.colorField)) ||
+    d3.descending(a.value, b.value) ||
+    d3.ascending(a.name, b.name)
+  );
 }
 
 function citationArcPath({ sourceX, targetX, axisY, role, rank }) {
@@ -2205,13 +2801,77 @@ function drawArcGroupTitle(svg, x, y, text) {
     .text(text);
 }
 
+function drawArcLegend(svg, { x, y }) {
+  const legend = svg
+    .append("g")
+    .attr("class", "arc-legend")
+    .attr("transform", `translate(${x}, ${y})`);
+
+  const domainItems = [
+    ["Physical Sciences", "Physical"],
+    ["Life Sciences", "Life"],
+    ["Health Sciences", "Health"],
+    ["Social Sciences", "Social"]
+  ];
+
+  let offset = 0;
+
+  domainItems.forEach(([domain, label]) => {
+    const item = legend.append("g").attr("transform", `translate(${offset}, 0)`);
+
+    item.append("circle")
+      .attr("cx", 6)
+      .attr("cy", 0)
+      .attr("r", 5.5)
+      .attr("fill", domainColor(domain, 0.92))
+      .attr("stroke", "#ffffff")
+      .attr("stroke-width", 1);
+
+    item.append("text")
+      .attr("x", 16)
+      .attr("y", 4)
+      .attr("font-size", 11)
+      .attr("fill", "#64748b")
+      .text(label);
+
+    offset += label.length * 7 + 48;
+  });
+
+  const linkItems = [
+    ["Same domain", "rgba(91, 111, 136, 0.56)"],
+    ["Cross domain", "rgba(220, 38, 38, 0.48)"]
+  ];
+
+  linkItems.forEach(([label, color]) => {
+    const item = legend.append("g").attr("transform", `translate(${offset}, 0)`);
+
+    item.append("line")
+      .attr("x1", 0)
+      .attr("x2", 28)
+      .attr("y1", 0)
+      .attr("y2", 0)
+      .attr("stroke", color)
+      .attr("stroke-width", 4)
+      .attr("stroke-linecap", "round");
+
+    item.append("text")
+      .attr("x", 36)
+      .attr("y", 4)
+      .attr("font-size", 11)
+      .attr("fill", "#64748b")
+      .text(label);
+
+    offset += label.length * 7 + 64;
+  });
+}
+
 function extractPrimarySubfield(value) {
   const items = splitMultiValue(value).map(d => cleanText(d)).filter(Boolean);
   return items.length ? items[0] : cleanText(value);
 }
 
-function bucketToTopOrOthers(name, topSet) {
-  return topSet.has(name) ? name : "Others";
+function bucketToTopOrOthers(name, topSet, domain = "") {
+  return topSet.has(name) ? name : `Other ${shortDomainName(domain)}`;
 }
 
 function addFieldVote(voteObj, field) {
@@ -2231,13 +2891,10 @@ function getArcLabelShowSet(sourceNodes, prizeNodes, targetNodes) {
 
   function addGroup(nodes, normalCount = 4) {
     const normal = nodes
-      .filter(d => d.name !== "Others")
+      .filter(d => !isArcOtherName(d.name))
       .slice(0, normalCount);
 
     normal.forEach(d => set.add(d.id));
-
-    const others = nodes.find(d => d.name === "Others");
-    if (others) set.add(others.id);
   }
 
   addGroup(sourceNodes, 4);
@@ -2248,66 +2905,34 @@ function getArcLabelShowSet(sourceNodes, prizeNodes, targetNodes) {
 }
 
 function nodeFieldColor(domain, alpha = 0.88) {
-  const text = cleanText(domain);
-  const lower = text.toLowerCase();
-
-  if (!text || lower === "other" || lower === "unknown") {
-    return `rgba(163, 172, 184, ${alpha})`;
-  }
-
-  if (lower.includes("physical")) {
-    return `rgba(91, 119, 164, ${alpha})`;     // Physical Sciences
-  }
-
-  if (lower.includes("life")) {
-    return `rgba(88, 139, 119, ${alpha})`;     // Life Sciences
-  }
-
-  if (lower.includes("health") || lower.includes("medical")) {
-    return `rgba(184, 126, 116, ${alpha})`;    // Health Sciences
-  }
-
-  if (lower.includes("social")) {
-    return `rgba(143, 125, 167, ${alpha})`;    // Social Sciences
-  }
-
-  if (lower.includes("arts") || lower.includes("humanities")) {
-    return `rgba(172, 137, 84, ${alpha})`;     // Arts and Humanities
-  }
-
-  const palette = [
-    [91, 119, 164],
-    [88, 139, 119],
-    [184, 126, 116],
-    [143, 125, 167],
-    [172, 137, 84],
-    [107, 132, 137],
-    [154, 116, 142],
-    [126, 139, 92]
-  ];
-
-  let hash = 0;
-
-  for (let i = 0; i < text.length; i += 1) {
-    hash = ((hash << 5) - hash) + text.charCodeAt(i);
-    hash |= 0;
-  }
-
-  const color = palette[Math.abs(hash) % palette.length];
-
-  return `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${alpha})`;
+  return domainColor(domain, alpha);
 }
 
-function arcStrokeColor(role, colorField, rank = 0) {
-  const alpha = Math.max(0.18, 0.46 - rank * 0.010);
+function arcStrokeColor(link, rank = 0) {
+  const sourceDomain = cleanText(link.sourceDomain);
+  const targetDomain = cleanText(link.targetDomain);
+  const sameDomain = sourceDomain && targetDomain && sourceDomain === targetDomain;
+  const alpha = Math.max(0.20, 0.50 - rank * 0.010);
 
-  // 上方弧线：低饱和蓝灰
-  if (role === "nobel_references_source") {
-    return `rgba(91, 111, 136, ${alpha})`;
-  }
+  if (sameDomain) return `rgba(91, 111, 136, ${alpha})`;
 
-  // 下方弧线：低饱和棕灰
-  return `rgba(138, 116, 108, ${alpha})`;
+  return `rgba(220, 38, 38, ${Math.max(0.24, alpha + 0.02)})`;
+}
+
+function arcLinkOpacity(link, rank = 0) {
+  return 1;
+}
+
+function arcLinkWidth(link, widthScale) {
+  return widthScale(link.value);
+}
+
+function isOtherArcLink(link) {
+  return isArcOtherName(link.sourceName) || isArcOtherName(link.targetName);
+}
+
+function isArcOtherName(name) {
+  return cleanText(name).toLowerCase().startsWith("other ");
 }
 
 function arcRoleLabel(role) {

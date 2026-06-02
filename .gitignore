@@ -6,6 +6,19 @@
 
 # Local project files and data.
 data/
+
+# Deployable reduced datasets.
+!data_final/
+data_final/*
+!data_final/section1/
+!data_final/section1/*.csv
+!data_final/section2/
+!data_final/section2/*.json
+!data_final/section3/
+!data_final/section3/*.json
+!data_final/section4/
+!data_final/section4/*.json
+!data_final/section4/*.csv
 direction3-prototype/
 docx_render_check/
 docx_render_front_four/

@@ -2,12 +2,7 @@ import { sankey, sankeyLinkHorizontal } from "https://cdn.jsdelivr.net/npm/d3-sa
 
 const d3 = window.d3;
 
-const DATA_PATHS = {
-  fieldOutputs: "data/nobel_prize_institution_field_outputs.csv",
-  institutionSummary: "data/nobel_prize_institution_summary.csv",
-  authorCountry: "data/nobel_prize_author_country.csv",
-  prizePapers: "data/matched_prize_papers_unique.csv",
-};
+const DATA_PATH = "data_final/section4/institution_sankey.json";
 
 const FIELD_ORDER = ["Physics", "Chemistry", "Medicine"];
 
@@ -292,6 +287,119 @@ function prepareData({ fieldRows, summaryRows, authorRows, prizeRows, topN }) {
   };
 }
 
+function prepareDataFromPrecomputed({ rows: sourceRows, prizeFieldsByInst, topN }) {
+  let rows = sourceRows || [];
+  const prizeFieldsByInstitution = new Map(
+    Object.entries(prizeFieldsByInst || {}).map(([id, fields]) => [id, new Set(fields)])
+  );
+
+  const totalByInst = d3.rollup(
+    rows,
+    (values) => d3.sum(values, (d) => d.worksCount),
+    (d) => d.institutionKey
+  );
+
+  const selectedInstIds = new Set(
+    Array.from(totalByInst.entries())
+      .sort((a, b) => d3.descending(a[1], b[1]))
+      .slice(0, Number(topN))
+      .map(([id]) => id)
+  );
+
+  rows = rows.filter((d) => selectedInstIds.has(d.institutionKey));
+
+  const mainFieldByInst = new Map();
+  const groupedByInst = d3.group(rows, (d) => d.institutionKey);
+
+  groupedByInst.forEach((values, instId) => {
+    const best = [...values].sort((a, b) => d3.descending(a.worksCount, b.worksCount))[0];
+    if (best) mainFieldByInst.set(instId, best.field);
+  });
+
+  const nodes = [];
+  const nodeIndex = new Map();
+
+  function addNode(id, name, type, extra = {}) {
+    if (nodeIndex.has(id)) return nodeIndex.get(id);
+    const node = { id, name, type, ...extra };
+    nodeIndex.set(id, nodes.length);
+    nodes.push(node);
+    return nodes.length - 1;
+  }
+
+  rows.forEach((d) => {
+    const prizeFieldSet = prizeFieldsByInstitution.get(d.institutionKey) || new Set();
+    const mainField = mainFieldByInst.get(d.institutionKey);
+
+    addNode(`inst:${d.institutionKey}`, d.institutionName, "institution", {
+      institutionKey: d.institutionKey,
+      countryCode: d.countryCode,
+      institutionType: d.institutionType,
+      mainField,
+      prizeFields: Array.from(prizeFieldSet),
+      isConsistent: prizeFieldSet.has(mainField),
+      prizePaperCount: d.prizePaperCount,
+      associatedLaureateCount: d.associatedLaureateCount,
+      associatedScientistCount: d.associatedScientistCount,
+      meanCitationPercentile: d.meanCitationPercentile,
+    });
+
+    addNode(`field:${d.field}`, d.field, "field", { field: d.field });
+  });
+
+  const links = [];
+
+  rows.forEach((d) => {
+    const prizeFieldSet = prizeFieldsByInstitution.get(d.institutionKey) || new Set();
+    const mainField = mainFieldByInst.get(d.institutionKey);
+    const isPrizeField = prizeFieldSet.has(d.field);
+    const isMainField = mainField === d.field;
+    const isConsistent = isPrizeField && isMainField;
+
+    links.push({
+      source: nodeIndex.get(`inst:${d.institutionKey}`),
+      target: nodeIndex.get(`field:${d.field}`),
+      value: d.worksCount,
+      raw: d,
+      linkType: isConsistent ? "consistent" : isPrizeField ? "prizeOnly" : isMainField ? "mainOnly" : "normal",
+      isPrizeField,
+      isMainField,
+      isConsistent,
+    });
+  });
+
+  const institutionIds = Array.from(groupedByInst.keys());
+
+  const consistentInstitutionCount = institutionIds.filter((instId) => {
+    const mainField = mainFieldByInst.get(instId);
+    const prizeFields = prizeFieldsByInstitution.get(instId);
+    return prizeFields && prizeFields.has(mainField);
+  }).length;
+
+  const inconsistentInstitutionCount = institutionIds.filter((instId) => {
+    const mainField = mainFieldByInst.get(instId);
+    const prizeFields = prizeFieldsByInstitution.get(instId);
+    return prizeFields && prizeFields.size > 0 && !prizeFields.has(mainField);
+  }).length;
+
+  const unknownPrizeFieldCount = institutionIds.filter((instId) => {
+    const prizeFields = prizeFieldsByInstitution.get(instId);
+    return !prizeFields || prizeFields.size === 0;
+  }).length;
+
+  return {
+    nodes,
+    links,
+    stats: {
+      institutionCount: groupedByInst.size,
+      consistentInstitutionCount,
+      inconsistentInstitutionCount,
+      unknownPrizeFieldCount,
+      totalWorks: d3.sum(rows, (d) => d.worksCount),
+    },
+  };
+}
+
 function renderInsightPanel(container, stats, selected = null) {
   if (!container) return;
 
@@ -523,21 +631,14 @@ export async function initInstitutionSankey() {
   const topNSelect = document.querySelector("#sankey-topn-select");
 
   try {
-    const [fieldRows, summaryRows, authorRows, prizeRows] = await Promise.all([
-      d3.csv(DATA_PATHS.fieldOutputs),
-      d3.csv(DATA_PATHS.institutionSummary),
-      d3.csv(DATA_PATHS.authorCountry),
-      d3.csv(DATA_PATHS.prizePapers),
-    ]);
+    const dataset = await d3.json(DATA_PATH);
 
     function update() {
       const topN = topNSelect?.value || "20";
 
-      const prepared = prepareData({
-        fieldRows,
-        summaryRows,
-        authorRows,
-        prizeRows,
+      const prepared = prepareDataFromPrecomputed({
+        rows: dataset.rows,
+        prizeFieldsByInst: dataset.prizeFieldsByInst,
         topN,
       });
 

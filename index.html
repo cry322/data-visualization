@@ -250,30 +250,6 @@
           </div>
         </div>
 
-        <div class="institution-hero card">
-          <div class="institution-hero-text">
-            <div class="panel-title">科研机构与国家分布看板</div>
-            <div class="panel-note">
-              观察哪些机构和国家构成诺奖科研中心，并比较不同学科下的机构影响力与国家分布。
-            </div>
-          </div>
-
-          <div class="institution-metrics">
-            <div class="metric-card">
-              <div class="metric-value" id="metric-institution-count">--</div>
-              <div class="metric-label">机构数量</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-value" id="metric-country-count">--</div>
-              <div class="metric-label">国家 / 地区</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-value" id="metric-paper-count">--</div>
-              <div class="metric-label">论文数量</div>
-            </div>
-          </div>
-        </div>
-
         <nav class="institution-subnav card">
           <a href="#institution-overview-block">机构概览</a>
           <a href="#institution-country-block">国家分布</a>
@@ -504,14 +480,12 @@
                 <option value="arc">引用路径弧线图</option>
               </select>
 
-              <span id="topic-arc-topn-control" class="topic-arc-topn-control" style="display: none;">
-                <label for="topic-arc-topn-select">弧线图 Top N：</label>
-                <select id="topic-arc-topn-select">
-                  <option value="10" selected>Top 10</option>
-                  <option value="15">Top 15</option>
-                  <option value="20">Top 20</option>
-                </select>
-              </span>
+              <label for="topic-arc-topn-select">图表 Top N：</label>
+              <select id="topic-arc-topn-select">
+                <option value="10">Top 10</option>
+                <option value="15" selected>Top 15</option>
+                <option value="20">Top 20</option>
+              </select>
             </div>
 
             <div class="topic-metric-strip">

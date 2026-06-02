@@ -1,4 +1,4 @@
-// js/charts/institutionOverview.js
+﻿// js/charts/institutionOverview.js
 
 const d3 = window.d3;
 
@@ -21,7 +21,7 @@ export function initInstitutionOverview() {
 
     let currentMetric = "prize_paper_count"; 
     let currentField = "all";          
-    let selectedInstitutionId = null; // 【新增】用于跟踪当前点击选中的机构 ID
+    let selectedInstitutionId = null; 
 
     const metricNameMap = {
         "prize_paper_count": "参与获奖论文数量",
@@ -47,46 +47,26 @@ export function initInstitutionOverview() {
         .style("position", "absolute")
         .style("z-index", "9999");
 
-    Promise.all([
-        d3.csv("data/nobel_prize_institution_summary.csv"),
-        d3.csv("data/nobel_prize_institution_field_outputs.csv"),
-        d3.csv("data/nobel_prize_author_country.csv")
-    ]).then(([summaryData, fieldData, authorCountryData]) => {
+    d3.json("data_final/section3/institution_overview.json").then(dataset => {
         
-        let validSummary = summaryData.filter(d => d.institution_id).map(d => {
-            const totalWorks = +d.institution_total_works_count || 0;
-            const totalCited = +d.institution_total_cited_by_count || 0;
-            const avgCitations = totalWorks > 0 ? (totalCited / totalWorks) : 0;
+        let validSummary = (dataset.institutions || []).filter(d => d.id).map(d => ({
+            id: d.id,
+            name: (d.name || d.id).trim(),
+            country: d.country ? d.country.trim().toUpperCase() : "未知",
+            prize_paper_count: +d.prize_paper_count || 0,
+            associated_laureate_count: +d.associated_laureate_count || 0,
+            associated_scientist_count: +d.associated_scientist_count || 0,
+            institution_total_works_count: +d.institution_total_works_count || 0,
+            median_prize_paper_cited_by_count: +d.median_prize_paper_cited_by_count || 0,
+            avg_citations_per_work: +d.avg_citations_per_work || 0,
+            fields: Array.isArray(d.fields) ? d.fields : [],
+            papers: Array.isArray(d.papers) ? d.papers : []
+        }));
 
-            return {
-                id: d.institution_id,
-                name: (d.institution_display_name || d.institution_id).trim(),
-                country: d.country_code ? d.country_code.trim().toUpperCase() : "未知",
-                prize_paper_count: +d.prize_paper_count || 0,
-                associated_laureate_count: +d.associated_laureate_count || 0,
-                associated_scientist_count: +d.associated_scientist_count || 0,
-                institution_total_works_count: totalWorks,
-                median_prize_paper_cited_by_count: +d.median_prize_paper_cited_by_count || 0,
-                avg_citations_per_work: avgCitations 
-            };
-        });
-
-        const fieldMap = new Map(); 
-        const institutionFieldsMap = new Map(); 
-
-        fieldData.forEach(f => {
-            if (f.mapping_methods && f.mapping_methods.includes("field_exact")) {
-                if (!fieldMap.has(f.nobel_field)) fieldMap.set(f.nobel_field, new Set());
-                fieldMap.get(f.nobel_field).add(f.institution_id);
-            }
-            if (f.institution_id && f.nobel_field) {
-                if (!institutionFieldsMap.has(f.institution_id)) {
-                    institutionFieldsMap.set(f.institution_id, new Set());
-                }
-                institutionFieldsMap.get(f.institution_id).add(f.nobel_field);
-            }
-        });
-
+        const fieldMap = new Map(
+            Object.entries(dataset.exactFieldInstitutionIds || {})
+                .map(([field, ids]) => [field, new Set(ids)])
+        ); 
         const x = d3.scaleLinear().range([0, width]);
         const y = d3.scaleBand().range([0, height]).padding(0.25);
 
@@ -102,7 +82,7 @@ export function initInstitutionOverview() {
             .style("fill", "#64748b")
             .style("font-weight", "600");
 
-        // 【修改】当切换排序指标时，重置选中状态与右侧面板
+        
         d3.select("#institution-sort-select").on("change", function() {
             currentMetric = this.value;
             selectedInstitutionId = null; 
@@ -110,7 +90,7 @@ export function initInstitutionOverview() {
             updateChart();
         });
 
-        // 【修改】当切换学科时，重置选中状态与右侧面板
+        
         d3.select("#institution-field-filter").on("change", function() {
             currentField = this.value;
             selectedInstitutionId = null;
@@ -154,7 +134,7 @@ export function initInstitutionOverview() {
                                  .domain([0, maxMetricVal * 1.1]);
 
             xAxisG.transition("axis").duration(600).call(d3.axisBottom(x).ticks(6));
-            xAxisLabel.text(`➤ ${metricNameMap[currentMetric]}`);
+            xAxisLabel.text(metricNameMap[currentMetric]);
 
             const nameMap = new Map(top20.map(d => [d.id, d.name]));
             yAxisG.transition("axis").duration(600).call(
@@ -213,39 +193,38 @@ export function initInstitutionOverview() {
                     tooltip.style("left", (event.pageX + 15) + "px").style("top", (event.pageY - 15) + "px");
                 })
                 .on("mouseout", function(event, d) {
-                    // 【修改】移出时判断：若当前柱子是被选中的那个，保持红色；否则恢复成对应的标尺渐变色
+                    
                     const targetColor = (d.id === selectedInstitutionId) ? "#e15759" : colorScale(d[currentMetric]);
                     d3.select(this).transition("hover").duration(150).attr("fill", targetColor);
                     tooltip.style("opacity", 0).style("display", "none");
                 })
                 .on("click", function(event, d) {
-                    // 【修改】实现开关（Toggle）切换逻辑
+                    
                     if (selectedInstitutionId === d.id) {
-                        // 1. 如果点击的是当前已选中的柱子 -> 取消选择
+                        
                         selectedInstitutionId = null;
                         
-                        // 恢复所有柱子的正常透明度与色彩
                         svg.selectAll(".bar").transition("click").duration(200)
                             .style("opacity", 1)
                             .attr("fill", d => colorScale(d[currentMetric]));
                         
-                        // 右侧详情面板退回空白占位状态
+                        // 鍙充晶璇︽儏闈㈡澘閫€鍥炵┖鐧藉崰浣嶇姸鎬?
                         d3.select("#institution-detail-content")
                             .html(`<div class="placeholder">机构详情面板位置</div>`);
                     } else {
-                        // 2. 如果点击的是其他柱子 -> 变更选中项
+                        // 2. 濡傛灉鐐瑰嚮鐨勬槸鍏朵粬鏌卞瓙 -> 鍙樻洿閫変腑椤?
                         selectedInstitutionId = d.id;
                         
-                        // 其他柱子变淡，当前柱子高亮为红色
+                        // 鍏朵粬鏌卞瓙鍙樻贰锛屽綋鍓嶆煴瀛愰珮浜负绾㈣壊
                         svg.selectAll(".bar").transition("click").duration(200)
                             .style("opacity", barData => barData.id === selectedInstitutionId ? 1 : 0.4)
                             .attr("fill", barData => barData.id === selectedInstitutionId ? "#e15759" : colorScale(barData[currentMetric]));
                         
-                        // 渲染右侧内容
-                        renderDetailPanel(d, institutionFieldsMap, authorCountryData);
+                        // 娓叉煋鍙充晶鍐呭
+                        renderDetailPanel(d);
                     }
                 })
-                // 利用 D3 统一生命周期管理：重绘时根据全局 selectedInstitutionId 自动校准样式
+                // 鍒╃敤 D3 缁熶竴鐢熷懡鍛ㄦ湡绠＄悊锛氶噸缁樻椂鏍规嵁鍏ㄥ眬 selectedInstitutionId 鑷姩鏍″噯鏍峰紡
                 .transition("layout").duration(600)
                 .attr("y", d => y(d.id))
                 .attr("height", y.bandwidth())
@@ -280,55 +259,33 @@ export function initInstitutionOverview() {
                       const val = d[currentMetric];
                       return Number.isInteger(val) ? val : val.toFixed(2);
                   })
-                  // 数值的显隐透明度也跟柱子保持一致联动
+                  // 鏁板€肩殑鏄鹃殣閫忔槑搴︿篃璺熸煴瀛愪繚鎸佷竴鑷磋仈鍔?
                   .style("opacity", d => selectedInstitutionId === null ? 1 : (d.id === selectedInstitutionId ? 1 : 0.4));
         }
 
         // ==========================================
-        // 右侧面板排版函数
+        // 鍙充晶闈㈡澘鎺掔増鍑芥暟
         // ==========================================
-        function renderDetailPanel(inst, fieldsMap, authorCountryData) {
+        function renderDetailPanel(inst) {
             const detailContainer = d3.select("#institution-detail-content");
             detailContainer.html(""); 
 
-            const fieldsSet = fieldsMap.get(inst.id) || new Set(["未明确分类"]);
+            const fieldsSet = new Set(inst.fields && inst.fields.length ? inst.fields : ["未明确分类"]);
             const fieldsBadges = Array.from(fieldsSet).map(f => 
                 `<span style="display:inline-block; background:rgba(66,107,143,0.1); color:#426b8f; border:1px solid rgba(66,107,143,0.25); padding:2px 8px; border-radius:12px; font-size:12px; margin-right:6px; margin-bottom:6px; font-weight:600;">${f}</span>`
             ).join("");
 
-            const papersForInst = authorCountryData.filter(row => row.institution_id === inst.id);
-            const uniquePapers = new Map(); 
-
-            papersForInst.forEach(row => {
-                if (row.nobel_title && row.laureate_name) {
-                    const titleStr = row.nobel_title.trim();
-                    const formattedTitle = titleStr.replace(/\b\w/g, char => char.toUpperCase());
-                    const key = titleStr + "|||" + row.laureate_name.trim();
-                    
-                    if (!uniquePapers.has(key)) {
-                        let lName = row.laureate_name.trim();
-                        lName = lName.replace(/\b\w/g, char => char.toUpperCase());
-                        
-                        uniquePapers.set(key, {
-                            title: formattedTitle,
-                            laureate: lName,
-                            year: row.prize_year || ""
-                        });
-                    }
-                }
-            });
-
-            const paperArray = Array.from(uniquePapers.values());
+            const paperArray = inst.papers || [];
             
             let listHtml = "";
             if (paperArray.length > 0) {
                 listHtml = paperArray.map((p, i) => `
                     <div style="padding: 10px; border-bottom: ${i === paperArray.length - 1 ? 'none' : '1px dashed rgba(129,115,97,0.2)'};">
                         <div style="font-size:13px; font-weight:600; color:#16212d; line-height:1.4; margin-bottom:4px;">
-                            📄 ${p.title}
+                            ${p.title}
                         </div>
                         <div style="font-size:12px; color:#746b60;">
-                            🏅 关联获奖者: <span style="color:#e15759; font-weight:700;">${p.laureate}</span>
+                            关联获奖者: <span style="color:#e15759; font-weight:700;">${p.laureate}</span>
                             ${p.year ? `<span style="margin-left:6px; background:#f1f5f9; padding:1px 5px; border-radius:4px; font-size:10px;">获奖年份：${p.year}</span>` : ""}
                         </div>
                     </div>
@@ -341,8 +298,8 @@ export function initInstitutionOverview() {
                 <div style="animation: fadeIn 0.4s ease-in-out;">
                     <h4 style="margin: 0 0 4px 0; color: #16212d; font-size: 18px; font-weight:700; line-height:1.35;">${inst.name}</h4>
                     <div style="font-size:12px; color:#746b60; margin-bottom:14px; display:flex; gap:12px;">
-                        <span>🆔 机构代码: <code>${inst.id}</code></span>
-                        <span> 国家/地区: <strong>${inst.country}</strong></span>
+                        <span>机构代码: <code>${inst.id}</code></span>
+                        <span>国家/地区: <strong>${inst.country}</strong></span>
                     </div>
                     
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:16px;">
@@ -381,6 +338,7 @@ export function initInstitutionOverview() {
 
     }).catch(err => {
         console.error("Institution summary data loading error:", err);
-        container.html(`<div style="color:red; padding: 20px;">数据加载失败，请确保本地使用了 Live Server 启动。</div>`);
+        container.html(`<div style="color:red; padding: 20px;">数据加载失败，请确保本地使用 Live Server 启动。</div>`);
     });
 }
+

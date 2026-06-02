@@ -1,11 +1,9 @@
 const OVERVIEW_PATHS = [
-  "data/career_overview(1).csv",
-  "data/career_overview.csv"
+  "data_final/section1/career_overview.csv"
 ];
 
 const DETAIL_PATHS = [
-  "data/career_detail(1).csv",
-  "data/career_detail.csv"
+  "data_final/section1/career_detail.csv"
 ];
 
 const REPRESENTATIVES = {
