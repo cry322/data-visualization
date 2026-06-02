@@ -2457,7 +2457,7 @@ function drawCitationArcDiagram(data) {
   const container = d3.select("#topic-migration-chart");
   const node = container.node();
   const width = node.clientWidth || 1100;
-  const height = 760;
+  const height = 840;
 
   const margin = {
     top: 95,
@@ -2466,7 +2466,7 @@ function drawCitationArcDiagram(data) {
     left: 40
   };
 
-  const axisY = height / 2 + 18;
+  const axisY = height / 2 - 22;
 
   const svg = container
     .append("svg")
@@ -2550,15 +2550,25 @@ function drawCitationArcDiagram(data) {
   const nodeById = new Map(data.nodes.map(d => [d.id, d]));
 
   const maxNodeValue = d3.max(data.nodes, d => d.value) || 1;
-  const maxLinkValue = d3.max(data.links, d => d.value) || 1;
+  const upperMaxLinkValue = d3.max(data.links.filter(d => d.role === "nobel_references_source"), d => d.value) || 1;
+  const lowerMaxLinkValue = d3.max(data.links.filter(d => d.role === "future_cites_nobel"), d => d.value) || 1;
 
   const radius = d3.scaleSqrt()
     .domain([1, maxNodeValue])
     .range([6, 17]);
 
-  const linkWidth = d3.scaleSqrt()
-    .domain([1, maxLinkValue])
-    .range([1.2, 8.2]);
+  const upperLinkWidth = d3.scaleSqrt()
+    .domain([1, upperMaxLinkValue])
+    .range([0.9, 5.8]);
+
+  const lowerLinkWidth = d3.scaleSqrt()
+    .domain([1, lowerMaxLinkValue])
+    .range([0.9, 6.2]);
+
+  const linkWidth = d => {
+    const scale = d.role === "nobel_references_source" ? upperLinkWidth : lowerLinkWidth;
+    return scale(d.value);
+  };
 
   data.nodes.forEach(d => {
     d.r = radius(d.value);
@@ -2566,9 +2576,10 @@ function drawCitationArcDiagram(data) {
 
   const tooltip = d3.select(".topic-tooltip");
 
-  drawArcGroupTitle(svg, (margin.left + 10 + width * 0.31) / 2, axisY + 82, "知识来源 subfield");
-  drawArcGroupTitle(svg, width / 2, axisY + 82, "诺奖核心 subfield");
-  drawArcGroupTitle(svg, (width * 0.69 + width - margin.right - 10) / 2, axisY + 82, "后续扩散 subfield");
+  const lowerGroupTitleY = axisY + 270;
+  drawArcGroupTitle(svg, (margin.left + 10 + width * 0.31) / 2, lowerGroupTitleY, "知识来源 subfield");
+  drawArcGroupTitle(svg, width / 2, lowerGroupTitleY, "诺奖核心 subfield");
+  drawArcGroupTitle(svg, (width * 0.69 + width - margin.right - 10) / 2, lowerGroupTitleY, "后续扩散 subfield");
 
   svg.append("text")
     .attr("x", margin.left + 4)
@@ -2580,7 +2591,7 @@ function drawCitationArcDiagram(data) {
 
   svg.append("text")
     .attr("x", margin.left + 4)
-    .attr("y", axisY + 226)
+    .attr("y", axisY + 310)
     .attr("fill", "#64748b")
     .attr("font-size", 12)
     .attr("font-weight", 700)
@@ -2626,6 +2637,7 @@ function drawCitationArcDiagram(data) {
           <strong>${safeText(d.sourceName)} → ${safeText(d.targetName)}</strong><br>
           类型：${safeText(arcRoleLabel(d.role))}<br>
           路径数量：${formatNumber(d.value)}<br>
+          路径关系：${safeText(arcSubfieldRelationLabel(d))}<br>
           说明：${safeText(arcDirectionExplain(d.role))}
         `);
     })
@@ -2653,8 +2665,8 @@ function drawCitationArcDiagram(data) {
       links
         .attr("stroke-opacity", link => (link.source === d.id || link.target === d.id) ? 1 : 0.08)
         .attr("stroke-width", link => (link.source === d.id || link.target === d.id)
-          ? Math.max(2.3, linkWidth(link.value) + 1.1)
-          : linkWidth(link.value));
+          ? Math.max(2.3, arcLinkWidth(link, linkWidth) + 1.1)
+          : arcLinkWidth(link, linkWidth));
 
       nodes.style("opacity", n => n.id === d.id ? 1 : 0.24);
       labels.style("opacity", n => n.id === d.id ? 1 : 0.18);
@@ -2685,7 +2697,7 @@ function drawCitationArcDiagram(data) {
     .on("mouseout", function () {
       links
         .attr("stroke-opacity", 1)
-        .attr("stroke-width", d => linkWidth(d.value));
+        .attr("stroke-width", d => arcLinkWidth(d, linkWidth));
 
       nodes.style("opacity", 1);
       labels.style("opacity", d => d.__showLabel ? 1 : 0);
@@ -2798,6 +2810,9 @@ function drawArcGroupTitle(svg, x, y, text) {
     .attr("fill", "#64748b")
     .attr("font-size", 12)
     .attr("font-weight", 800)
+    .attr("paint-order", "stroke")
+    .attr("stroke", "#ffffff")
+    .attr("stroke-width", 5)
     .text(text);
 }
 
@@ -2838,8 +2853,8 @@ function drawArcLegend(svg, { x, y }) {
   });
 
   const linkItems = [
-    ["Same domain", "rgba(91, 111, 136, 0.56)"],
-    ["Cross domain", "rgba(220, 38, 38, 0.48)"]
+    ["Same subfield", "rgba(169, 120, 93, 0.60)"],
+    ["Different subfield", "rgba(107, 114, 128, 0.48)"]
   ];
 
   linkItems.forEach(([label, color]) => {
@@ -2908,15 +2923,25 @@ function nodeFieldColor(domain, alpha = 0.88) {
   return domainColor(domain, alpha);
 }
 
+function arcSubfieldRelation(link) {
+  const sourceName = cleanText(link.sourceName);
+  const targetName = cleanText(link.targetName);
+  if (!sourceName || !targetName || isOtherArcLink(link)) return "different";
+  return sourceName === targetName ? "same" : "different";
+}
+
+function arcSubfieldRelationLabel(link) {
+  return arcSubfieldRelation(link) === "same" ? "同一 subfield" : "不同 subfield";
+}
+
 function arcStrokeColor(link, rank = 0) {
-  const sourceDomain = cleanText(link.sourceDomain);
-  const targetDomain = cleanText(link.targetDomain);
-  const sameDomain = sourceDomain && targetDomain && sourceDomain === targetDomain;
-  const alpha = Math.max(0.20, 0.50 - rank * 0.010);
+  const relation = arcSubfieldRelation(link);
+  const alpha = Math.max(0.22, 0.54 - rank * 0.010);
 
-  if (sameDomain) return `rgba(91, 111, 136, ${alpha})`;
+  if (relation === "same") return `rgba(169, 120, 93, ${Math.max(0.32, alpha + 0.04)})`;
+  if (isOtherArcLink(link)) return `rgba(107, 114, 128, ${Math.max(0.18, alpha * 0.68)})`;
 
-  return `rgba(220, 38, 38, ${Math.max(0.24, alpha + 0.02)})`;
+  return `rgba(107, 114, 128, ${Math.max(0.28, alpha * 0.90)})`;
 }
 
 function arcLinkOpacity(link, rank = 0) {
@@ -2924,7 +2949,7 @@ function arcLinkOpacity(link, rank = 0) {
 }
 
 function arcLinkWidth(link, widthScale) {
-  return widthScale(link.value);
+  return widthScale(link);
 }
 
 function isOtherArcLink(link) {

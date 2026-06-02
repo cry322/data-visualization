@@ -464,9 +464,8 @@ function showLinkTooltip(event, link, tooltip) {
       <div>产出强度：<strong>${formatNumber(link.value)}</strong></div>
       ${link.isPrizeField !== undefined ? `<div>获奖关联领域：<strong>${link.isPrizeField ? "是" : "否"}</strong></div>` : ""}
       ${link.isMainField !== undefined ? `<div>研究最集中领域：<strong>${link.isMainField ? "是" : "否"}</strong></div>` : ""}
-      <div>总被引量：${formatNumber(d.citedByCount)}</div>
-      <div>Topic 数：${formatNumber(d.topicCount)}</div>
-      <div>代表 topic：${truncate(d.topicNames?.slice(0, 3).join(" / ") || "暂无", 88)}</div>
+      <div>涉及领域数：${formatNumber(d.topicCount)}</div>
+      <div>代表领域：${truncate(d.topicNames?.slice(0, 3).join(" / ") || "暂无", 88)}</div>
     `)
     .style("left", `${event.pageX + 14}px`)
     .style("top", `${event.pageY + 14}px`);
