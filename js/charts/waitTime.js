@@ -7,16 +7,16 @@ const FIELD_COLORS = {
 };
 
 const FIELD_LABELS = {
-  Physics: "物理",
-  Chemistry: "化学",
-  Medicine: "生物"
+  Physics: "Physics",
+  Chemistry: "Chemistry",
+  Medicine: "Medicine"
 };
 
 const FIELD_OPTIONS = [
   { value: "all", label: "全部" },
-  { value: "Physics", label: "物理" },
-  { value: "Chemistry", label: "化学" },
-  { value: "Medicine", label: "生物" }
+  { value: "Physics", label: "Physics" },
+  { value: "Chemistry", label: "Chemistry" },
+  { value: "Medicine", label: "Medicine" }
 ];
 
 const Y_AXIS_OPTIONS = [
