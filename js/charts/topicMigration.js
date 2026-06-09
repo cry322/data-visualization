@@ -153,11 +153,11 @@ export async function initTopicMigration() {
       .attr("preserveAspectRatio", "xMidYMid meet");
 
     svg.append("text")
-      .attr("x", margin.left - 20)
+      .attr("x", margin.left - nodeWidth)
       .attr("y", 30)
-      .attr("text-anchor", "end")
+      .attr("text-anchor", "start")
       .attr("fill", "#475569")
-      .attr("font-size", 13)
+      .attr("font-size", 15)
       .attr("font-weight", 800)
       .text("Knowledge source domains");
 
@@ -166,16 +166,16 @@ export async function initTopicMigration() {
       .attr("y", 30)
       .attr("text-anchor", "middle")
       .attr("fill", "#475569")
-      .attr("font-size", 13)
+      .attr("font-size", 15)
       .attr("font-weight", 800)
       .text("Nobel paper domains");
 
     svg.append("text")
-      .attr("x", width - margin.right + 20)
+      .attr("x", width - margin.right + nodeWidth)
       .attr("y", 30)
-      .attr("text-anchor", "start")
+      .attr("text-anchor", "end")
       .attr("fill", "#475569")
-      .attr("font-size", 13)
+      .attr("font-size", 15)
       .attr("font-weight", 800)
       .text("Impact domains");
 
@@ -314,7 +314,7 @@ export async function initTopicMigration() {
         return "middle";
       })
       .attr("fill", "#334155")
-      .attr("font-size", 10.8)
+      .attr("font-size", 12.5)
       .attr("font-weight", 700)
       .attr("paint-order", "stroke")
       .attr("stroke", "#ffffff")
@@ -327,14 +327,6 @@ export async function initTopicMigration() {
       x: margin.left,
       y: height - 54
     });
-
-    svg.append("text")
-      .attr("x", width / 2)
-      .attr("y", height - 18)
-      .attr("text-anchor", "middle")
-      .attr("fill", "#94a3b8")
-      .attr("font-size", 12)
-      .text("Sankey 左右两段分别缩放：线越粗，表示该阶段内部该路径出现次数越多。");
   }
 
   function drawForceNetwork(data) {
@@ -406,7 +398,7 @@ export async function initTopicMigration() {
 
     const color = d3.scaleOrdinal()
       .domain(["source", "prize", "target", "mixed"])
-      .range(["#7aa6c2", "#b8a7d9", "#d9a66a", "#8bbf9f"]);
+      .range(["#2f6f73", "#6f5b8f", "#b56b5f", "#8a8f75"]);
 
     const radius = d3.scaleSqrt()
       .domain([1, d3.max(data.nodes, d => d.value) || 1])
@@ -532,7 +524,7 @@ export async function initTopicMigration() {
       .data(labelNodes, d => d.id)
       .join("text")
       .attr("fill", "#334155")
-      .attr("font-size", 11)
+      .attr("font-size", 12.5)
       .attr("font-weight", 700)
       .attr("paint-order", "stroke")
       .attr("stroke", "#ffffff")
@@ -573,7 +565,7 @@ export async function initTopicMigration() {
       .attr("y", height - 12)
       .attr("text-anchor", "middle")
       .attr("fill", "#94a3b8")
-      .attr("font-size", 12)
+      .attr("font-size", 13)
       .text("这是力导向网络：节点位置由连接关系自动计算，不表示固定阶段或坐标。可拖拽节点、滚轮缩放。");
 
     simulation.on("tick", () => {
@@ -1970,11 +1962,11 @@ function roleColor(type, alpha = 0.9) {
 function domainColor(domain, alpha = 0.78) {
   const key = cleanText(domain).toLowerCase();
   const colors = {
-    physical: [216, 162, 74],
-    life: [122, 166, 194],
-    health: [199, 124, 124],
-    social: [184, 166, 207],
-    unknown: [215, 221, 229]
+    physical: [184, 107, 75],
+    life: [47, 125, 117],
+    health: [154, 139, 58],
+    social: [110, 90, 155],
+    unknown: [214, 208, 199]
   };
 
   let rgb = colors.unknown;
@@ -2489,27 +2481,6 @@ function drawCitationArcDiagram(data) {
     .attr("d", "M0,-5L10,0L0,5")
     .attr("fill", "rgba(0, 0, 0, 0.45)");
 
-  const title = data.selectedField === "all"
-    ? "全部学科引用路径弧线图"
-    : `${data.selectedField} 引用路径弧线图`;
-
-  svg.append("text")
-    .attr("x", width / 2)
-    .attr("y", 28)
-    .attr("text-anchor", "middle")
-    .attr("fill", "#0f172a")
-    .attr("font-size", 16)
-    .attr("font-weight", 800)
-    .text(title);
-
-  svg.append("text")
-    .attr("x", width / 2)
-    .attr("y", 50)
-    .attr("text-anchor", "middle")
-    .attr("fill", "#64748b")
-    .attr("font-size", 12)
-    .text(`节点使用 subfield，颜色表示 domain；每侧保留 Top ${data.topN}，其余合并为 Others；已删除 Unknown；上方为前置知识来源，下方为后续扩散路径；若后续扩散与知识来源重合，则复用左侧节点。`);
-
   svg.append("line")
     .attr("x1", margin.left - 20)
     .attr("x2", width - margin.right + 20)
@@ -2585,7 +2556,7 @@ function drawCitationArcDiagram(data) {
     .attr("x", margin.left + 4)
     .attr("y", axisY - 220)
     .attr("fill", "#64748b")
-    .attr("font-size", 12)
+    .attr("font-size", 13.5)
     .attr("font-weight", 700)
     .text("上方：诺奖核心引用前置知识");
 
@@ -2593,7 +2564,7 @@ function drawCitationArcDiagram(data) {
     .attr("x", margin.left + 4)
     .attr("y", axisY + 310)
     .attr("fill", "#64748b")
-    .attr("font-size", 12)
+    .attr("font-size", 13.5)
     .attr("font-weight", 700)
     .text("下方：后续研究引用诺奖核心");
 
@@ -2734,21 +2705,13 @@ function drawCitationArcDiagram(data) {
     .attr("y", d => axisY + 36)
     .attr("text-anchor", "middle")
     .attr("fill", "#334155")
-    .attr("font-size", 10.5)
+    .attr("font-size", 12)
     .attr("font-weight", 700)
     .attr("paint-order", "stroke")
     .attr("stroke", "#ffffff")
     .attr("stroke-width", 3)
     .style("opacity", d => d.__showLabel ? 1 : 0)
     .text(d => isArcOtherName(d.name) ? "" : shortenText(d.name, 12));
-
-  svg.append("text")
-    .attr("x", width / 2)
-    .attr("y", height - 18)
-    .attr("text-anchor", "middle")
-    .attr("fill", "#94a3b8")
-    .attr("font-size", 11)
-    .text("节点颜色表示 domain；每侧仅保留 Top N subfield，其余合并为 Others；已删除 Unknown；点击节点或弧线可查看代表论文。");
 
   drawArcLegend(svg, {
     x: margin.left + 8,
@@ -2808,7 +2771,7 @@ function drawArcGroupTitle(svg, x, y, text) {
     .attr("y", y)
     .attr("text-anchor", "middle")
     .attr("fill", "#64748b")
-    .attr("font-size", 12)
+    .attr("font-size", 14)
     .attr("font-weight", 800)
     .attr("paint-order", "stroke")
     .attr("stroke", "#ffffff")
@@ -2845,7 +2808,7 @@ function drawArcLegend(svg, { x, y }) {
     item.append("text")
       .attr("x", 16)
       .attr("y", 4)
-      .attr("font-size", 11)
+      .attr("font-size", 12.5)
       .attr("fill", "#64748b")
       .text(label);
 
@@ -2872,7 +2835,7 @@ function drawArcLegend(svg, { x, y }) {
     item.append("text")
       .attr("x", 36)
       .attr("y", 4)
-      .attr("font-size", 11)
+      .attr("font-size", 12.5)
       .attr("fill", "#64748b")
       .text(label);
 

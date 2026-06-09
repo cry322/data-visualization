@@ -78,7 +78,7 @@ export function initInstitutionOverview() {
             .attr("x", width)
             .attr("y", height + margin.bottom - 5)
             .style("text-anchor", "end")
-            .style("font-size", "13px")
+            .style("font-size", "17px")
             .style("fill", "#64748b")
             .style("font-weight", "600");
 
@@ -134,6 +134,7 @@ export function initInstitutionOverview() {
                                  .domain([0, maxMetricVal * 1.1]);
 
             xAxisG.transition("axis").duration(600).call(d3.axisBottom(x).ticks(6));
+            xAxisG.selectAll("text").style("font-size", "15px").style("fill", "#64748b");
             xAxisLabel.text(metricNameMap[currentMetric]);
 
             const nameMap = new Map(top20.map(d => [d.id, d.name]));
@@ -143,7 +144,7 @@ export function initInstitutionOverview() {
                     return n.length > 32 ? n.substring(0, 32) + "..." : n;
                 })
             ).selectAll("text")
-             .style("font-size", "12px")
+             .style("font-size", "14px")
              .style("fill", "#334155");
 
             const bars = svg.selectAll(".bar").data(top20, d => d.id);
@@ -245,7 +246,7 @@ export function initInstitutionOverview() {
                   .attr("y", d => y(d.id) + y.bandwidth() / 2) 
                   .attr("x", 0)
                   .attr("dy", ".35em") 
-                  .style("font-size", "12px")
+                  .style("font-size", "14px")
                   .style("fill", "#475569")
                   .style("font-weight", "600")
                   .style("opacity", 0)
