@@ -1087,45 +1087,39 @@ function prepareSankeyData(records, state) {
     return (citationCounts.get(d.citationTopic) || 0) >= minPathWeight;
   });
 
-  const sourceRecords = filteredRecords.filter(d => d.isInput);
-  const targetRecords = filteredRecords.filter(d => !d.isInput);
-  const sourceCounts = countByWeight(sourceRecords, d => d.citationTopic, d => d.count);
   const prizeCounts = countByWeight(filteredRecords, d => d.prizeTopic, d => d.count);
+  const topPrizes = topKeys(prizeCounts, topN);
+  const prizeFocusedRecords = includeCoreDirectionalFallbacks(
+    records,
+    filteredRecords,
+    topPrizes
+  );
+  const sourceRecords = prizeFocusedRecords.filter(d => d.isInput);
+  const targetRecords = prizeFocusedRecords.filter(d => !d.isInput);
+  const sourceCounts = countByWeight(sourceRecords, d => d.citationTopic, d => d.count);
   const targetCounts = countByWeight(targetRecords, d => d.citationTopic, d => d.count);
-  const prizeDomainCounts = countByWeight(filteredRecords, d => d.prizeDomain, d => d.count);
-
-  const sourceDomainByTopic = buildTopicDomainMap(sourceRecords, d => d.citationTopic, d => d.citationDomain);
-  const prizeDomainByTopic = buildTopicDomainMap(filteredRecords, d => d.prizeTopic, d => d.prizeDomain);
-  const targetDomainByTopic = buildTopicDomainMap(targetRecords, d => d.citationTopic, d => d.citationDomain);
-  const topSources = selectTopFieldsWithOtherBudget(sourceCounts, sourceDomainByTopic, topN);
-  const topPrizes = selectTopFieldsWithOtherBudget(prizeCounts, prizeDomainByTopic, topN);
-  const topTargets = selectTopFieldsWithOtherBudget(targetCounts, targetDomainByTopic, topN);
+  const topSources = topKeys(sourceCounts, topN);
+  const topTargets = topKeys(targetCounts, topN);
   const prizeOrder = buildOrderMap(prizeCounts);
-  const prizeDomainOrder = buildOrderMap(prizeDomainCounts);
+  const prizeDomainOrder = new Map();
   const linkMap = new Map();
 
-  filteredRecords.forEach(d => {
-    const prizeNode = resolveFieldNode({
+  prizeFocusedRecords.forEach(d => {
+    const prizeNode = createVisibleFieldNode({
       type: "prize",
       topic: d.prizeTopic,
-      domain: d.prizeDomain,
-      keepSet: topPrizes,
-      otherPrefix: "Other Nobel"
+      domain: d.prizeDomain
     });
     const citationNode = d.isInput
-      ? resolveFieldNode({
+      ? createVisibleFieldNode({
           type: "source",
           topic: d.citationTopic,
-          domain: d.citationDomain,
-          keepSet: topSources,
-          otherPrefix: "Other source"
+          domain: d.citationDomain
         })
-      : resolveFieldNode({
+      : createVisibleFieldNode({
           type: "target",
           topic: d.citationTopic,
-          domain: d.citationDomain,
-          keepSet: topTargets,
-          otherPrefix: "Other impact"
+          domain: d.citationDomain
         });
 
     const sourceNode = d.isInput ? citationNode : prizeNode;
@@ -1153,11 +1147,12 @@ function prepareSankeyData(records, state) {
 
     const link = linkMap.get(key);
     link.value += d.count;
+    if (d.isCoreFallback) link.isCoreFallback = true;
     pushSample(link.samples, d, state.maxSamples);
   });
 
   const links = Array.from(linkMap.values())
-    .filter(d => d.value >= minPathWeight)
+    .filter(d => d.value >= minPathWeight || d.isCoreFallback)
     .sort((a, b) => d3.descending(a.value, b.value));
 
   const nodeMap = new Map();
@@ -1198,7 +1193,7 @@ function prepareSankeyData(records, state) {
   return {
     nodes,
     links: keptLinks,
-    totalPathCount: d3.sum(filteredRecords, d => d.count),
+    totalPathCount: d3.sum(keptLinks, d => d.value),
     sourceCount: nodes.filter(d => d.type === "source").length,
     prizeCount: nodes.filter(d => d.type === "prize").length,
     targetCount: nodes.filter(d => d.type === "target").length
@@ -1236,6 +1231,35 @@ function markSankeyEmphasisLinks(links) {
         link.isEmphasis = true;
       });
   });
+}
+
+function includeCoreDirectionalFallbacks(allRecords, visibleRecords, topPrizes) {
+  const result = visibleRecords.filter(d => topPrizes.has(d.prizeTopic));
+  const visibleDirections = new Set();
+
+  result.forEach(d => {
+    visibleDirections.add(`${d.prizeTopic}|${d.isInput ? "input" : "output"}`);
+  });
+
+  const bestByDirection = new Map();
+
+  allRecords.forEach(d => {
+    if (!topPrizes.has(d.prizeTopic)) return;
+
+    const key = `${d.prizeTopic}|${d.isInput ? "input" : "output"}`;
+    const current = bestByDirection.get(key);
+
+    if (!current || d.count > current.count) {
+      bestByDirection.set(key, d);
+    }
+  });
+
+  bestByDirection.forEach((record, key) => {
+    if (visibleDirections.has(key)) return;
+    result.push({ ...record, isCoreFallback: true });
+  });
+
+  return result;
 }
 
 function prepareForceNetworkData(records, state) {
@@ -1798,33 +1822,6 @@ function selectReadableFields(countMap, { maxCount, minShare, coverage }) {
   return result;
 }
 
-function selectTopFieldsWithOtherBudget(countMap, domainByTopic, topN) {
-  const entries = Array.from(countMap.entries())
-    .filter(([, value]) => value > 0)
-    .sort((a, b) => d3.descending(a[1], b[1]));
-  const keep = new Set(entries.slice(0, topN).map(([key]) => key));
-
-  while (keep.size + countOtherDomains(entries, keep, domainByTopic) > topN && keep.size > 0) {
-    const removable = Array.from(keep)
-      .sort((a, b) => d3.ascending(countMap.get(a) || 0, countMap.get(b) || 0))[0];
-    keep.delete(removable);
-  }
-
-  return keep;
-}
-
-function countOtherDomains(entries, keep, domainByTopic) {
-  const domains = new Set();
-
-  entries.forEach(([topic]) => {
-    if (keep.has(topic)) return;
-    const domain = domainByTopic.get(topic);
-    if (!isUnknownValue(domain)) domains.add(domain);
-  });
-
-  return domains.size;
-}
-
 function buildTopicDomainMap(rows, topicAccessor, domainAccessor) {
   const domainCountsByTopic = new Map();
 
@@ -1862,15 +1859,13 @@ function getPrizeReferenceRank(node, prizeOrder, prizeDomainOrder) {
   return 500 + domainRank;
 }
 
-function resolveFieldNode({ type, topic, domain, keepSet, otherPrefix }) {
+function createVisibleFieldNode({ type, topic, domain }) {
   const safeDomain = cleanText(domain) || "Unknown Domain";
   const safeTopic = cleanText(topic) || "Unknown Field";
-  const isKept = keepSet.has(safeTopic);
-  const name = isKept ? safeTopic : `${otherPrefix} ${shortDomainName(safeDomain)}`;
 
   return {
-    id: `${type}|${safeDomain}|${name}`,
-    name,
+    id: `${type}|${safeDomain}|${safeTopic}`,
+    name: safeTopic,
     type,
     domain: safeDomain
   };
@@ -2240,27 +2235,28 @@ function prepareCitationArcData(rows, state) {
 
   const globalRoleStats = buildArcGlobalRoleStats(rawRecords);
 
-  const sourceCounts = countByWeight(
-    rawRecords.filter(d => d.isInput),
-    d => d.citationSubfield,
-    d => d.count
-  );
-
   const prizeCounts = countByWeight(
     rawRecords,
     d => d.prizeSubfield,
     d => d.count
   );
 
+  const topPrizes = topKeys(prizeCounts, topN);
+  const prizeFocusedRecords = rawRecords.filter(d => topPrizes.has(d.prizeSubfield));
+
+  const sourceCounts = countByWeight(
+    prizeFocusedRecords.filter(d => d.isInput),
+    d => d.citationSubfield,
+    d => d.count
+  );
+
   const targetCounts = countByWeight(
-    rawRecords.filter(d => d.isOutput),
+    prizeFocusedRecords.filter(d => d.isOutput),
     d => d.citationSubfield,
     d => d.count
   );
 
   const topSources = topKeys(sourceCounts, topN);
-  const topPrizes = topKeys(prizeCounts, topN);
-
   const rawTopTargets = topKeys(targetCounts, topN);
 
   // 如果后续扩散 subfield 已经在左侧知识来源里出现，就不再单独放到右边
@@ -2302,8 +2298,8 @@ function prepareCitationArcData(rows, state) {
     pushSample(node.samples, record, maxSamples);
   }
 
-  rawRecords.forEach(record => {
-    const prizeBucket = bucketToTopOrOthers(record.prizeSubfield, topPrizes, record.prizeDomain);
+  prizeFocusedRecords.forEach(record => {
+    const prizeBucket = record.prizeSubfield;
     const prizeNodeId = `prize|${prizeBucket}`;
     const prizeNode = ensureNode(prizeNodeId, prizeBucket, "prize");
 
@@ -2311,7 +2307,9 @@ function prepareCitationArcData(rows, state) {
     addNodeContribution(prizeNode, "prizeValue", record.prizeDomain, record);
 
     if (record.isInput) {
-      const sourceBucket = bucketToTopOrOthers(record.citationSubfield, topSources, record.citationDomain);
+      if (!topSources.has(record.citationSubfield)) return;
+
+      const sourceBucket = record.citationSubfield;
       const sourceNodeId = `source|${sourceBucket}`;
       const sourceNode = ensureNode(sourceNodeId, sourceBucket, "source");
 
@@ -2346,10 +2344,16 @@ function prepareCitationArcData(rows, state) {
     }
 
     if (record.isOutput) {
-      const sourceSideBucket = bucketToTopOrOthers(record.citationSubfield, topSources, record.citationDomain);
-      const targetSideBucket = bucketToTopOrOthers(record.citationSubfield, topTargets, record.citationDomain);
+      const sourceSideBucket = topSources.has(record.citationSubfield)
+        ? record.citationSubfield
+        : "";
+      const targetSideBucket = topTargets.has(record.citationSubfield)
+        ? record.citationSubfield
+        : "";
 
-      const overlapsWithSource = !isArcOtherName(sourceSideBucket);
+      if (!sourceSideBucket && !targetSideBucket) return;
+
+      const overlapsWithSource = Boolean(sourceSideBucket);
 
       if (overlapsWithSource) {
         const sourceNodeId = `source|${sourceSideBucket}`;
@@ -2420,9 +2424,7 @@ function prepareCitationArcData(rows, state) {
     // colorField 这里实际存的是 domain
     node.colorField = chooseDominantField(node.colorVotes);
 
-    node.globalRoleStats = isArcOtherName(node.name)
-      ? null
-      : (globalRoleStats.get(node.name) || { source: 0, prize: 0, target: 0 });
+    node.globalRoleStats = globalRoleStats.get(node.name) || { source: 0, prize: 0, target: 0 };
 
     return node;
   });
@@ -2433,9 +2435,6 @@ function prepareCitationArcData(rows, state) {
     if (a.axisRole !== b.axisRole) {
       return d3.ascending(roleOrder[a.axisRole], roleOrder[b.axisRole]);
     }
-
-    if (isArcOtherName(a.name) && !isArcOtherName(b.name)) return 1;
-    if (!isArcOtherName(a.name) && isArcOtherName(b.name)) return -1;
 
     return d3.descending(a.value, b.value);
   });
@@ -2462,6 +2461,15 @@ function prepareCitationArcData(rows, state) {
 
   const keptUpper = upperLinks.slice(0, maxLinksPerSide);
   const keptLower = lowerLinks.slice(0, maxLinksPerSide);
+  const keptLinks = [...keptUpper, ...keptLower];
+  const keptNodeIds = new Set();
+
+  keptLinks.forEach(link => {
+    keptNodeIds.add(link.source);
+    keptNodeIds.add(link.target);
+  });
+
+  const visibleNodes = nodes.filter(node => node.axisRole === "prize" || keptNodeIds.has(node.id));
 
   keptUpper.forEach((d, i) => { d.arcRank = i; });
   keptLower.forEach((d, i) => { d.arcRank = i; });
@@ -2469,14 +2477,14 @@ function prepareCitationArcData(rows, state) {
   return {
     selectedField,
     topN,
-    totalPathCount: d3.sum(rawRecords, d => d.count),
+    totalPathCount: d3.sum(keptLinks, d => d.value),
 
-    nodes,
-    links: [...keptUpper, ...keptLower],
+    nodes: visibleNodes,
+    links: keptLinks,
 
-    sourceCount: nodes.filter(d => d.axisRole === "source").length,
-    prizeCount: nodes.filter(d => d.axisRole === "prize").length,
-    targetCount: nodes.filter(d => d.axisRole === "target").length
+    sourceCount: visibleNodes.filter(d => d.axisRole === "source").length,
+    prizeCount: visibleNodes.filter(d => d.axisRole === "prize").length,
+    targetCount: visibleNodes.filter(d => d.axisRole === "target").length
   };
 }
 
@@ -2677,12 +2685,7 @@ function drawCitationArcDiagram(data) {
       nodes.style("opacity", n => n.id === d.id ? 1 : 0.24);
       labels.style("opacity", n => n.id === d.id ? 1 : 0.18);
 
-      const globalStatsHtml = isArcOtherName(d.name)
-        ? `
-          该节点为按 domain 分组的 Others 合并节点。<br>
-          它包含未进入 Top N 的多个 subfield，因此不展示单一 subfield 的全局角色统计。
-        `
-        : `
+      const globalStatsHtml = `
           该 subfield 在全局中的角色：<br>
           作为知识来源：${formatNumber(d.globalRoleStats?.source || 0)}<br>
           作为诺奖核心：${formatNumber(d.globalRoleStats?.prize || 0)}<br>
@@ -2724,7 +2727,7 @@ function drawCitationArcDiagram(data) {
     .attr("fill", "rgba(255,255,255,0.28)")
     .attr("pointer-events", "none");
 
-  // 标签只显示每组前几个 + Others，避免太挤
+  // 标签只显示每组前几个，避免太挤
   const labelShowSet = getArcLabelShowSet(sourceNodes, prizeNodes, targetNodes);
 
   data.nodes.forEach(d => {
@@ -2746,7 +2749,7 @@ function drawCitationArcDiagram(data) {
     .attr("stroke", chartHaloColor())
     .attr("stroke-width", 3)
     .style("opacity", d => d.__showLabel ? 1 : 0)
-    .text(d => isArcOtherName(d.name) ? "" : shortenText(d.name, 12));
+    .text(d => shortenText(d.name, 12));
 
   drawArcLegend(svg, {
     x: margin.left + 8,
@@ -2851,8 +2854,8 @@ function drawArcLegend(svg, { x, y }) {
   });
 
   const linkItems = [
-    ["Same subfield", "rgba(169, 120, 93, 0.60)"],
-    ["Different subfield", "rgba(107, 114, 128, 0.48)"]
+    ["Same subfield", arcRelationColor("same", 0.60)],
+    ["Different subfield", arcRelationColor("different", 0.48)]
   ];
 
   linkItems.forEach(([label, color]) => {
@@ -2871,7 +2874,7 @@ function drawArcLegend(svg, { x, y }) {
       .attr("x", 36)
       .attr("y", 4)
       .attr("font-size", 12.5)
-      .attr("fill", "#64748b")
+      .attr("fill", chartLabelColor())
       .text(label);
 
     offset += label.length * 7 + 64;
@@ -2881,10 +2884,6 @@ function drawArcLegend(svg, { x, y }) {
 function extractPrimarySubfield(value) {
   const items = splitMultiValue(value).map(d => cleanText(d)).filter(Boolean);
   return items.length ? items[0] : cleanText(value);
-}
-
-function bucketToTopOrOthers(name, topSet, domain = "") {
-  return topSet.has(name) ? name : `Other ${shortDomainName(domain)}`;
 }
 
 function addFieldVote(voteObj, field) {
@@ -2924,7 +2923,7 @@ function nodeFieldColor(domain, alpha = 0.88) {
 function arcSubfieldRelation(link) {
   const sourceName = cleanText(link.sourceName);
   const targetName = cleanText(link.targetName);
-  if (!sourceName || !targetName || isOtherArcLink(link)) return "different";
+  if (!sourceName || !targetName) return "different";
   return sourceName === targetName ? "same" : "different";
 }
 
@@ -2937,20 +2936,22 @@ function arcStrokeColor(link, rank = 0) {
   const alpha = Math.max(0.26, 0.58 - rank * 0.010);
 
   if (relation === "same") {
-    return isDarkTheme()
-      ? `rgba(96, 220, 205, ${Math.max(0.36, alpha + 0.06)})`
-      : `rgba(22, 166, 160, ${Math.max(0.34, alpha + 0.04)})`;
+    return arcRelationColor("same", Math.max(0.34, alpha + 0.04));
   }
 
-  if (isOtherArcLink(link)) {
+  return arcRelationColor("different", Math.max(0.28, alpha * 0.90));
+}
+
+function arcRelationColor(relation, alpha) {
+  if (relation === "same") {
     return isDarkTheme()
-      ? `rgba(153, 162, 174, ${Math.max(0.20, alpha * 0.68)})`
-      : `rgba(138, 150, 164, ${Math.max(0.22, alpha * 0.72)})`;
+      ? `rgba(214, 184, 152, ${alpha})`
+      : `rgba(169, 120, 93, ${alpha})`;
   }
 
   return isDarkTheme()
-    ? `rgba(166, 178, 246, ${Math.max(0.30, alpha * 0.90)})`
-    : `rgba(96, 111, 196, ${Math.max(0.28, alpha * 0.90)})`;
+    ? `rgba(185, 190, 198, ${alpha})`
+    : `rgba(107, 114, 128, ${alpha})`;
 }
 
 function arcLinkOpacity(link, rank = 0) {
@@ -2959,10 +2960,6 @@ function arcLinkOpacity(link, rank = 0) {
 
 function arcLinkWidth(link, widthScale) {
   return widthScale(link);
-}
-
-function isOtherArcLink(link) {
-  return isArcOtherName(link.sourceName) || isArcOtherName(link.targetName);
 }
 
 function isArcOtherName(name) {
