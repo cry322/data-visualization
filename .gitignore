@@ -24,6 +24,10 @@ docx_render_check/
 docx_render_front_four/
 css/
 js/
+!js/
+js/*
+!js/vendor/
+!js/vendor/*
 
 # Local scripts and generated documents.
 *.py
