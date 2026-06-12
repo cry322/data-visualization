@@ -3,22 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>诺贝尔奖可视化框架</title>
+    <title>诺贝尔奖论文知识流动可视化</title>
     <link rel="stylesheet" href="css/style.css" />
     <script src="https://d3js.org/d3.v7.min.js"></script>
   </head>
   <body>
     <header class="hero" id="top">
       <div class="hero-content">
-        <h1>诺贝尔奖科学发现的时间、人物与组织网络</h1>
-        <p>从科学家的职业阶段、关键论文的等待时间，到科研机构与学术迁移网络，追踪诺奖成果如何产生、积累并获得认可。</p>
+        <div class="hero-kicker">Nobel Papers · Data Story</div>
+        <h1>从一篇论文到诺贝尔奖：知识如何被时间、机构与学科路径共同塑造</h1>
+        <p>这个可视化项目把诺奖相关论文放回更长的知识流动中观察：它们何时出现在科学家的职业轨迹里，经历多久才被奖项认可，又在机构、国家和学科网络中留下怎样的连接。</p>
 
-        <nav class="global-subnav" aria-label="页面主导航">
-          <a href="#section-career" aria-label="职业阶段"><span>1</span>职业阶段</a>
-          <a href="#section-waittime" aria-label="等待时间"><span>2</span>等待时间</a>
-          <a href="#section-institution" aria-label="机构与国家"><span>3</span>机构与国家</a>
-          <a href="#section-network" aria-label="网络与迁移"><span>4</span>网络与迁移</a>
-        </nav>
         <div class="legacy-hero-copy" hidden>
         <h1>项目标题</h1>
         <p>补充文字</p>
@@ -26,16 +21,37 @@
       </div>
     </header>
 
+    <nav class="global-subnav" aria-label="页面主导航">
+      <a href="#section-intro" aria-label="叙事起点"><span>0</span>叙事起点</a>
+      <a href="#section-career" aria-label="职业阶段"><span>1</span>职业阶段</a>
+      <a href="#section-waittime" aria-label="时间等待"><span>2</span>时间等待</a>
+      <a href="#section-institution" aria-label="机构地图"><span>3</span>机构地图</a>
+      <a href="#section-network" aria-label="知识路径"><span>4</span>知识路径</a>
+      <a href="#section-summary" aria-label="总结附录"><span>5</span>总结附录</a>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切换护眼模式" aria-pressed="false">
+        <span class="theme-toggle-icon" aria-hidden="true"></span>
+        <span class="theme-toggle-label">护眼模式</span>
+      </button>
+    </nav>
+
+
     <main>
+      <section id="section-intro" class="section story-section intro-section">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">Opening</div>
+            <h2>0. 叙事起点：把诺奖论文放回知识流中</h2>
+            <p class="story-copy" data-story-text="诺贝尔奖常常被理解为某个“高光时刻”，但论文、作者、机构和学科路径共同构成了更长的背景。本项目从职业阶段、等待时间、机构空间和知识路径四条线索切入，尝试观察诺奖成果在发表、积累、传播与认可之间的关系。图表并不直接证明因果，而是帮助我们在当前样本中寻找可以进一步追问的结构。"></p>
+          </div>
+        </div>
+      </section>
 
       <section id="section-career" class="section">
 
         <div class="section-header">
           <div>
             <h2>1. 职业阶段与诺奖认可</h2>
-            <p>
-              从整体分布和个人轨迹两个层面，观察诺奖关键成果在科学家职业生涯中的出现时机。
-            </p>
+            <p class="story-copy" data-story-text="一篇后来获奖的论文，可能出现在研究者职业生涯的早期、稳定高产期，也可能来自漫长积累后的关键突破。这一部分把整体分布和个人轨迹并置，帮助观察“关键成果出现”与“奖项认可”在职业时间轴上的距离。当前图表更适合发现阶段性倾向，而不是判断单一成功路径。"></p>
           </div>
         </div>
 
@@ -193,7 +209,7 @@
         <div class="section-header">
           <div>
             <h2>2. 等待时间影响因素探索</h2>
-            <p>通过职业年龄、机构声誉等维度，分析 wait_time 变化。</p>
+            <p class="story-copy" data-story-text="诺奖成果往往不是发表后立刻被奖项看见，论文发表与获奖之间可能隔着长期引用、复核和学科共同体的再确认。这里用等待时间作为横轴，并结合发表前积累、职业年龄和学科筛选，观察不同论文在“被承认之前”经历了怎样的时间跨度。若相关性不明显，也同样提示诺奖认可并非只由单一变量解释。"></p>
           </div>
         </div>
 
@@ -244,9 +260,7 @@
         <div class="section-header">
           <div>
             <h2>3. 科研机构与国家分布</h2>
-            <p>
-              从机构排行榜与国家版图两个层面，观察诺奖科研活动集中在哪些机构和地区。
-            </p>
+            <p class="story-copy" data-story-text="论文背后不仅有作者，也有实验室、大学、研究院和国家科研体系的长期支撑。机构排行与国家分布图展示了当前样本中诺奖相关知识生产更频繁出现的空间位置，并允许用户切换不同指标观察结构是否稳定。这部分需要谨慎理解：高频出现代表样本中的关联强度，不等同于对机构贡献的完整评价。"></p>
           </div>
         </div>
 
@@ -259,7 +273,7 @@
           <div class="section-header compact">
             <div>
               <h3>3.1 机构影响力概览</h3>
-              <p>哪些机构在诺奖科学家的发表记录中最常出现？哪些机构在论文数、关键论文和引用影响力上更突出？</p>
+              <p class="story-copy" data-story-text="机构排行榜把分散在论文和作者记录中的组织信息压缩为可比较的序列。用户可以切换排序指标，观察“参与获奖论文数量”“关联获奖者数量”和“引用影响力”等维度是否指向相同的机构。"></p>
             </div>
           </div>
 
@@ -308,7 +322,7 @@
           <div class="section-header compact">
             <div>
               <h3>3.2 国家 / 地区分布图</h3>
-              <p>诺奖科研机构主要分布在哪些国家或地区？不同国家是否具有不同的学科结构？</p>
+              <p class="story-copy" data-story-text="国家和地区视角提供了更宏观的空间背景：哪些地方在诺奖相关机构、论文和获奖科学家记录中更常出现。地图与排行榜联动，适合先识别集中区域，再进入国家科研档案查看代表机构、论文和人物。"></p>
             </div>
           </div>
 
@@ -358,9 +372,7 @@
         <div class="section-header">
           <div>
             <h2>4. 合作网络与知识迁移</h2>
-            <p>
-              从机构合作关系、机构—学科结构和关键论文知识路径三个角度，观察诺奖成果背后的连接与扩散。
-            </p>
+            <p class="story-copy" data-story-text="诺奖论文并不是孤立节点，它们连接着合作机构、前置知识和后续研究。这个部分从机构合作网络、机构—学科关系和论文引用路径三个层次展开，观察知识如何在组织之间流动，又如何沿着学科主题继续扩散。网络图强调关系结构，因此更适合看连接、桥接和路径，而不是单纯比较数量高低。"></p>
           </div>
         </div>
 
@@ -374,7 +386,7 @@
           <div class="section-header compact">
             <div>
               <h3>4.1 机构合作网络图</h3>
-              <p>哪些机构之间形成了高频合作关系？哪些机构位于诺奖科研合作网络的中心？</p>
+              <p class="story-copy" data-story-text="合作网络把共同出现在论文中的机构连接起来，帮助识别样本中的高频合作和可能的枢纽机构。通过调整 Top N 和最小边权重，可以从稠密网络切换到更清晰的核心关系。"></p>
             </div>
           </div>
 
@@ -412,7 +424,7 @@
           <div class="section-header compact">
             <div>
               <h3>4.2 机构—学科关系图</h3>
-              <p>不同学科的诺奖科研活动是否集中在不同机构？哪些机构是综合型科研中心？</p>
+              <p class="story-copy" data-story-text="桑基图关注机构与学科之间的流量关系：某些机构可能在一个学科上高度集中，也可能跨多个诺奖领域保持连接。颜色提示研究集中领域与获奖关联领域是否一致，适合用来观察机构的学科路径是否单一。"></p>
             </div>
           </div>
 
@@ -449,9 +461,7 @@
           <div class="section-header compact">
             <div>
               <h3>4.3 学术主题迁移与知识路径图</h3>
-              <p>
-                基于诺奖关键论文的一跳引文关系，观察知识如何流入获奖论文，又如何从获奖论文向后续研究扩散。
-              </p>
+              <p class="story-copy" data-story-text="如果把获奖论文看作知识路径中的中间站，它既吸收前置研究，也被后续论文继续引用和改写。这里基于一跳引文关系展示知识来源、诺奖核心和后续扩散之间的连接，帮助用户观察学科主题是否发生跨域迁移。"></p>
             </div>
           </div>
 
@@ -516,11 +526,31 @@
           </div>
         </div>
       </section>
-    </main>
 
-    <footer>
-      <p>说明文字</p>
-    </footer>
+      <section id="section-summary" class="section story-section summary-section">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">Appendix</div>
+            <h2>5. 总结与附录：回到整体问题</h2>
+            <p class="story-copy" data-story-text="从当前样本看，诺奖论文的价值呈现为一条较长的链路：职业积累提供时间背景，等待时间提示认可过程，机构与国家分布呈现知识生产的空间结构，引用与迁移网络展示论文前后的知识连接。需要注意的是，本项目依赖已匹配的诺奖论文、OpenAlex 记录和机构字段，样本覆盖、字段缺失与匹配误差都会影响解释边界。建议阅读时先看整体趋势，再通过筛选、悬浮和点击交互进入具体案例。"></p>
+          </div>
+        </div>
+        <div class="appendix-grid">
+          <div class="appendix-card">
+            <h3>主要阅读顺序</h3>
+            <p>先从职业阶段和等待时间理解“时间积累”，再进入机构空间分布，最后用网络和路径图观察知识如何连接。</p>
+          </div>
+          <div class="appendix-card">
+            <h3>数据边界</h3>
+            <p>图表基于当前项目内的诺奖论文匹配数据、OpenAlex 扩展字段与预处理结果；未匹配或字段缺失的记录不会完整反映在图中。</p>
+          </div>
+          <div class="appendix-card">
+            <h3>交互提示</h3>
+            <p>筛选器用于切换学科、指标和图表范围；鼠标悬浮查看细节，点击机构、国家或节点可进入更具体的解释面板。</p>
+          </div>
+        </div>
+      </section>
+    </main>
 
     <script type="module" src="js/main.js"></script>
   </body>

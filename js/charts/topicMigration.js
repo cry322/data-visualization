@@ -153,11 +153,11 @@ export async function initTopicMigration() {
       .attr("preserveAspectRatio", "xMidYMid meet");
 
     svg.append("text")
-      .attr("x", margin.left - 20)
+      .attr("x", margin.left - nodeWidth)
       .attr("y", 30)
-      .attr("text-anchor", "end")
-      .attr("fill", "#475569")
-      .attr("font-size", 13)
+      .attr("text-anchor", "start")
+      .attr("fill", chartLabelColor())
+      .attr("font-size", 15)
       .attr("font-weight", 800)
       .text("Knowledge source domains");
 
@@ -165,17 +165,17 @@ export async function initTopicMigration() {
       .attr("x", width / 2)
       .attr("y", 30)
       .attr("text-anchor", "middle")
-      .attr("fill", "#475569")
-      .attr("font-size", 13)
+      .attr("fill", chartLabelColor())
+      .attr("font-size", 15)
       .attr("font-weight", 800)
       .text("Nobel paper domains");
 
     svg.append("text")
-      .attr("x", width - margin.right + 20)
+      .attr("x", width - margin.right + nodeWidth)
       .attr("y", 30)
-      .attr("text-anchor", "start")
-      .attr("fill", "#475569")
-      .attr("font-size", 13)
+      .attr("text-anchor", "end")
+      .attr("fill", chartLabelColor())
+      .attr("font-size", 15)
       .attr("font-weight", 800)
       .text("Impact domains");
 
@@ -199,7 +199,7 @@ export async function initTopicMigration() {
       return scale(d.value);
     };
 
-    const linkOpacity = d => d.isEmphasis ? 0.42 : 0.075;
+    const linkOpacity = d => d.isEmphasis ? 0.52 : 0.11;
     const linkDisplayWidth = d => {
       const width = linkWidth(d);
       return d.isEmphasis ? width : Math.max(0.7, width * 0.42);
@@ -210,7 +210,7 @@ export async function initTopicMigration() {
       .data(layout.links.slice().sort((a, b) => d3.ascending(Number(a.isEmphasis), Number(b.isEmphasis))), d => d.key)
       .join("path")
       .attr("fill", "none")
-      .attr("stroke", d => domainColor(getLinkColorDomain(d), 0.78))
+      .attr("stroke", d => domainColor(getLinkColorDomain(d), d.isEmphasis ? 0.72 : 0.42))
       .attr("stroke-opacity", linkOpacity)
       .attr("stroke-linecap", "round")
       .attr("stroke-width", linkDisplayWidth)
@@ -259,8 +259,8 @@ export async function initTopicMigration() {
       .attr("height", d => d.height)
       .attr("rx", 7)
       .attr("fill", d => domainColor(d.domain, 0.9))
-      .attr("fill-opacity", 0.88)
-      .attr("stroke", "#ffffff")
+      .attr("fill-opacity", 0.92)
+      .attr("stroke", chartHaloColor())
       .attr("stroke-width", 1.2)
       .style("cursor", "pointer")
       .on("mouseover", function (event, d) {
@@ -283,11 +283,11 @@ export async function initTopicMigration() {
         nodes
           .interrupt()
           .style("opacity", 1)
-          .attr("stroke", "#ffffff")
+          .attr("stroke", chartHaloColor())
           .attr("stroke-width", 1.2);
         links
           .interrupt()
-          .attr("stroke", d => domainColor(getLinkColorDomain(d), 0.78))
+          .attr("stroke", d => domainColor(getLinkColorDomain(d), d.isEmphasis ? 0.72 : 0.42))
           .attr("stroke-opacity", linkOpacity)
           .attr("stroke-width", linkDisplayWidth);
         tooltip.style("opacity", 0);
@@ -313,11 +313,11 @@ export async function initTopicMigration() {
         if (d.type === "target") return "start";
         return "middle";
       })
-      .attr("fill", "#334155")
-      .attr("font-size", 10.8)
+      .attr("fill", chartLabelColor())
+      .attr("font-size", 12.5)
       .attr("font-weight", 700)
       .attr("paint-order", "stroke")
-      .attr("stroke", "#ffffff")
+      .attr("stroke", chartHaloColor())
       .attr("stroke-width", 3.2)
       .attr("stroke-linejoin", "round")
       .attr("pointer-events", "none")
@@ -327,14 +327,6 @@ export async function initTopicMigration() {
       x: margin.left,
       y: height - 54
     });
-
-    svg.append("text")
-      .attr("x", width / 2)
-      .attr("y", height - 18)
-      .attr("text-anchor", "middle")
-      .attr("fill", "#94a3b8")
-      .attr("font-size", 12)
-      .text("Sankey 左右两段分别缩放：线越粗，表示该阶段内部该路径出现次数越多。");
   }
 
   function drawForceNetwork(data) {
@@ -406,7 +398,7 @@ export async function initTopicMigration() {
 
     const color = d3.scaleOrdinal()
       .domain(["source", "prize", "target", "mixed"])
-      .range(["#7aa6c2", "#b8a7d9", "#d9a66a", "#8bbf9f"]);
+      .range(["#2f6f73", "#6f5b8f", "#b56b5f", "#8a8f75"]);
 
     const radius = d3.scaleSqrt()
       .domain([1, d3.max(data.nodes, d => d.value) || 1])
@@ -532,7 +524,7 @@ export async function initTopicMigration() {
       .data(labelNodes, d => d.id)
       .join("text")
       .attr("fill", "#334155")
-      .attr("font-size", 11)
+      .attr("font-size", 12.5)
       .attr("font-weight", 700)
       .attr("paint-order", "stroke")
       .attr("stroke", "#ffffff")
@@ -573,7 +565,7 @@ export async function initTopicMigration() {
       .attr("y", height - 12)
       .attr("text-anchor", "middle")
       .attr("fill", "#94a3b8")
-      .attr("font-size", 12)
+      .attr("font-size", 13)
       .text("这是力导向网络：节点位置由连接关系自动计算，不表示固定阶段或坐标。可拖拽节点、滚轮缩放。");
 
     simulation.on("tick", () => {
@@ -1967,14 +1959,32 @@ function roleColor(type, alpha = 0.9) {
   return `rgba(148, 163, 184, ${alpha})`;
 }
 
+function isDarkTheme() {
+  return document.documentElement.dataset.theme === "dark";
+}
+
+function chartLabelColor() {
+  return getComputedStyle(document.documentElement).getPropertyValue("--chart-label").trim() || (isDarkTheme() ? "#e0d8ec" : "#334155");
+}
+
+function chartHaloColor() {
+  return isDarkTheme() ? "#171420" : "#ffffff";
+}
+
 function domainColor(domain, alpha = 0.78) {
   const key = cleanText(domain).toLowerCase();
-  const colors = {
-    physical: [216, 162, 74],
-    life: [122, 166, 194],
-    health: [199, 124, 124],
-    social: [184, 166, 207],
-    unknown: [215, 221, 229]
+  const colors = isDarkTheme() ? {
+    physical: [145, 213, 212],
+    life: [159, 207, 172],
+    health: [216, 149, 157],
+    social: [176, 160, 210],
+    unknown: [153, 162, 174]
+  } : {
+    physical: [72, 132, 143],
+    life: [92, 145, 111],
+    health: [181, 105, 111],
+    social: [126, 108, 166],
+    unknown: [138, 150, 164]
   };
 
   let rgb = colors.unknown;
@@ -2487,35 +2497,14 @@ function drawCitationArcDiagram(data) {
     .attr("orient", "auto")
     .append("path")
     .attr("d", "M0,-5L10,0L0,5")
-    .attr("fill", "rgba(0, 0, 0, 0.45)");
-
-  const title = data.selectedField === "all"
-    ? "全部学科引用路径弧线图"
-    : `${data.selectedField} 引用路径弧线图`;
-
-  svg.append("text")
-    .attr("x", width / 2)
-    .attr("y", 28)
-    .attr("text-anchor", "middle")
-    .attr("fill", "#0f172a")
-    .attr("font-size", 16)
-    .attr("font-weight", 800)
-    .text(title);
-
-  svg.append("text")
-    .attr("x", width / 2)
-    .attr("y", 50)
-    .attr("text-anchor", "middle")
-    .attr("fill", "#64748b")
-    .attr("font-size", 12)
-    .text(`节点使用 subfield，颜色表示 domain；每侧保留 Top ${data.topN}，其余合并为 Others；已删除 Unknown；上方为前置知识来源，下方为后续扩散路径；若后续扩散与知识来源重合，则复用左侧节点。`);
+    .attr("fill", isDarkTheme() ? "rgba(224,216,236,0.58)" : "rgba(38,50,68,0.52)");
 
   svg.append("line")
     .attr("x1", margin.left - 20)
     .attr("x2", width - margin.right + 20)
     .attr("y1", axisY)
     .attr("y2", axisY)
-    .attr("stroke", "#cbd5e1")
+    .attr("stroke", isDarkTheme() ? "rgba(214,205,232,0.24)" : "#cbd5e1")
     .attr("stroke-width", 1.2);
 
   const sourceNodes = data.nodes.filter(d => d.axisRole === "source");
@@ -2584,16 +2573,16 @@ function drawCitationArcDiagram(data) {
   svg.append("text")
     .attr("x", margin.left + 4)
     .attr("y", axisY - 220)
-    .attr("fill", "#64748b")
-    .attr("font-size", 12)
+    .attr("fill", chartLabelColor())
+    .attr("font-size", 13.5)
     .attr("font-weight", 700)
     .text("上方：诺奖核心引用前置知识");
 
   svg.append("text")
     .attr("x", margin.left + 4)
     .attr("y", axisY + 310)
-    .attr("fill", "#64748b")
-    .attr("font-size", 12)
+    .attr("fill", chartLabelColor())
+    .attr("font-size", 13.5)
     .attr("font-weight", 700)
     .text("下方：后续研究引用诺奖核心");
 
@@ -2710,7 +2699,7 @@ function drawCitationArcDiagram(data) {
   nodes.append("circle")
     .attr("r", d => radius(d.value))
     .attr("fill", d => nodeFieldColor(d.colorField, 0.92))
-    .attr("stroke", "rgba(255,255,255,0.95)")
+    .attr("stroke", chartHaloColor())
     .attr("stroke-width", 1.8);
 
   nodes.append("circle")
@@ -2733,22 +2722,14 @@ function drawCitationArcDiagram(data) {
     .attr("x", d => d.x)
     .attr("y", d => axisY + 36)
     .attr("text-anchor", "middle")
-    .attr("fill", "#334155")
-    .attr("font-size", 10.5)
+    .attr("fill", chartLabelColor())
+    .attr("font-size", 12)
     .attr("font-weight", 700)
     .attr("paint-order", "stroke")
-    .attr("stroke", "#ffffff")
+    .attr("stroke", chartHaloColor())
     .attr("stroke-width", 3)
     .style("opacity", d => d.__showLabel ? 1 : 0)
     .text(d => isArcOtherName(d.name) ? "" : shortenText(d.name, 12));
-
-  svg.append("text")
-    .attr("x", width / 2)
-    .attr("y", height - 18)
-    .attr("text-anchor", "middle")
-    .attr("fill", "#94a3b8")
-    .attr("font-size", 11)
-    .text("节点颜色表示 domain；每侧仅保留 Top N subfield，其余合并为 Others；已删除 Unknown；点击节点或弧线可查看代表论文。");
 
   drawArcLegend(svg, {
     x: margin.left + 8,
@@ -2807,8 +2788,8 @@ function drawArcGroupTitle(svg, x, y, text) {
     .attr("x", x)
     .attr("y", y)
     .attr("text-anchor", "middle")
-    .attr("fill", "#64748b")
-    .attr("font-size", 12)
+    .attr("fill", chartLabelColor())
+    .attr("font-size", 14)
     .attr("font-weight", 800)
     .attr("paint-order", "stroke")
     .attr("stroke", "#ffffff")
@@ -2839,14 +2820,14 @@ function drawArcLegend(svg, { x, y }) {
       .attr("cy", 0)
       .attr("r", 5.5)
       .attr("fill", domainColor(domain, 0.92))
-      .attr("stroke", "#ffffff")
+      .attr("stroke", chartHaloColor())
       .attr("stroke-width", 1);
 
     item.append("text")
       .attr("x", 16)
       .attr("y", 4)
-      .attr("font-size", 11)
-      .attr("fill", "#64748b")
+      .attr("font-size", 12.5)
+      .attr("fill", chartLabelColor())
       .text(label);
 
     offset += label.length * 7 + 48;
@@ -2872,7 +2853,7 @@ function drawArcLegend(svg, { x, y }) {
     item.append("text")
       .attr("x", 36)
       .attr("y", 4)
-      .attr("font-size", 11)
+      .attr("font-size", 12.5)
       .attr("fill", "#64748b")
       .text(label);
 
@@ -2936,12 +2917,23 @@ function arcSubfieldRelationLabel(link) {
 
 function arcStrokeColor(link, rank = 0) {
   const relation = arcSubfieldRelation(link);
-  const alpha = Math.max(0.22, 0.54 - rank * 0.010);
+  const alpha = Math.max(0.26, 0.58 - rank * 0.010);
 
-  if (relation === "same") return `rgba(169, 120, 93, ${Math.max(0.32, alpha + 0.04)})`;
-  if (isOtherArcLink(link)) return `rgba(107, 114, 128, ${Math.max(0.18, alpha * 0.68)})`;
+  if (relation === "same") {
+    return isDarkTheme()
+      ? `rgba(145, 213, 212, ${Math.max(0.36, alpha + 0.06)})`
+      : `rgba(72, 132, 143, ${Math.max(0.34, alpha + 0.04)})`;
+  }
 
-  return `rgba(107, 114, 128, ${Math.max(0.28, alpha * 0.90)})`;
+  if (isOtherArcLink(link)) {
+    return isDarkTheme()
+      ? `rgba(153, 162, 174, ${Math.max(0.20, alpha * 0.68)})`
+      : `rgba(138, 150, 164, ${Math.max(0.22, alpha * 0.72)})`;
+  }
+
+  return isDarkTheme()
+    ? `rgba(176, 160, 210, ${Math.max(0.30, alpha * 0.90)})`
+    : `rgba(126, 108, 166, ${Math.max(0.28, alpha * 0.90)})`;
 }
 
 function arcLinkOpacity(link, rank = 0) {

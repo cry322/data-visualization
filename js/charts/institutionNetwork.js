@@ -86,8 +86,8 @@ export async function initInstitutionNetwork() {
     .style("line-height", "1.6")
     .style("box-shadow", "0 10px 28px rgba(15, 23, 42, 0.22)");
 
-  const defaultLinkColor = "rgba(215, 221, 229, 0.88)";
-  const activeLinkColor = "rgba(102, 112, 133, 0.78)";
+  const defaultLinkColor = "rgba(212, 207, 197, 0.9)";
+  const activeLinkColor = "rgba(47, 111, 115, 0.82)";
 
   const state = {
     field: "all",
@@ -1056,40 +1056,40 @@ function moveTooltip(event) {
 
 const COUNTRY_COLOR_MAP = new Map(
   Object.entries({
-    US: "#7aa6c2",
-    GB: "#d8a24a",
-    DE: "#6b8f71",
-    FR: "#c77c7c",
-    JP: "#8ba7a0",
-    CA: "#b69b5b",
-    CH: "#9b6a6c",
-    SE: "#667085",
-    AU: "#a98973",
-    RU: "#9ca3af",
-    NL: "#86a77d",
-    DK: "#b77e94",
-    BE: "#9bbf8f",
-    IT: "#c59a9f",
-    CL: "#79706e",
-    NO: "#9bb8cc",
-    MY: "#caa46b",
-    ES: "#a99557",
-    IL: "#6f9f99",
-    Unknown: "#94a3b8"
+    US: "#2f6f73",
+    GB: "#b25d5d",
+    DE: "#5b6f9f",
+    FR: "#a36f38",
+    JP: "#7e5a8a",
+    CA: "#3f7f5f",
+    CH: "#9a5268",
+    SE: "#6f7480",
+    AU: "#b07a52",
+    RU: "#8a8f75",
+    NL: "#4f8a7b",
+    DK: "#a26892",
+    BE: "#7f9a65",
+    IT: "#bc7466",
+    CL: "#6d625c",
+    NO: "#5f879c",
+    MY: "#b98a45",
+    ES: "#9f7f3e",
+    IL: "#4f827f",
+    Unknown: "#98a2b3"
   })
 );
 
 const FALLBACK_COUNTRY_COLORS = [
-  "#7aa6c2",
-  "#d8a24a",
-  "#6b8f71",
-  "#c77c7c",
-  "#667085",
-  "#9b6a6c",
-  "#8ba7a0",
-  "#b69b5b",
-  "#a98973",
-  "#9ca3af"
+  "#2f6f73",
+  "#b25d5d",
+  "#5b6f9f",
+  "#a36f38",
+  "#7e5a8a",
+  "#3f7f5f",
+  "#9a5268",
+  "#b07a52",
+  "#8a8f75",
+  "#5f879c"
 ];
 
 const COUNTRY_CODE_ALIASES = new Map(

@@ -28,7 +28,7 @@ export function initCountryMap() {
         .translate([width / 2, height / 2]);
     const path = d3.geoPath().projection(projection);
 
-    svgMap.append("rect").attr("width", width).attr("height", height).attr("fill", "#f8f9fa");
+    svgMap.append("rect").attr("class", "map-background").attr("width", width).attr("height", height);
 
     const mapZoomGroup = svgMap.append("g"); 
     const zoom = d3.zoom()
@@ -158,8 +158,8 @@ export function initCountryMap() {
                 const cc = nameToAlpha2[d.properties.name];
                 return cc ? `map-path map-path-${cc}` : "map-path"; 
             })
-            .attr("fill", "#ffffff")
-            .attr("stroke", "#cbd5e1")
+            .attr("fill", "var(--bg-card)")
+            .attr("stroke", "var(--chart-axis)")
             .attr("stroke-width", 0.5)
             .style("cursor", "pointer") 
             .style("transition", "stroke 0.2s, stroke-width 0.2s"); 
@@ -190,13 +190,19 @@ export function initCountryMap() {
             let currentInterpolator;
             if (currentMetric === "m1") {
                 // 娣遍們娴疯摑 (Ocean Blue: 娴呴潚 -> 婀栬摑)
-                currentInterpolator = d3.interpolate("#f0f9ff", "#0369a1"); 
+                currentInterpolator = isEyeTheme()
+                    ? d3.interpolate("#355f68", "#9bd8d8")
+                    : d3.interpolate("#f0f9ff", "#0369a1"); 
             } else if (currentMetric === "m2") {
                 // 缁忓吀绉戞妧钃?(Tech Blue: 娴呰摑 -> 瀹濊摑)
-                currentInterpolator = d3.interpolate("#eff6ff", "#1d4ed8");  
+                currentInterpolator = isEyeTheme()
+                    ? d3.interpolate("#4f4967", "#c5b5e3")
+                    : d3.interpolate("#eff6ff", "#1d4ed8");  
             } else {
                 // 楂樼骇钘忛潚/鐏拌摑 (Slate/Navy Blue: 娴呯伆鐧?-> 娣辫棌闈?
-                currentInterpolator = d3.interpolate("#f8fafc", "#426b8f");  
+                currentInterpolator = isEyeTheme()
+                    ? d3.interpolate("#59424f", "#e3a7ad")
+                    : d3.interpolate("#f8fafc", "#426b8f");  
             }
 
             const colorScale = d3.scaleSequential(currentInterpolator).domain([0, Math.log1p(maxVal)]); 
@@ -214,9 +220,9 @@ export function initCountryMap() {
             // 鏇存柊鍦板浘棰滆壊
             mapPaths.transition("color").duration(750).attr("fill", d => {
                 const cc = nameToAlpha2[d.properties.name];
-                if (!cc || !countryMetrics.has(cc)) return "#ffffff"; 
+                if (!cc || !countryMetrics.has(cc)) return cssVar("--bg-card"); 
                 const val = countryMetrics.get(cc)[currentMetric];
-                return val === 0 ? "#ffffff" : colorScale(Math.log1p(val));
+                return val === 0 ? cssVar("--bg-card") : colorScale(Math.log1p(val));
             });
 
             // 鏇存柊鍙充笅瑙掑鏁板浘渚嬪潗鏍囪酱
@@ -236,8 +242,8 @@ export function initCountryMap() {
                 .tickFormat(d3.format(".0f"));
 
             legendAxisG.transition("layout").duration(600).call(legendAxis);
-            legendAxisG.selectAll("text").style("font-size", "10px").style("fill", "#64748b");
-            legendAxisG.selectAll("path, line").style("stroke", "#cbd5e1");
+            legendAxisG.selectAll("text").style("font-size", "12px").style("fill", "var(--chart-label)");
+            legendAxisG.selectAll("path, line").style("stroke", "var(--chart-axis)");
 
             // 鏇存柊鍙充晶鍥藉鎺掕姒?Top 10
             const sortedList = [...combinedData].sort((a, b) => b[currentMetric] - a[currentMetric]);
@@ -247,8 +253,9 @@ export function initCountryMap() {
             yRank.domain(top10.map(d => d.name));
 
             xRankAxisG.transition("layout").duration(600).call(d3.axisBottom(xRank).ticks(4));
+            xRankAxisG.selectAll("text").style("font-size", "13px").style("fill", "var(--chart-label)");
             yRankAxisG.transition("layout").duration(600).call(d3.axisLeft(yRank))
-                .selectAll("text").style("font-size", "12px").style("fill", "#334155");
+                .selectAll("text").style("font-size", "14px").style("fill", "var(--chart-label)");
 
             const bars = svgRank.selectAll(".rank-bar").data(top10, d => d.code);
 
@@ -278,7 +285,7 @@ export function initCountryMap() {
                 const cData = countryMetrics.get(cc);
                 if (cData[currentMetric] === 0) return; 
 
-                d3.select(this).raise().attr("stroke", "#0f172a").attr("stroke-width", 1.5);
+                d3.select(this).raise().attr("stroke", "var(--chart-highlight)").attr("stroke-width", 1.5);
                 // 銆愪慨鏀圭偣 3銆慔over鑹蹭篃浣跨敤褰撳墠娓愬彉鐨勬渶娣辫壊
                 d3.selectAll(`.rank-bar-${cc}`).transition("hover").duration(150).attr("fill", activeHoverColor);
                 showTooltip(event, cData);
@@ -288,7 +295,7 @@ export function initCountryMap() {
             })
             .on("mouseout", function(event, d) {
                 const cc = nameToAlpha2[d.properties.name];
-                d3.select(this).attr("stroke", "#cbd5e1").attr("stroke-width", 0.5);
+                d3.select(this).attr("stroke", "var(--chart-axis)").attr("stroke-width", 0.5);
                 
                 if (cc && countryMetrics.has(cc)) {
                     const cData = countryMetrics.get(cc);
@@ -306,7 +313,7 @@ export function initCountryMap() {
             barsEnter.merge(bars).on("mouseover", function(event, d) {
                 // 銆愪慨鏀圭偣 3銆戝悓鐞嗘洿鏂版煴鐘跺浘鐨?Hover 鑹?
                 d3.select(this).transition("hover").duration(150).attr("fill", activeHoverColor); 
-                d3.selectAll(`.map-path-${d.code}`).raise().attr("stroke", "#0f172a").attr("stroke-width", 1.5);
+                d3.selectAll(`.map-path-${d.code}`).raise().attr("stroke", "var(--chart-highlight)").attr("stroke-width", 1.5);
                 showTooltip(event, d); 
             })
             .on("mousemove", function(event) {
@@ -314,7 +321,7 @@ export function initCountryMap() {
             })
             .on("mouseout", function(event, d) {
                 d3.select(this).transition("hover").duration(150).attr("fill", colorScale(Math.log1p(d[currentMetric])));
-                d3.selectAll(`.map-path-${d.code}`).attr("stroke", "#cbd5e1").attr("stroke-width", 0.5);
+                d3.selectAll(`.map-path-${d.code}`).attr("stroke", "var(--chart-axis)").attr("stroke-width", 0.5);
                 tooltip.style("opacity", 0).style("display", "none");
             })
             .on("click", function(event, d) {
@@ -323,6 +330,7 @@ export function initCountryMap() {
         }
 
         updateDashboard();
+        window.addEventListener("themechange", updateDashboard);
 
         function showTooltip(event, d) {
             const activeMetricName = metricConfig[currentMetric];
@@ -353,7 +361,7 @@ export function initCountryMap() {
         function renderCountryDetail(cc, countryData) {
             d3.select("#country-detail-panel").style("display", "block");
             const countryName = (countryData && countryData.name) || cc;
-            d3.select("#detail-country-name").text(countryName).style("color", "#3b82f6");
+            d3.select("#detail-country-name").text(countryName);
             const container = d3.select("#country-detail-content");
             container.html(""); 
 
@@ -361,53 +369,50 @@ export function initCountryMap() {
                 .sort((a, b) => (+b.prize_paper_count || 0) - (+a.prize_paper_count || 0));
 
             let instHtml = instsForCountry.length ? instsForCountry.map(inst => `
-                <div style="padding: 8px 0; border-bottom: 1px dashed rgba(129,115,97,0.15);">
-                    <div style="font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 3px;">
+                <div class="country-detail-item">
+                    <div class="country-detail-name">
                          ${inst.name || inst.id}
                     </div>
-                    <div style="font-size: 11px; color: #64748b;">
-                        关联诺奖论文: <span style="color: #3b82f6; font-weight: bold;">${inst.prize_paper_count || 0}</span> 篇 | 
-                        诺奖得主: <span style="color: #3b82f6; font-weight: bold;">${inst.associated_laureate_count || 0}</span> 位
+                    <div class="country-detail-meta">
+                        关联诺奖论文: <span class="country-detail-value">${inst.prize_paper_count || 0}</span> 篇 | 
+                        诺奖得主: <span class="country-detail-value">${inst.associated_laureate_count || 0}</span> 位
                     </div>
                 </div>
-            `).join("") : `<div style="padding: 15px; color: #94a3b8; font-size: 12px; text-align: center; font-style: italic;">该国暂无直接登录的诺奖关联机构</div>`;
+            `).join("") : `<div class="country-detail-empty">该国暂无直接登录的诺奖关联机构</div>`;
 
             const laureateArray = (countryData && countryData.laureates) || [];
             const paperArray = (countryData && countryData.papers) || [];
 
             let laureateHtml = laureateArray.length ? laureateArray.map(l => `
-                <div style="padding: 8px 0; border-bottom: 1px dashed rgba(129,115,97,0.15); display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-size: 13px; font-weight: 600; color: #1e293b;"> ${l.name}</div>
-                    ${l.year ? `<div style="font-size: 10px; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">获奖年份：${l.year}</div>` : ""}
+                <div class="country-detail-item country-detail-row">
+                    <div class="country-detail-name"> ${l.name}</div>
+                    ${l.year ? `<div class="country-detail-year">获奖年份：${l.year}</div>` : ""}
                 </div>
-            `).join("") : `<div style="padding: 15px; color: #94a3b8; font-size: 12px; text-align: center; font-style: italic;">该国暂无诺奖得主直属记录</div>`;
+            `).join("") : `<div class="country-detail-empty">该国暂无诺奖得主直属记录</div>`;
 
             let paperHtml = paperArray.length ? paperArray.map(p => `
-                <div style="padding: 10px 0; border-bottom: 1px dashed rgba(129,115,97,0.15);">
-                    <div style="font-size: 12px; font-weight: 600; color: #1e293b; line-height: 1.4; margin-bottom: 4px;">
+                <div class="country-detail-item country-detail-paper">
+                    <div class="country-detail-name">
                          ${p.title}
                     </div>
-                    <div style="font-size: 11px; color: #64748b;">
-                        获奖者 <strong style="color: #426b8f;">${p.laureate}</strong> 
-                        ${p.year ? `<span style="margin-left:6px; background:#e2e8f0; padding:1px 5px; border-radius:4px; font-size:10px;">获奖年份：${p.year}</span>` : ""}
+                    <div class="country-detail-meta">
+                        获奖者 <strong>${p.laureate}</strong> 
+                        ${p.year ? `<span class="country-detail-year">获奖年份：${p.year}</span>` : ""}
                     </div>
                 </div>
-            `).join("") : `<div style="padding: 15px; color: #94a3b8; font-size: 12px; text-align: center; font-style: italic;">该国暂无代表性获奖论文数据</div>`;
-
-            const colStyle = "background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; max-height: 380px; overflow-y: auto; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);";
-            const headerStyle = "font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 12px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; position: sticky; top: -16px; background: #f8fafc; z-index: 10;";
+            `).join("") : `<div class="country-detail-empty">该国暂无代表性获奖论文数据</div>`;
 
             container.html(`
-                <div style="${colStyle}">
-                    <div style="${headerStyle}"> 顶尖关联机构 (${instsForCountry.length})</div>
+                <div class="country-detail-column">
+                    <div class="country-detail-title"> 顶尖关联机构 <span class="country-detail-badge">${instsForCountry.length}</span></div>
                     ${instHtml}
                 </div>
-                <div style="${colStyle}">
-                    <div style="${headerStyle}"> 诺奖得主名录 (${laureateArray.length})</div>
+                <div class="country-detail-column">
+                    <div class="country-detail-title"> 诺奖得主名录 <span class="country-detail-badge">${laureateArray.length}</span></div>
                     ${laureateHtml}
                 </div>
-                <div style="${colStyle}">
-                    <div style="${headerStyle}"> 代表获奖论文 (${paperArray.length})</div>
+                <div class="country-detail-column">
+                    <div class="country-detail-title"> 代表获奖论文 <span class="country-detail-badge">${paperArray.length}</span></div>
                     ${paperHtml}
                 </div>
             `);
@@ -419,4 +424,12 @@ export function initCountryMap() {
         console.error("Map Data Loading Error:", err);
         mapContainer.html(`<div style="color:red; padding: 20px;">鍦板浘鏁版嵁鍔犺浇澶辫触锛岃妫€鏌ョ綉缁滃拰鏁版嵁璺緞銆?/div>`);
     });
+}
+
+function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function isEyeTheme() {
+    return document.documentElement.dataset.theme === "dark";
 }
