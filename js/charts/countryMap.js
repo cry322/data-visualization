@@ -191,17 +191,17 @@ export function initCountryMap() {
             if (currentMetric === "m1") {
                 // 娣遍們娴疯摑 (Ocean Blue: 娴呴潚 -> 婀栬摑)
                 currentInterpolator = isEyeTheme()
-                    ? d3.interpolate("#1a2531", "#7fc5c6")
+                    ? d3.interpolate("#355f68", "#9bd8d8")
                     : d3.interpolate("#f0f9ff", "#0369a1"); 
             } else if (currentMetric === "m2") {
                 // 缁忓吀绉戞妧钃?(Tech Blue: 娴呰摑 -> 瀹濊摑)
                 currentInterpolator = isEyeTheme()
-                    ? d3.interpolate("#1b2234", "#b0a0d2")
+                    ? d3.interpolate("#4f4967", "#c5b5e3")
                     : d3.interpolate("#eff6ff", "#1d4ed8");  
             } else {
                 // 楂樼骇钘忛潚/鐏拌摑 (Slate/Navy Blue: 娴呯伆鐧?-> 娣辫棌闈?
                 currentInterpolator = isEyeTheme()
-                    ? d3.interpolate("#1c2426", "#d8959d")
+                    ? d3.interpolate("#59424f", "#e3a7ad")
                     : d3.interpolate("#f8fafc", "#426b8f");  
             }
 
@@ -330,6 +330,7 @@ export function initCountryMap() {
         }
 
         updateDashboard();
+        window.addEventListener("themechange", updateDashboard);
 
         function showTooltip(event, d) {
             const activeMetricName = metricConfig[currentMetric];

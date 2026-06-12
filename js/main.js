@@ -39,9 +39,10 @@ function initThemeToggle() {
   const root = document.documentElement;
   const toggle = document.querySelector("#theme-toggle");
   const label = toggle?.querySelector(".theme-toggle-label");
+  const requestedTheme = new URLSearchParams(window.location.search).get("theme");
   const storedTheme = localStorage.getItem(STORAGE_KEY);
   const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-  const initialTheme = storedTheme || (prefersDark ? "dark" : "light");
+  const initialTheme = requestedTheme || storedTheme || (prefersDark ? "dark" : "light");
 
   const setTheme = (theme) => {
     const normalizedTheme = theme === "dark" ? "dark" : "light";
@@ -63,6 +64,7 @@ function initThemeToggle() {
   };
 
   setTheme(initialTheme);
+  initChartThemeRefresh();
 
   toggle?.addEventListener("click", () => {
     setTheme(root.dataset.theme === "dark" ? "light" : "dark");
@@ -160,19 +162,51 @@ function applyChartTheme() {
     .style("fill", labelColor)
     .attr("fill", labelColor);
 
-  d3.selectAll(".waittime-grid line, .career-left-grid line, .career-right-grid line")
+  d3.selectAll(".waittime-grid line, .career-left-grid line, .career-right-grid line, .river-axis line, .river-center-line")
     .attr("stroke", gridColor)
     .style("stroke", gridColor);
 
   d3.selectAll(".waittime-plot-bg")
-    .attr("fill", isDark ? "#171420" : "#ffffff")
-    .attr("stroke", isDark ? "rgba(214,205,232,0.10)" : "rgba(216,222,232,0.72)");
+    .attr("fill", bgColor)
+    .style("fill", bgColor)
+    .attr("stroke", isDark ? "rgba(214,205,232,0.14)" : "rgba(216,222,232,0.72)");
 
   d3.selectAll("#country-map-chart svg > rect")
     .attr("fill", bgColor);
 
   d3.selectAll(".map-path")
     .attr("stroke", axisColor);
+
+  d3.selectAll(".network-background circle, .citation-network-axis, .river-center-line")
+    .attr("stroke", gridColor)
+    .style("stroke", gridColor);
+
+  d3.selectAll(".sankey-node text, .sankey-legend text, .topic-node-label, .topic-column-title, .citation-node-label, .citation-layer-label, .citation-network-note, .citation-legend, .river-topic-label, .river-legend, .river-note, .bar-label, .x-axis-label")
+    .attr("fill", labelColor)
+    .style("fill", labelColor);
+
+  d3.selectAll(".waittime-dot, .career-right-dot, .topic-node, .citation-node")
+    .attr("stroke", isDark ? "#171420" : "#fffefa");
+}
+
+function initChartThemeRefresh() {
+  const chartRoot = document.querySelector("main");
+  if (!chartRoot || !("MutationObserver" in window)) return;
+
+  let pending = false;
+  const observer = new MutationObserver(() => {
+    if (pending) return;
+    pending = true;
+    window.setTimeout(() => {
+      pending = false;
+      applyChartTheme();
+    }, 80);
+  });
+
+  observer.observe(chartRoot, {
+    childList: true,
+    subtree: true
+  });
 }
 
 function initSectionNav() {

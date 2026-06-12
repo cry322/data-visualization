@@ -7,16 +7,16 @@ const DATA_PATH = "data_final/section4/institution_sankey.json";
 const FIELD_ORDER = ["Physics", "Chemistry", "Medicine"];
 
 const FIELD_COLORS = {
-  Physics: "#667085",
-  Chemistry: "#6b8f71",
-  Medicine: "#9b6a6c",
+  Physics: "#8f7fc3",
+  Chemistry: "#6fa47e",
+  Medicine: "#c57b82",
 };
 
 const LINK_COLORS = {
-  consistent: "#d8a24a", // 研究集中领域与获奖领域一致
-  prizeOnly: "#c77c7c",  // 参与获奖领域，但不是研究最集中领域
-  mainOnly: "#7aa6c2",   // 研究最集中领域，但不是获奖领域
-  normal: "#d7dde5",     // 其他一般关联
+  consistent: "#91d5d4", // 研究集中领域与获奖领域一致
+  prizeOnly: "#d8959d",  // 参与获奖领域，但不是研究最集中领域
+  mainOnly: "#b0a0d2",   // 研究最集中领域，但不是获奖领域
+  normal: "#7f8d9a",     // 其他一般关联
 };
 
 function toNumber(value, fallback = 0) {
@@ -582,7 +582,7 @@ function renderSankey(data, containerSelector) {
     .attr("rx", 5)
     .attr("fill", (d) => {
       if (d.type === "field") return FIELD_COLORS[d.name] || "#64748b";
-      if (d.isConsistent) return "#f59e0b";
+      if (d.isConsistent) return "#91d5d4";
       return "#475569";
     })
     .attr("stroke", "#ffffff")

@@ -1,9 +1,16 @@
 import { loadJSON } from "../utils/dataLoader.js";
 
 const FIELD_COLORS = {
-  Physics: "#7aa6dc",
-  Chemistry: "#6fc4a2",
-  Medicine: "#e78b8b"
+  light: {
+    Physics: "#6f6fb0",
+    Chemistry: "#6f9b7d",
+    Medicine: "#c9796f"
+  },
+  dark: {
+    Physics: "#b8a8e6",
+    Chemistry: "#9fcfac",
+    Medicine: "#e3a09a"
+  }
 };
 
 const FIELD_LABELS = {
@@ -101,6 +108,15 @@ function getFieldLabel(field) {
   return FIELD_LABELS[field] || field || "未知";
 }
 
+function isDarkTheme() {
+  return document.documentElement.dataset.theme === "dark";
+}
+
+function getFieldColor(field) {
+  const palette = isDarkTheme() ? FIELD_COLORS.dark : FIELD_COLORS.light;
+  return palette[field] || (isDarkTheme() ? "#d1c9dc" : "#8a96a6");
+}
+
 function getCountryName(country) {
   if (!country) return "未知国家";
   return COUNTRY_NAMES[country] || country;
@@ -188,7 +204,7 @@ function appendFieldBreakdown(panel, rows) {
 
     const label = item.append("span");
     label.append("i")
-      .style("background", FIELD_COLORS[field] || "#94a3b8");
+      .style("background", getFieldColor(field));
     label.append("span")
       .text(getFieldLabel(field));
 
@@ -476,9 +492,9 @@ function renderScatter(config, rows) {
     .attr("cx", row => x(row.waitTime))
     .attr("cy", row => y.cy(row))
     .attr("r", 5.4)
-    .attr("fill", row => FIELD_COLORS[row.field] || "#94a3b8")
-    .attr("fill-opacity", 0.78)
-    .attr("stroke", "#fffefa")
+    .attr("fill", row => getFieldColor(row.field))
+    .attr("fill-opacity", isDarkTheme() ? 0.86 : 0.76)
+    .attr("stroke", isDarkTheme() ? "#171420" : "#fffefa")
     .attr("stroke-width", 1.35)
     .attr("tabindex", 0)
     .attr("aria-label", row => `${row.laureateName || "未知获奖人"}，${getFieldLabel(row.field)}，等待 ${row.waitTime} 年`)
@@ -554,7 +570,8 @@ function renderLegend(g, width) {
     .attr("class", "waittime-legend")
     .attr("transform", `translate(${Math.max(0, width - 78)},18)`);
 
-  Object.entries(FIELD_COLORS).forEach(([field, color], index) => {
+  Object.keys(FIELD_COLORS.light).forEach((field, index) => {
+    const color = getFieldColor(field);
     const item = legend.append("g").attr("transform", `translate(0,${index * 22})`);
     item.append("circle").attr("r", 5).attr("fill", color);
     item.append("text").attr("x", 13).attr("y", 4).text(getFieldLabel(field));
@@ -591,6 +608,7 @@ export async function initWaitTimeModule() {
 
     setupFilters();
     renderWaitTimeModule();
+    window.addEventListener("themechange", renderWaitTimeModule);
   } catch (error) {
     console.error("等待时间模块加载失败：", error);
     d3.select("#waittime-main-chart")

@@ -79,7 +79,7 @@ export function initInstitutionOverview() {
             .attr("y", height + margin.bottom - 5)
             .style("text-anchor", "end")
             .style("font-size", "17px")
-            .style("fill", "#64748b")
+            .style("fill", "var(--chart-label)")
             .style("font-weight", "600");
 
         
@@ -99,6 +99,7 @@ export function initInstitutionOverview() {
         });
 
         updateChart();
+        window.addEventListener("themechange", updateChart);
 
         function updateChart() {
             let filteredData = [...validSummary];
@@ -119,22 +120,23 @@ export function initInstitutionOverview() {
             x.domain([0, maxMetricVal]);
             y.domain(top20.map(d => d.id));
 
+            const eyeTheme = document.documentElement.dataset.theme === "dark";
             let colorInterpolator;
             if (currentField === "Physics") {
-                colorInterpolator = d3.interpolatePurples; 
+                colorInterpolator = eyeTheme ? d3.interpolate("#5c5484", "#c9b8ef") : d3.interpolate("#eeeafd", "#6f5fb0"); 
             } else if (currentField === "Chemistry") {
-                colorInterpolator = d3.interpolateGreens; 
+                colorInterpolator = eyeTheme ? d3.interpolate("#3f6858", "#9fd7bd") : d3.interpolate("#e8f6ed", "#4d8b68"); 
             } else if (currentField === "Medicine") {
-                colorInterpolator = d3.interpolateOranges;  
+                colorInterpolator = eyeTheme ? d3.interpolate("#704d55", "#e0a2aa") : d3.interpolate("#faece9", "#b8646a");  
             } else {
-                colorInterpolator = d3.interpolateBlues;   
+                colorInterpolator = eyeTheme ? d3.interpolate("#4b5668", "#c6d2dd") : d3.interpolate("#edf1f5", "#66788d");   
             }
             
             const colorScale = d3.scaleSequential(colorInterpolator)
                                  .domain([0, maxMetricVal * 1.1]);
 
             xAxisG.transition("axis").duration(600).call(d3.axisBottom(x).ticks(6));
-            xAxisG.selectAll("text").style("font-size", "15px").style("fill", "#64748b");
+            xAxisG.selectAll("text").style("font-size", "15px").style("fill", "var(--chart-label)");
             xAxisLabel.text(metricNameMap[currentMetric]);
 
             const nameMap = new Map(top20.map(d => [d.id, d.name]));
@@ -145,7 +147,7 @@ export function initInstitutionOverview() {
                 })
             ).selectAll("text")
              .style("font-size", "14px")
-             .style("fill", "#334155");
+             .style("fill", "var(--chart-label)");
 
             const bars = svg.selectAll(".bar").data(top20, d => d.id);
 
@@ -167,7 +169,7 @@ export function initInstitutionOverview() {
 
             barsEnter.merge(bars)
                 .on("mouseover", function(event, d) {
-                    d3.select(this).transition("hover").duration(150).attr("fill", "#e15759");
+                    d3.select(this).transition("hover").duration(150).attr("fill", "var(--chart-highlight)");
                     
                     const displayField = fieldNameMap[currentField] || currentField;
                     const displayMetric = metricNameMap[currentMetric] || currentMetric;
@@ -195,7 +197,7 @@ export function initInstitutionOverview() {
                 })
                 .on("mouseout", function(event, d) {
                     
-                    const targetColor = (d.id === selectedInstitutionId) ? "#e15759" : colorScale(d[currentMetric]);
+                    const targetColor = (d.id === selectedInstitutionId) ? "var(--chart-highlight)" : colorScale(d[currentMetric]);
                     d3.select(this).transition("hover").duration(150).attr("fill", targetColor);
                     tooltip.style("opacity", 0).style("display", "none");
                 })
@@ -219,7 +221,7 @@ export function initInstitutionOverview() {
                         // 鍏朵粬鏌卞瓙鍙樻贰锛屽綋鍓嶆煴瀛愰珮浜负绾㈣壊
                         svg.selectAll(".bar").transition("click").duration(200)
                             .style("opacity", barData => barData.id === selectedInstitutionId ? 1 : 0.4)
-                            .attr("fill", barData => barData.id === selectedInstitutionId ? "#e15759" : colorScale(barData[currentMetric]));
+                            .attr("fill", barData => barData.id === selectedInstitutionId ? "var(--chart-highlight)" : colorScale(barData[currentMetric]));
                         
                         // 娓叉煋鍙充晶鍐呭
                         renderDetailPanel(d);
@@ -230,7 +232,7 @@ export function initInstitutionOverview() {
                 .attr("y", d => y(d.id))
                 .attr("height", y.bandwidth())
                 .attr("width", d => x(d[currentMetric]))
-                .attr("fill", d => d.id === selectedInstitutionId ? "#e15759" : colorScale(d[currentMetric]))
+                .attr("fill", d => d.id === selectedInstitutionId ? "var(--chart-highlight)" : colorScale(d[currentMetric]))
                 .style("opacity", d => selectedInstitutionId === null ? 1 : (d.id === selectedInstitutionId ? 1 : 0.4)); 
 
             const labels = svg.selectAll(".bar-label").data(top20, d => d.id);
@@ -247,7 +249,7 @@ export function initInstitutionOverview() {
                   .attr("x", 0)
                   .attr("dy", ".35em") 
                   .style("font-size", "14px")
-                  .style("fill", "#475569")
+                  .style("fill", "var(--chart-label)")
                   .style("font-weight", "600")
                   .style("opacity", 0)
                   .style("pointer-events", "none");
@@ -273,7 +275,7 @@ export function initInstitutionOverview() {
 
             const fieldsSet = new Set(inst.fields && inst.fields.length ? inst.fields : ["未明确分类"]);
             const fieldsBadges = Array.from(fieldsSet).map(f => 
-                `<span style="display:inline-block; background:rgba(66,107,143,0.1); color:#426b8f; border:1px solid rgba(66,107,143,0.25); padding:2px 8px; border-radius:12px; font-size:12px; margin-right:6px; margin-bottom:6px; font-weight:600;">${f}</span>`
+                `<span class="institution-field-badge">${f}</span>`
             ).join("");
 
             const paperArray = inst.papers || [];
@@ -281,55 +283,55 @@ export function initInstitutionOverview() {
             let listHtml = "";
             if (paperArray.length > 0) {
                 listHtml = paperArray.map((p, i) => `
-                    <div style="padding: 10px; border-bottom: ${i === paperArray.length - 1 ? 'none' : '1px dashed rgba(129,115,97,0.2)'};">
-                        <div style="font-size:13px; font-weight:600; color:#16212d; line-height:1.4; margin-bottom:4px;">
+                    <div class="institution-paper-item">
+                        <div class="institution-paper-title">
                             ${p.title}
                         </div>
-                        <div style="font-size:12px; color:#746b60;">
-                            关联获奖者: <span style="color:#e15759; font-weight:700;">${p.laureate}</span>
-                            ${p.year ? `<span style="margin-left:6px; background:#f1f5f9; padding:1px 5px; border-radius:4px; font-size:10px;">获奖年份：${p.year}</span>` : ""}
+                        <div class="institution-paper-meta">
+                            关联获奖者: <strong>${p.laureate}</strong>
+                            ${p.year ? `<span class="country-detail-year">获奖年份：${p.year}</span>` : ""}
                         </div>
                     </div>
                 `).join("");
             } else {
-                listHtml = `<div style="padding:20px; color:#a8a094; font-size:13px; text-align:center; font-style:italic;">该机构暂无具体的代表性文献及获奖者关联名录。</div>`;
+                listHtml = `<div class="institution-empty">该机构暂无具体的代表性文献及获奖者关联名录。</div>`;
             }
 
             detailContainer.html(`
-                <div style="animation: fadeIn 0.4s ease-in-out;">
-                    <h4 style="margin: 0 0 4px 0; color: #16212d; font-size: 18px; font-weight:700; line-height:1.35;">${inst.name}</h4>
-                    <div style="font-size:12px; color:#746b60; margin-bottom:14px; display:flex; gap:12px;">
+                <div class="institution-detail-shell">
+                    <h4 class="institution-detail-title">${inst.name}</h4>
+                    <div class="institution-detail-meta">
                         <span>机构代码: <code>${inst.id}</code></span>
                         <span>国家/地区: <strong>${inst.country}</strong></span>
                     </div>
                     
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:16px;">
-                        <div class="sankey-stat" style="padding:10px; text-align:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px;">
-                            <div class="sankey-stat-value" style="font-size:18px; color:#0f172a; font-weight:700;">${inst.prize_paper_count}</div>
-                            <div class="sankey-stat-label" style="font-size:11px; color:#64748b;">参与获奖论文</div>
+                    <div class="institution-stat-grid">
+                        <div class="institution-stat-card">
+                            <div class="sankey-stat-value">${inst.prize_paper_count}</div>
+                            <div class="sankey-stat-label">参与获奖论文</div>
                         </div>
-                        <div class="sankey-stat" style="padding:10px; text-align:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px;">
-                            <div class="sankey-stat-value" style="font-size:18px; color:#426b8f; font-weight:700;">${inst.institution_total_works_count}</div>
-                            <div class="sankey-stat-label" style="font-size:11px; color:#64748b;">机构总发文量</div>
+                        <div class="institution-stat-card">
+                            <div class="sankey-stat-value">${inst.institution_total_works_count}</div>
+                            <div class="sankey-stat-label">机构总发文量</div>
                         </div>
-                        <div class="sankey-stat" style="padding:10px; text-align:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px;">
-                            <div class="sankey-stat-value" style="font-size:18px; color:#0f172a; font-weight:700;">${inst.associated_laureate_count}</div>
-                            <div class="sankey-stat-label" style="font-size:11px; color:#64748b;">关联获奖者</div>
+                        <div class="institution-stat-card">
+                            <div class="sankey-stat-value">${inst.associated_laureate_count}</div>
+                            <div class="sankey-stat-label">关联获奖者</div>
                         </div>
-                        <div class="sankey-stat" style="padding:10px; text-align:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px;">
-                            <div class="sankey-stat-value" style="font-size:18px; color:#0f172a; font-weight:700;">${inst.associated_scientist_count}</div>
-                            <div class="sankey-stat-label" style="font-size:11px; color:#64748b;">关联科学家</div>
+                        <div class="institution-stat-card">
+                            <div class="sankey-stat-value">${inst.associated_scientist_count}</div>
+                            <div class="sankey-stat-label">关联科学家</div>
                         </div>
                     </div>
 
                     <div style="margin-bottom:14px;">
-                        <div style="font-size:12px; font-weight:700; color:#16212d; margin-bottom:6px; letter-spacing:0.5px; text-transform:uppercase;">核心研究主题</div>
+                        <div class="institution-mini-title">核心研究主题</div>
                         <div>${fieldsBadges}</div>
                     </div>
 
                     <div>
-                        <div style="font-size:12px; font-weight:700; color:#16212d; margin-bottom:6px; letter-spacing:0.5px; text-transform:uppercase;">参与获奖论文及获奖者名录 (${paperArray.length})</div>
-                        <div style="max-height: 250px; overflow-y: auto; background:rgba(216,222,232,0.15); border:1px solid rgba(129,115,97,0.15); border-radius:8px;">
+                        <div class="institution-mini-title">参与获奖论文及获奖者名录 <span class="country-detail-badge">${paperArray.length}</span></div>
+                        <div class="institution-paper-list">
                             ${listHtml}
                         </div>
                     </div>
