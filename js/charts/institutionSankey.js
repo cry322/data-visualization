@@ -1,16 +1,11 @@
-import { sankey, sankeyLinkHorizontal } from "https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/+esm";
+import { sankey, sankeyLinkHorizontal } from "../vendor/d3-sankey.esm.js";
+import { getFieldColor } from "../utils/dataLoader.js";
 
 const d3 = window.d3;
 
 const DATA_PATH = "data_final/section4/institution_sankey.json";
 
 const FIELD_ORDER = ["Physics", "Chemistry", "Medicine"];
-
-const FIELD_COLORS = {
-  Physics: "#8f7fc3",
-  Chemistry: "#6fa47e",
-  Medicine: "#c57b82",
-};
 
 const LINK_COLORS = {
   consistent: "#91d5d4", // 研究集中领域与获奖领域一致
@@ -581,7 +576,7 @@ function renderSankey(data, containerSelector) {
     .attr("width", (d) => d.x1 - d.x0)
     .attr("rx", 5)
     .attr("fill", (d) => {
-      if (d.type === "field") return FIELD_COLORS[d.name] || "#64748b";
+      if (d.type === "field") return getFieldColor(d.name) || "#64748b";
       if (d.isConsistent) return "#91d5d4";
       return "#475569";
     })
@@ -652,6 +647,7 @@ export async function initInstitutionSankey() {
       "resize",
       debounce(() => update(), 250)
     );
+    window.addEventListener("themechange", update);
   } catch (error) {
     console.error("Failed to load institution sankey data:", error);
     container.html(`

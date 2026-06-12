@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>诺贝尔奖论文知识流动可视化</title>
     <link rel="stylesheet" href="css/style.css" />
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/vendor/d3.v7.min.js"></script>
   </head>
   <body>
     <header class="hero" id="top">
       <div class="hero-content">
         <div class="hero-kicker">Nobel Papers · Data Story</div>
-        <h1>从一篇论文到诺贝尔奖：知识如何被时间、机构与学科路径共同塑造</h1>
-        <p>这个可视化项目把诺奖相关论文放回更长的知识流动中观察：它们何时出现在科学家的职业轨迹里，经历多久才被奖项认可，又在机构、国家和学科网络中留下怎样的连接。</p>
+        <h1>从论文到诺奖:一场跨越时光、圈层与领域的科学远行</h1>
+        <p>奖项发生在某一年，但获奖论文的发表远早于颁奖时刻。这个数据故事追问：一篇论文如何穿过职业阶段、等待时间、科研空间和学科网络，最终被识别为诺奖成果。</p>
 
         <div class="legacy-hero-copy" hidden>
         <h1>项目标题</h1>
@@ -24,10 +24,10 @@
     <nav class="global-subnav" aria-label="页面主导航">
       <a href="#section-intro" aria-label="叙事起点"><span>0</span>叙事起点</a>
       <a href="#section-career" aria-label="职业阶段"><span>1</span>职业阶段</a>
-      <a href="#section-waittime" aria-label="时间等待"><span>2</span>时间等待</a>
-      <a href="#section-institution" aria-label="机构地图"><span>3</span>机构地图</a>
-      <a href="#section-network" aria-label="知识路径"><span>4</span>知识路径</a>
-      <a href="#section-summary" aria-label="总结附录"><span>5</span>总结附录</a>
+      <a href="#section-waittime" aria-label="等待时间"><span>2</span>等待时间</a>
+      <a href="#section-institution" aria-label="科研空间"><span>3</span>科研空间</a>
+      <a href="#section-network" aria-label="合作网络"><span>4</span>合作网络</a>
+      <a href="#section-summary" aria-label="总结"><span>5</span>总结</a>
       <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切换护眼模式" aria-pressed="false">
         <span class="theme-toggle-icon" aria-hidden="true"></span>
         <span class="theme-toggle-label">护眼模式</span>
@@ -40,8 +40,8 @@
         <div class="section-header">
           <div>
             <div class="section-kicker">Opening</div>
-            <h2>0. 叙事起点：把诺奖论文放回知识流中</h2>
-            <p class="story-copy" data-story-text="诺贝尔奖常常被理解为某个“高光时刻”，但论文、作者、机构和学科路径共同构成了更长的背景。本项目从职业阶段、等待时间、机构空间和知识路径四条线索切入，尝试观察诺奖成果在发表、积累、传播与认可之间的关系。图表并不直接证明因果，而是帮助我们在当前样本中寻找可以进一步追问的结构。"></p>
+            <h2>0. 叙事起点：诺奖不是终点，而是科学长河里一次耀眼的定格</h2>
+            <p class="story-copy" data-story-text="我们先不把诺奖看成一个孤立高光，而把它拆成四个问题：论文何时出现，等了多久，在哪里被生产，又沿着哪些学科路径继续扩散。我们将使用数据可视化的方法把这些问题放到同一条数据叙事线上。"></p>
           </div>
         </div>
       </section>
@@ -50,8 +50,8 @@
 
         <div class="section-header">
           <div>
-            <h2>1. 职业阶段与诺奖认可</h2>
-            <p class="story-copy" data-story-text="一篇后来获奖的论文，可能出现在研究者职业生涯的早期、稳定高产期，也可能来自漫长积累后的关键突破。这一部分把整体分布和个人轨迹并置，帮助观察“关键成果出现”与“奖项认可”在职业时间轴上的距离。当前图表更适合发现阶段性倾向，而不是判断单一成功路径。"></p>
+            <h2>1. 职业阶段：关键论文往往早于奖项很多年出现</h2>
+            <p class="story-copy" data-story-text="把论文放回获奖者的职业时间轴，故事会变长。此图先比较“获奖论文出现”和“获奖认可”之间的距离，再进入个人轨迹，看看同一个奖项背后可能存在早熟、高产积累和晚期突破等不同路径。"></p>
           </div>
         </div>
 
@@ -64,11 +64,11 @@
           <aside class="card panel panel-overview">
 
             <div class="panel-title">
-              职业生涯发表密度概览
+              论文出现与获奖认可的职业时间差
             </div>
 
             <div class="panel-note">
-              比较 Physics、Chemistry 和 Medicine 三个学科在职业生涯不同阶段的关键论文与获奖认可分布。
+              上半部分表示诺奖论文出现的标准化密度，下半部分表示获奖认可发生的标准化密度。当前样本中，Physics 的获奖论文出现中位职业年约为第 5.5 年，而获奖认可中位约在第 24 年，时间差本身就是故事的起点。
             </div>
 
             <div class="panel-controls">
@@ -101,11 +101,11 @@
           <div class="card panel panel-detail">
 
             <div class="panel-title">
-              科学家职业轨迹探索
+              个体科研之路:截然不同的成长节奏
             </div>
 
             <div class="panel-note">
-              查看代表性科学家的逐年发文轨迹，并标记诺奖论文出现与获得认可的职业年份。
+              右图用累计发文数或年发文量重建个人轨迹，并标出诺奖论文与认可年份。它提醒我们：总体分布之外，Dirac、Einstein、Pauling、Furchgott 等案例并不共享同一条成功曲线。
             </div>
 
             <div class="trajectory-rows">
@@ -208,8 +208,8 @@
       <section id="section-waittime" class="section">
         <div class="section-header">
           <div>
-            <h2>2. 等待时间影响因素探索</h2>
-            <p class="story-copy" data-story-text="诺奖成果往往不是发表后立刻被奖项看见，论文发表与获奖之间可能隔着长期引用、复核和学科共同体的再确认。这里用等待时间作为横轴，并结合发表前积累、职业年龄和学科筛选，观察不同论文在“被承认之前”经历了怎样的时间跨度。若相关性不明显，也同样提示诺奖认可并非只由单一变量解释。"></p>
+            <h2>2. 等待时间：认可的延迟因何不同</h2>
+            <p class="story-copy" data-story-text="从职业时间差继续往下追问：论文发表后，为什么还要等待多年才进入诺奖叙事？这里把等待时间放在横轴上，并从发表前积累、发表时职业年龄的角度观察这些论文在“被看见之前”经历了怎样的时间跨度，试图探索等待时间背后的影响因素。"></p>
           </div>
         </div>
 
@@ -259,28 +259,77 @@
       <section id="section-institution" class="section section-institution">
         <div class="section-header">
           <div>
-            <h2>3. 科研机构与国家分布</h2>
-            <p class="story-copy" data-story-text="论文背后不仅有作者，也有实验室、大学、研究院和国家科研体系的长期支撑。机构排行与国家分布图展示了当前样本中诺奖相关知识生产更频繁出现的空间位置，并允许用户切换不同指标观察结构是否稳定。这部分需要谨慎理解：高频出现代表样本中的关联强度，不等同于对机构贡献的完整评价。"></p>
+            <h2>3. 科研空间：诺奖论文在何处聚集</h2>
+            <p class="story-copy" data-story-text="诺奖关键论文主要在哪里被生产和组织的呢，我们使用空间分布来回答这个问题。先从国家 / 地区的宏观集中度进入，再落到具体机构排行：高频出现代表当前样本中的关联强度，不等同于对国家或机构贡献的完整评价。"></p>
           </div>
         </div>
 
         <nav class="institution-subnav card">
-          <a href="#institution-overview-block">机构概览</a>
           <a href="#institution-country-block">国家分布</a>
+          <a href="#institution-overview-block">机构影响力</a>
         </nav>
+
+        <div id="institution-country-block" class="institution-block">
+          <div class="section-header compact">
+            <div>
+              <h3>3.1 国家分布：前沿研究呈现明显的空间集聚</h3>
+              <p class="story-copy" data-story-text="默认按关联机构数着色时，美国以 137 个机构明显领先，英国、德国、法国、日本构成第二梯队；切换到论文数或获奖科学家数，领先国家仍大体稳定。地图的作用不是给国家贡献打分，而是提示诺奖相关记录在当前样本中的空间集中度。"></p>
+            </div>
+          </div>
+
+          <div class="country-layout">
+            <div class="card panel">
+              <div class="panel-title">诺奖相关研究全球分布</div>
+              <div class="panel-note">颜色越深，表示当前指标下该国家 / 地区在样本中出现越频繁。右侧排行榜与地图联动，适合先识别集中区域，再点击进入国家科研档案。</div>
+
+              <div class="panel-controls" style="justify-content: flex-end;">
+                <label for="country-sort-select">指标切换：</label>
+                <select id="country-sort-select">
+                  <option value="m1">诺奖关联机构数</option>
+                  <option value="m2">诺奖关联论文数</option>
+                  <option value="m3">诺奖获奖科学家数</option>
+                </select>
+              </div>
+
+              <div id="country-map-chart" class="chart placeholder-box">
+                <div class="placeholder">世界地图 / 国家着色图位置</div>
+              </div>
+            </div>
+
+            <div class="card panel">
+              <div class="panel-title">热门国家Top 10</div>
+              <div class="panel-note">默认机构数指标下，美国、英国、德国、法国、日本排在前列；切换指标后，可观察这种空间集中是否仍然稳定。</div>
+
+              <div id="country-ranking-chart" class="chart placeholder-box">
+                <div class="placeholder">国家 Top 10 排行榜位置</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card panel" id="country-detail-panel" style="margin-top: 24px; display: none; animation: fadeIn 0.4s ease-in-out;">
+            <div class="panel-title" style="font-size: 20px; color: #0f172a;">
+               国家科研档案：<span id="detail-country-name" style="color: #e15759; font-weight: 800;">请选择国家</span>
+            </div>
+            <div class="panel-note" style="margin-bottom: 20px;">点击地图或排行榜后，这里会显示该国家 / 地区关联机构、获奖者和代表论文。它更适合做案例追踪，而不是直接比较国家科研实力。</div>
+            
+            <div id="country-detail-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+              </div>
+          </div>
+
+        </div>
 
         <div id="institution-overview-block" class="institution-block">
           <div class="section-header compact">
             <div>
-              <h3>3.1 机构影响力概览</h3>
-              <p class="story-copy" data-story-text="机构排行榜把分散在论文和作者记录中的组织信息压缩为可比较的序列。用户可以切换排序指标，观察“参与获奖论文数量”“关联获奖者数量”和“引用影响力”等维度是否指向相同的机构。"></p>
+              <h3>3.2 机构力量：具体组织中的科研高地</h3>
+              <p class="story-copy" data-story-text="国家地图显示宏观集中，机构排行则把这种集中落到大学、实验室和研究机构。默认指标下，Harvard University、UC Berkeley、HHMI、MRC Laboratory of Molecular Biology 等机构排在前列；但当排序切换为关联获奖者、被引中位数或机构总发文量时，榜单会发生变化。"></p>
             </div>
           </div>
 
           <div class="institution-overview-layout">
             <div class="card panel">
               <div class="panel-title">Top 20 机构排行榜</div>
-              <div class="panel-note">默认按参与论文数排序，可切换排序指标。</div>
+              <div class="panel-note">默认按参与获奖论文数量排序：Harvard University 为 19，UC Berkeley 为 18，HHMI 与 MRC Laboratory of Molecular Biology 均为 15。切换指标后，榜单会揭示“论文参与”“人物连接”和“引用影响”并不总是同一件事。</div>
 
               <div class="panel-controls">
                 <label for="institution-field-filter">学科筛选：</label>
@@ -309,7 +358,7 @@
 
             <aside class="card panel institution-detail-panel">
               <div class="panel-title">机构详情</div>
-              <div class="panel-note">点击任意机构后，在此显示代表科学家、论文、主题与合作机构。</div>
+              <div class="panel-note">点击柱子后，这里会显示该机构关联的获奖论文、获奖者、学科主题和统计值，帮助把排名中的一个条形还原成具体科研档案。</div>
 
               <div id="institution-detail-content" class="detail-content">
                 <div class="placeholder">机构详情面板位置</div>
@@ -318,81 +367,33 @@
           </div>
         </div>
 
-        <div id="institution-country-block" class="institution-block">
-          <div class="section-header compact">
-            <div>
-              <h3>3.2 国家 / 地区分布图</h3>
-              <p class="story-copy" data-story-text="国家和地区视角提供了更宏观的空间背景：哪些地方在诺奖相关机构、论文和获奖科学家记录中更常出现。地图与排行榜联动，适合先识别集中区域，再进入国家科研档案查看代表机构、论文和人物。"></p>
-            </div>
-          </div>
-
-          <div class="country-layout">
-            <div class="card panel">
-              <div class="panel-title">全球科研机构分布</div>
-              <div class="panel-note">基于 country_code 进行国家级着色地图展示。</div>
-
-              <div class="panel-controls" style="justify-content: flex-end;">
-                <label for="country-sort-select">指标切换：</label>
-                <select id="country-sort-select">
-                  <option value="m1">诺奖关联机构数</option>
-                  <option value="m2">诺奖关联论文数</option>
-                  <option value="m3">诺奖获奖科学家数</option>
-                </select>
-              </div>
-
-              <div id="country-map-chart" class="chart placeholder-box">
-                <div class="placeholder">世界地图 / 国家着色图位置</div>
-              </div>
-            </div>
-
-            <div class="card panel">
-              <div class="panel-title">国家 / 地区 Top 10</div>
-              <div class="panel-note">展示当前选定指标排名前 10 的国家。</div>
-
-              <div id="country-ranking-chart" class="chart placeholder-box">
-                <div class="placeholder">国家 Top 10 排行榜位置</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card panel" id="country-detail-panel" style="margin-top: 24px; display: none; animation: fadeIn 0.4s ease-in-out;">
-            <div class="panel-title" style="font-size: 20px; color: #0f172a;">
-               国家科研档案：<span id="detail-country-name" style="color: #e15759; font-weight: 800;">请选择国家</span>
-            </div>
-            <div class="panel-note" style="margin-bottom: 20px;">展示该国在诺奖历史中的核心科研力量、代表性学术产出与顶尖科学家名录。</div>
-            
-            <div id="country-detail-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-              </div>
-          </div>
-
-        </div>
       </section>
 
       <section id="section-network" class="section section-institution">
         <div class="section-header">
           <div>
-            <h2>4. 合作网络与知识迁移</h2>
-            <p class="story-copy" data-story-text="诺奖论文并不是孤立节点，它们连接着合作机构、前置知识和后续研究。这个部分从机构合作网络、机构—学科关系和论文引用路径三个层次展开，观察知识如何在组织之间流动，又如何沿着学科主题继续扩散。网络图强调关系结构，因此更适合看连接、桥接和路径，而不是单纯比较数量高低。"></p>
+            <h2>4. 合作网络与知识迁移：看见科研背后的协作与知识传播</h2>
+            <p class="story-copy" data-story-text="国家和机构告诉我们诺奖相关论文集中在哪里，但集中本身还不能解释知识如何移动。这个部分把机构放回合作网络，再把机构连接到学科，最后把诺奖论文放进前置知识和后续引用之间，观察位置如何变成关系，关系如何变成路径。"></p>
           </div>
         </div>
 
         <nav class="institution-subnav card">
           <a href="#institution-network-block">合作网络</a>
           <a href="#institution-sankey-block">机构-学科</a>
-          <a href="#topic-migration-block">主题迁移</a>
+          <a href="#topic-migration-block">知识路径</a>
         </nav>
 
         <div id="institution-network-block" class="institution-block">
           <div class="section-header compact">
             <div>
-              <h3>4.1 机构合作网络图</h3>
-              <p class="story-copy" data-story-text="合作网络把共同出现在论文中的机构连接起来，帮助识别样本中的高频合作和可能的枢纽机构。通过调整 Top N 和最小边权重，可以从稠密网络切换到更清晰的核心关系。"></p>
+              <h3>4.1 携手同行:榜单之外，千丝万缕的合作网络</h3>
+              <p class="story-copy" data-story-text="机构排行把组织排成序列，合作网络则把它们重新连成结构。当前数据包含 318 个机构节点和 51,194 条合作边；默认阈值下，少数强连接撑起核心骨架，例如 Lawrence Berkeley National Laboratory 与 UC Berkeley 的高权重联系。"></p>
             </div>
           </div>
 
           <div class="card panel">
             <div class="panel-title">机构合作力导向网络</div>
-            <div class="panel-note">节点表示机构，边表示两个机构共同出现在同一篇论文中，边宽表示合作次数。</div>
+            <div class="panel-note">节点表示机构，边表示两个机构共同出现在同一篇论文中，边越粗代表合作次数越高。拖动、缩放、调整 Top N 和最小边权重，可以从完整关系网切换到更清晰的核心骨架。</div>
 
             <div class="panel-controls network-controls">
               <label for="network-field-filter">学科筛选：</label>
@@ -423,15 +424,15 @@
         <div id="institution-sankey-block" class="institution-block">
           <div class="section-header compact">
             <div>
-              <h3>4.2 机构—学科关系图</h3>
-              <p class="story-copy" data-story-text="桑基图关注机构与学科之间的流量关系：某些机构可能在一个学科上高度集中，也可能跨多个诺奖领域保持连接。颜色提示研究集中领域与获奖关联领域是否一致，适合用来观察机构的学科路径是否单一。"></p>
+              <h3>4.2 机构—学科关系：立足专长，亦跨界探索</h3>
+              <p class="story-copy" data-story-text="合作网络回答机构之间如何相连，桑基图进一步追问这些连接通向哪些学科。它把 Top 机构与 Physics、Chemistry、Medicine 相连，用流宽表示对应学科的作品规模，用颜色提示主要研究集中领域与获奖关联领域是否一致。"></p>
             </div>
           </div>
 
           <div class="sankey-layout">
             <div class="card panel">
               <div class="panel-title">机构 → 学科桑基图</div>
-              <div class="panel-note">展示 Top 机构与 Physics、Chemistry、Medicine 三个诺奖学科之间的关联强度。</div>
+              <div class="panel-note">有些机构的流量明显集中在一个领域，有些则跨多个诺奖学科保持连接。这里的“宽”代表作品规模，不直接等同于贡献大小，但能帮助识别机构的学科路径是否单一。</div>
 
               <div class="panel-controls sankey-controls">
                 <label for="sankey-topn-select">机构范围：</label>
@@ -449,7 +450,7 @@
 
             <aside class="card panel">
               <div class="panel-title">图表说明</div>
-              <div class="panel-note">颜色区分机构的研究集中领域与获奖关联领域是否一致；点击节点可查看机构详情。</div>
+              <div class="panel-note">点击机构或学科节点后，右侧会显示一致 / 不一致的统计和代表连接。它适合用来寻找“研究集中在哪里”和“诺奖关联在哪里”之间的偏移。</div>
               <div id="sankey-insight-card" class="detail-content">
                 <div class="placeholder">桑基图解读卡片位置</div>
               </div>
@@ -460,17 +461,17 @@
         <div id="topic-migration-block" class="institution-block">
           <div class="section-header compact">
             <div>
-              <h3>4.3 学术主题迁移与知识路径图</h3>
-              <p class="story-copy" data-story-text="如果把获奖论文看作知识路径中的中间站，它既吸收前置研究，也被后续论文继续引用和改写。这里基于一跳引文关系展示知识来源、诺奖核心和后续扩散之间的连接，帮助用户观察学科主题是否发生跨域迁移。"></p>
+              <h3>4.3 知识长河:获奖成果承前启后，延续影响</h3>
+              <p class="story-copy" data-story-text="最后回到论文自身：如果把获奖论文看作知识路径中的中间站，它既吸收前置研究，也持续影响后续论文。当前 field 聚合路径总量超过 144 万，最粗路径多发生在同一大领域内部，同时也能看到 Life Sciences 到 Health Sciences 等跨域吸收。"></p>
             </div>
           </div>
 
           <div class="card panel topic-path-panel">
             <div class="topic-path-head">
               <div>
-                <div class="panel-title">诺奖关键论文的知识路径</div>
+                <div class="panel-title">诺奖核心成果的知识传播路径</div>
                 <div class="panel-note">
-                  本图以诺奖关键论文为中心，展示其引用的前置知识来源，以及后续引用它的研究论文。Sankey 强调学科路径，弧线图强调引用路径的上下方向。
+                  三列 Sankey 将路径拆成“知识来源 → 诺奖核心 → 后续影响”：Physical Sciences 与 Life Sciences 的内部延续最粗，但跨域路径提示部分诺奖知识会在新的应用语境中被重新吸收。切换弧线图可在 subfield 层级查看更细的引用方向。
                 </div>
               </div>
             </div>
@@ -531,22 +532,8 @@
         <div class="section-header">
           <div>
             <div class="section-kicker">Appendix</div>
-            <h2>5. 总结与附录：回到整体问题</h2>
-            <p class="story-copy" data-story-text="从当前样本看，诺奖论文的价值呈现为一条较长的链路：职业积累提供时间背景，等待时间提示认可过程，机构与国家分布呈现知识生产的空间结构，引用与迁移网络展示论文前后的知识连接。需要注意的是，本项目依赖已匹配的诺奖论文、OpenAlex 记录和机构字段，样本覆盖、字段缺失与匹配误差都会影响解释边界。建议阅读时先看整体趋势，再通过筛选、悬浮和点击交互进入具体案例。"></p>
-          </div>
-        </div>
-        <div class="appendix-grid">
-          <div class="appendix-card">
-            <h3>主要阅读顺序</h3>
-            <p>先从职业阶段和等待时间理解“时间积累”，再进入机构空间分布，最后用网络和路径图观察知识如何连接。</p>
-          </div>
-          <div class="appendix-card">
-            <h3>数据边界</h3>
-            <p>图表基于当前项目内的诺奖论文匹配数据、OpenAlex 扩展字段与预处理结果；未匹配或字段缺失的记录不会完整反映在图中。</p>
-          </div>
-          <div class="appendix-card">
-            <h3>交互提示</h3>
-            <p>筛选器用于切换学科、指标和图表范围；鼠标悬浮查看细节，点击机构、国家或节点可进入更具体的解释面板。</p>
+            <h2>5. 总结：诺奖是一串足迹，而非孤立的光点</h2>
+            <p class="story-copy" data-story-text="总而言之，诺奖论文的故事不是“发表—获奖”两点之间的直线，而是职业积累、长期等待、机构集中、合作网络和学科扩散叠加出的链路。科学认可常常是在时间和合作、引文网络中逐步形成的。"></p>
           </div>
         </div>
       </section>

@@ -1,6 +1,6 @@
 ﻿// js/charts/countryMap.js
 
-import * as topojson from "https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/+esm";
+import * as topojson from "../vendor/topojson-client.esm.js";
 
 const d3 = window.d3;
 
@@ -126,7 +126,7 @@ export function initCountryMap() {
     }
 
     Promise.all([
-        d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json"),
+        d3.json("js/vendor/countries-110m.json"),
         d3.json("data_final/section3/country_map.json")
     ]).then(([worldData, dataset]) => {
         
@@ -201,8 +201,8 @@ export function initCountryMap() {
             } else {
                 // 楂樼骇钘忛潚/鐏拌摑 (Slate/Navy Blue: 娴呯伆鐧?-> 娣辫棌闈?
                 currentInterpolator = isEyeTheme()
-                    ? d3.interpolate("#59424f", "#e3a7ad")
-                    : d3.interpolate("#f8fafc", "#426b8f");  
+                    ? d3.interpolate("#554a31", "#d7b66f")
+                    : d3.interpolate("#faf7ed", "#8a6f3d");  
             }
 
             const colorScale = d3.scaleSequential(currentInterpolator).domain([0, Math.log1p(maxVal)]); 
