@@ -36,21 +36,21 @@ export async function initInstitutionNetwork() {
 
   background
     .append("circle")
+    .attr("class", "network-guide")
     .attr("cx", width / 2)
     .attr("cy", height / 2)
     .attr("r", Math.min(width, height) * 0.35)
     .attr("fill", "none")
-    .attr("stroke", "#e2e8f0")
     .attr("stroke-width", 1)
     .attr("stroke-dasharray", "4 8");
 
   background
     .append("circle")
+    .attr("class", "network-guide")
     .attr("cx", width / 2)
     .attr("cy", height / 2)
     .attr("r", Math.min(width, height) * 0.22)
     .attr("fill", "none")
-    .attr("stroke", "#edf2f7")
     .attr("stroke-width", 1)
     .attr("stroke-dasharray", "4 8");
 
@@ -86,9 +86,6 @@ export async function initInstitutionNetwork() {
     .style("line-height", "1.6")
     .style("box-shadow", "0 10px 28px rgba(15, 23, 42, 0.22)");
 
-  const defaultLinkColor = "rgba(212, 207, 197, 0.9)";
-  const activeLinkColor = "rgba(47, 111, 115, 0.82)";
-
   const state = {
     field: "all",
     topN: getInitialNumber("#network-topn-range", 20),
@@ -120,6 +117,7 @@ export async function initInstitutionNetwork() {
 
   bindControls();
   render();
+  window.addEventListener("themechange", render);
 
   function bindControls() {
     const fieldButtons = d3.selectAll(".network-field-btn");
@@ -164,6 +162,13 @@ export async function initInstitutionNetwork() {
   }
 
   function render() {
+    const theme = getNetworkTheme();
+    const defaultLinkColor = theme.link;
+    const activeLinkColor = theme.activeLink;
+
+    svg.style("background", theme.background);
+    background.selectAll(".network-guide").attr("stroke", theme.guide);
+
     linkLayer.selectAll("*").remove();
     nodeLayer.selectAll("*").remove();
     labelLayer.selectAll("*").remove();
@@ -266,9 +271,9 @@ export async function initInstitutionNetwork() {
       .append("circle")
       .attr("class", "network-node")
       .attr("r", d => d.radius)
-      .attr("fill", d => getCountryColor(d.country))
+      .attr("fill", d => getCountryOuterColor(d.country))
       .attr("fill-opacity", 1)
-      .attr("stroke", "#ffffff")
+      .attr("stroke", theme.panel)
       .attr("stroke-width", 1.6)
       .attr("filter", "url(#network-node-shadow)")
       .on("mouseover", function (event, d) {
@@ -300,7 +305,7 @@ export async function initInstitutionNetwork() {
       .append("circle")
       .attr("class", "network-node-inner")
       .attr("r", (d) => Math.max(2.5, d.radius * 0.38))
-      .attr("fill", "rgba(255,255,255,0.42)")
+      .attr("fill", d => getCountryInnerColor(d.country))
       .attr("pointer-events", "none");
 
     const labelNodes = nodes
@@ -315,9 +320,9 @@ export async function initInstitutionNetwork() {
       .attr("class", "network-label")
       .attr("font-size", (d) => (d.strength > maxStrength * 0.6 ? 12 : 10.5))
       .attr("font-weight", (d) => (d.strength > maxStrength * 0.6 ? 800 : 650))
-      .attr("fill", "#334155")
+      .attr("fill", theme.textPrimary)
       .attr("paint-order", "stroke")
-      .attr("stroke", "#ffffff")
+      .attr("stroke", theme.background)
       .attr("stroke-width", 4)
       .attr("stroke-linejoin", "round")
       .text((d) => shortenName(d.name))
@@ -408,9 +413,16 @@ export async function initInstitutionNetwork() {
         .attr("cx", 6)
         .attr("cy", 6)
         .attr("r", 5.5)
-        .attr("fill", item.color)
-        .attr("stroke", "#ffffff")
+        .attr("fill", item.outer)
+        .attr("stroke", getNetworkTheme().panel)
         .attr("stroke-width", 1);
+
+      group
+        .append("circle")
+        .attr("cx", 6)
+        .attr("cy", 6)
+        .attr("r", 2.6)
+        .attr("fill", item.inner);
 
       group
         .append("text")
@@ -418,7 +430,7 @@ export async function initInstitutionNetwork() {
         .attr("y", 10)
         .attr("font-size", 11)
         .attr("font-weight", 700)
-        .attr("fill", "#475569")
+        .attr("fill", getNetworkTheme().textPrimary)
         .text(item.code);
     });
   }
@@ -510,6 +522,8 @@ export async function initInstitutionNetwork() {
   }
 
   function showEmptyState() {
+    const theme = getNetworkTheme();
+
     linkLayer.selectAll("*").remove();
     nodeLayer.selectAll("*").remove();
     labelLayer.selectAll("*").remove();
@@ -519,7 +533,7 @@ export async function initInstitutionNetwork() {
       .attr("x", width / 2)
       .attr("y", height / 2 - 10)
       .attr("text-anchor", "middle")
-      .attr("fill", "#64748b")
+      .attr("fill", theme.textPrimary)
       .attr("font-size", 15)
       .attr("font-weight", 700)
       .text("当前筛选条件下没有足够的合作关系");
@@ -529,7 +543,7 @@ export async function initInstitutionNetwork() {
       .attr("x", width / 2)
       .attr("y", height / 2 + 18)
       .attr("text-anchor", "middle")
-      .attr("fill", "#94a3b8")
+      .attr("fill", theme.textSecondary)
       .attr("font-size", 12)
       .text("可以降低最小合作次数，或增加 Top N 机构范围。");
   }
@@ -1054,43 +1068,54 @@ function moveTooltip(event) {
     .style("top", `${event.pageY + 14}px`);
 }
 
-const COUNTRY_COLOR_MAP = new Map(
-  Object.entries({
-    US: "#2f6f73",
-    GB: "#b25d5d",
-    DE: "#5b6f9f",
-    FR: "#a36f38",
-    JP: "#7e5a8a",
-    CA: "#3f7f5f",
-    CH: "#9a5268",
-    SE: "#6f7480",
-    AU: "#b07a52",
-    RU: "#8a8f75",
-    NL: "#4f8a7b",
-    DK: "#a26892",
-    BE: "#7f9a65",
-    IT: "#bc7466",
-    CL: "#6d625c",
-    NO: "#5f879c",
-    MY: "#b98a45",
-    ES: "#9f7f3e",
-    IL: "#4f827f",
-    Unknown: "#98a2b3"
-  })
-);
-
-const FALLBACK_COUNTRY_COLORS = [
-  "#2f6f73",
-  "#b25d5d",
-  "#5b6f9f",
-  "#a36f38",
-  "#7e5a8a",
-  "#3f7f5f",
-  "#9a5268",
-  "#b07a52",
-  "#8a8f75",
-  "#5f879c"
-];
+const NETWORK_THEMES = {
+  light: {
+    background: "#F3F1ED",
+    panel: "#E9E5DF",
+    textPrimary: "#2F3540",
+    textSecondary: "#5C6470",
+    link: "rgba(160, 150, 136, 0.30)",
+    activeLink: "rgba(129, 99, 61, 0.58)",
+    guide: "rgba(170, 160, 145, 0.20)",
+    country: {
+      US: { outer: "#B9771F", inner: "#E3BC7A" },
+      GB: { outer: "#A33A2B", inner: "#D9897A" },
+      FR: { outer: "#D39A20", inner: "#EBCB79" },
+      IT: { outer: "#C86433", inner: "#E7A07E" },
+      DE: { outer: "#6A4A58", inner: "#B69AA6" }
+    },
+    fallbackCountry: [
+      { outer: "#9D6A33", inner: "#D6AE79" },
+      { outer: "#8D6E3F", inner: "#C8B07B" },
+      { outer: "#9B5B3A", inner: "#D3A284" },
+      { outer: "#7B684B", inner: "#BFB19A" },
+      { outer: "#8B5A6B", inner: "#C6A8B7" }
+    ]
+  },
+  dark: {
+    background: "#23201D",
+    panel: "#2C2824",
+    textPrimary: "#E6DDD2",
+    textSecondary: "#B9ADA0",
+    link: "rgba(196, 184, 167, 0.22)",
+    activeLink: "rgba(230, 195, 138, 0.48)",
+    guide: "rgba(210, 198, 182, 0.18)",
+    country: {
+      US: { outer: "#C7892F", inner: "#E6C38A" },
+      GB: { outer: "#B24A3C", inner: "#D99B8F" },
+      FR: { outer: "#D7A63A", inner: "#E9CF93" },
+      IT: { outer: "#CC7445", inner: "#E4AA8F" },
+      DE: { outer: "#7B6175", inner: "#BDA8B8" }
+    },
+    fallbackCountry: [
+      { outer: "#B88345", inner: "#D8B987" },
+      { outer: "#9F8350", inner: "#C9B586" },
+      { outer: "#A66B4C", inner: "#D0A28A" },
+      { outer: "#8F7658", inner: "#BFAE98" },
+      { outer: "#9B7183", inner: "#C7AABA" }
+    ]
+  }
+};
 
 const COUNTRY_CODE_ALIASES = new Map(
   Object.entries({
@@ -1132,16 +1157,34 @@ function normalizeCountryCode(value) {
   return COUNTRY_CODE_ALIASES.get(text) || text;
 }
 
-function getCountryColor(value) {
+function isDarkTheme() {
+  return document.documentElement.dataset.theme === "dark";
+}
+
+function getNetworkTheme() {
+  return isDarkTheme() ? NETWORK_THEMES.dark : NETWORK_THEMES.light;
+}
+
+function getCountrySwatch(value) {
   const code = normalizeCountryCode(value);
-  if (COUNTRY_COLOR_MAP.has(code)) return COUNTRY_COLOR_MAP.get(code);
+  const theme = getNetworkTheme();
+
+  if (theme.country[code]) return theme.country[code];
 
   let hash = 0;
   for (let i = 0; i < code.length; i += 1) {
     hash = (hash * 31 + code.charCodeAt(i)) >>> 0;
   }
 
-  return FALLBACK_COUNTRY_COLORS[hash % FALLBACK_COUNTRY_COLORS.length];
+  return theme.fallbackCountry[hash % theme.fallbackCountry.length];
+}
+
+function getCountryOuterColor(value) {
+  return getCountrySwatch(value).outer;
+}
+
+function getCountryInnerColor(value) {
+  return getCountrySwatch(value).inner;
 }
 
 function getTopCountryLegendItems(values, limit = 10) {
@@ -1157,6 +1200,6 @@ function getTopCountryLegendItems(values, limit = 10) {
     .slice(0, limit)
     .map(([code]) => ({
       code,
-      color: getCountryColor(code)
+      ...getCountrySwatch(code)
     }));
 }

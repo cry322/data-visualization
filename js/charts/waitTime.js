@@ -1,17 +1,4 @@
-import { loadJSON } from "../utils/dataLoader.js";
-
-const FIELD_COLORS = {
-  light: {
-    Physics: "#6f6fb0",
-    Chemistry: "#6f9b7d",
-    Medicine: "#c9796f"
-  },
-  dark: {
-    Physics: "#b8a8e6",
-    Chemistry: "#9fcfac",
-    Medicine: "#e3a09a"
-  }
-};
+import { FIELD_PALETTE, getFieldColor as getSharedFieldColor, loadJSON } from "../utils/dataLoader.js";
 
 const FIELD_LABELS = {
   Physics: "Physics",
@@ -113,8 +100,7 @@ function isDarkTheme() {
 }
 
 function getFieldColor(field) {
-  const palette = isDarkTheme() ? FIELD_COLORS.dark : FIELD_COLORS.light;
-  return palette[field] || (isDarkTheme() ? "#d1c9dc" : "#8a96a6");
+  return getSharedFieldColor(field);
 }
 
 function getCountryName(country) {
@@ -570,7 +556,7 @@ function renderLegend(g, width) {
     .attr("class", "waittime-legend")
     .attr("transform", `translate(${Math.max(0, width - 78)},18)`);
 
-  Object.keys(FIELD_COLORS.light).forEach((field, index) => {
+  Object.keys(FIELD_PALETTE.light).forEach((field, index) => {
     const color = getFieldColor(field);
     const item = legend.append("g").attr("transform", `translate(0,${index * 22})`);
     item.append("circle").attr("r", 5).attr("fill", color);

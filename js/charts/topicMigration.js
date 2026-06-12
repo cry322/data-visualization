@@ -66,6 +66,9 @@ export async function initTopicMigration() {
   bindControls();
   updateArcTopNVisibility();
   render();
+  window.addEventListener("themechange", () => {
+    window.requestAnimationFrame(render);
+  });
 
   function bindControls() {
     if (!fieldSelect.empty()) {
@@ -258,6 +261,7 @@ export async function initTopicMigration() {
       .attr("width", nodeWidth)
       .attr("height", d => d.height)
       .attr("rx", 7)
+      .attr("class", "topic-sankey-node")
       .attr("fill", d => domainColor(d.domain, 0.9))
       .attr("fill-opacity", 0.92)
       .attr("stroke", chartHaloColor())
@@ -302,6 +306,7 @@ export async function initTopicMigration() {
       .selectAll("text")
       .data(labelNodes, d => d.id)
       .join("text")
+      .attr("class", "topic-sankey-label")
       .attr("x", d => {
         if (d.type === "source") return d.x - 8;
         if (d.type === "target") return d.x + nodeWidth + 8;
@@ -313,12 +318,12 @@ export async function initTopicMigration() {
         if (d.type === "target") return "start";
         return "middle";
       })
-      .attr("fill", chartLabelColor())
+      .attr("fill", sankeyLabelColor())
       .attr("font-size", 12.5)
       .attr("font-weight", 700)
       .attr("paint-order", "stroke")
-      .attr("stroke", chartHaloColor())
-      .attr("stroke-width", 3.2)
+      .attr("stroke", sankeyLabelHaloColor())
+      .attr("stroke-width", isDarkTheme() ? 1.35 : 3)
       .attr("stroke-linejoin", "round")
       .attr("pointer-events", "none")
       .text(d => shortenText(d.name, d.type === "prize" ? 22 : 24));
@@ -396,9 +401,13 @@ export async function initTopicMigration() {
 
     svg.call(zoom);
 
+    const roleColors = isDarkTheme()
+      ? ["#60dccc", "#a6b2f6", "#f5b85d", "#b8c1cc"]
+      : ["#16a6a0", "#6478d8", "#d08a2d", "#8b96a6"];
+
     const color = d3.scaleOrdinal()
       .domain(["source", "prize", "target", "mixed"])
-      .range(["#2f6f73", "#6f5b8f", "#b56b5f", "#8a8f75"]);
+      .range(roleColors);
 
     const radius = d3.scaleSqrt()
       .domain([1, d3.max(data.nodes, d => d.value) || 1])
@@ -1971,20 +1980,28 @@ function chartHaloColor() {
   return isDarkTheme() ? "#171420" : "#ffffff";
 }
 
+function sankeyLabelColor() {
+  return isDarkTheme() ? "rgba(232, 226, 238, 0.82)" : chartLabelColor();
+}
+
+function sankeyLabelHaloColor() {
+  return isDarkTheme() ? "rgba(18, 15, 27, 0.70)" : "rgba(255, 255, 255, 0.92)";
+}
+
 function domainColor(domain, alpha = 0.78) {
   const key = cleanText(domain).toLowerCase();
   const colors = isDarkTheme() ? {
-    physical: [145, 213, 212],
-    life: [159, 207, 172],
-    health: [216, 149, 157],
-    social: [176, 160, 210],
-    unknown: [153, 162, 174]
+    physical: [245, 184, 93],
+    life: [96, 220, 205],
+    health: [232, 128, 188],
+    social: [166, 178, 246],
+    unknown: [172, 181, 194]
   } : {
-    physical: [72, 132, 143],
-    life: [92, 145, 111],
-    health: [181, 105, 111],
-    social: [126, 108, 166],
-    unknown: [138, 150, 164]
+    physical: [210, 132, 48],
+    life: [43, 176, 166],
+    health: [197, 83, 142],
+    social: [96, 111, 196],
+    unknown: [150, 160, 172]
   };
 
   let rgb = colors.unknown;
@@ -2792,8 +2809,8 @@ function drawArcGroupTitle(svg, x, y, text) {
     .attr("font-size", 14)
     .attr("font-weight", 800)
     .attr("paint-order", "stroke")
-    .attr("stroke", "#ffffff")
-    .attr("stroke-width", 5)
+    .attr("stroke", isDarkTheme() ? "rgba(23, 20, 32, 0.86)" : "rgba(255, 255, 255, 0.92)")
+    .attr("stroke-width", isDarkTheme() ? 2.6 : 4)
     .text(text);
 }
 
@@ -2921,8 +2938,8 @@ function arcStrokeColor(link, rank = 0) {
 
   if (relation === "same") {
     return isDarkTheme()
-      ? `rgba(145, 213, 212, ${Math.max(0.36, alpha + 0.06)})`
-      : `rgba(72, 132, 143, ${Math.max(0.34, alpha + 0.04)})`;
+      ? `rgba(96, 220, 205, ${Math.max(0.36, alpha + 0.06)})`
+      : `rgba(22, 166, 160, ${Math.max(0.34, alpha + 0.04)})`;
   }
 
   if (isOtherArcLink(link)) {
@@ -2932,8 +2949,8 @@ function arcStrokeColor(link, rank = 0) {
   }
 
   return isDarkTheme()
-    ? `rgba(176, 160, 210, ${Math.max(0.30, alpha * 0.90)})`
-    : `rgba(126, 108, 166, ${Math.max(0.28, alpha * 0.90)})`;
+    ? `rgba(166, 178, 246, ${Math.max(0.30, alpha * 0.90)})`
+    : `rgba(96, 111, 196, ${Math.max(0.28, alpha * 0.90)})`;
 }
 
 function arcLinkOpacity(link, rank = 0) {

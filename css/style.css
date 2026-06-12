@@ -1688,15 +1688,15 @@ footer {
 }
 
 .legend-physics {
-  background: #2f6f73;
+  background: var(--chart-field-physics);
 }
 
 .legend-chemistry {
-  background: #b56b5f;
+  background: var(--chart-field-chemistry);
 }
 
 .legend-medicine {
-  background: #6f5b8f;
+  background: var(--chart-field-medicine);
 }
 
 .legend-line {
@@ -2003,27 +2003,27 @@ footer {
 }
 
 .career-stage-overview .career-left-focus-area-top.physics {
-  fill: rgba(37, 99, 235, 0.32);
+  fill: color-mix(in srgb, var(--chart-field-physics) 32%, transparent);
 }
 
 .career-stage-overview .career-left-focus-area-bottom.physics {
-  fill: rgba(37, 99, 235, 0.55);
+  fill: color-mix(in srgb, var(--chart-field-physics) 55%, transparent);
 }
 
 .career-stage-overview .career-left-focus-area-top.chemistry {
-  fill: rgba(5, 150, 105, 0.32);
+  fill: color-mix(in srgb, var(--chart-field-chemistry) 32%, transparent);
 }
 
 .career-stage-overview .career-left-focus-area-bottom.chemistry {
-  fill: rgba(5, 150, 105, 0.55);
+  fill: color-mix(in srgb, var(--chart-field-chemistry) 55%, transparent);
 }
 
 .career-stage-overview .career-left-focus-area-top.medicine {
-  fill: rgba(220, 38, 38, 0.32);
+  fill: color-mix(in srgb, var(--chart-field-medicine) 32%, transparent);
 }
 
 .career-stage-overview .career-left-focus-area-bottom.medicine {
-  fill: rgba(220, 38, 38, 0.55);
+  fill: color-mix(in srgb, var(--chart-field-medicine) 55%, transparent);
 }
 
 .career-stage-overview .career-left-hover-line,
@@ -3011,19 +3011,19 @@ html[data-theme="dark"] .river-legend-dot {
   --accent-secondary: var(--accent-2);
   --tooltip-text: var(--tooltip-ink);
   --chart-highlight: var(--accent-3);
-  --chart-field-physics: #4b8588;
-  --chart-field-chemistry: #b26f69;
-  --chart-field-medicine: #7c6a9e;
-  --chart-wash-a: rgba(75, 133, 136, 0.10);
-  --chart-wash-b: rgba(178, 111, 105, 0.08);
+  --chart-field-physics: #426B8F;
+  --chart-field-chemistry: #4D8B68;
+  --chart-field-medicine: #B8646A;
+  --chart-wash-a: rgba(66, 107, 143, 0.10);
+  --chart-wash-b: rgba(184, 100, 106, 0.08);
 }
 
 html[data-theme="dark"] {
-  --chart-field-physics: #7fc5c6;
-  --chart-field-chemistry: #d8959d;
-  --chart-field-medicine: #b0a0d2;
-  --chart-wash-a: rgba(127, 197, 198, 0.10);
-  --chart-wash-b: rgba(216, 149, 157, 0.08);
+  --chart-field-physics: #8FB7D8;
+  --chart-field-chemistry: #9FCFAC;
+  --chart-field-medicine: #E0A2AA;
+  --chart-wash-a: rgba(143, 183, 216, 0.10);
+  --chart-wash-b: rgba(224, 162, 170, 0.08);
 }
 
 .theme-toggle {
@@ -3407,10 +3407,42 @@ html[data-theme="dark"] .map-path[fill="var(--bg-card)"] {
 
 @media (max-width: 900px) {
   .theme-toggle {
-    min-width: 42px;
-    max-width: 42px;
-    padding: 0;
+    min-width: 104px;
+    max-width: none;
+    padding: 0 12px;
   }
+}
+
+.global-subnav .theme-toggle .theme-toggle-icon,
+.hero .global-subnav .theme-toggle .theme-toggle-icon {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-3), var(--accent-2));
+  color: inherit;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent-2) 36%, transparent);
+}
+
+.global-subnav .theme-toggle .theme-toggle-label,
+.hero .global-subnav .theme-toggle .theme-toggle-label,
+.global-subnav:hover .theme-toggle .theme-toggle-label,
+.global-subnav:focus-within .theme-toggle .theme-toggle-label {
+  display: inline;
+  flex: 0 1 auto;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+  font-size: 14px;
+  line-height: 1;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 html,

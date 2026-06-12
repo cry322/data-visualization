@@ -133,7 +133,7 @@ function typeStory(element, text) {
       return;
     }
 
-    const pause = charIndex === 0 ? 180 : 22;
+    const pause = charIndex === 0 ? 70 : 8;
     window.setTimeout(step, pause);
   };
 

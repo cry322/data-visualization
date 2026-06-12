@@ -1,5 +1,7 @@
 ﻿// js/charts/institutionOverview.js
 
+import { getFieldRamp } from "../utils/dataLoader.js";
+
 const d3 = window.d3;
 
 export function initInstitutionOverview() {
@@ -120,15 +122,12 @@ export function initInstitutionOverview() {
             x.domain([0, maxMetricVal]);
             y.domain(top20.map(d => d.id));
 
-            const eyeTheme = document.documentElement.dataset.theme === "dark";
             let colorInterpolator;
-            if (currentField === "Physics") {
-                colorInterpolator = eyeTheme ? d3.interpolate("#5c5484", "#c9b8ef") : d3.interpolate("#eeeafd", "#6f5fb0"); 
-            } else if (currentField === "Chemistry") {
-                colorInterpolator = eyeTheme ? d3.interpolate("#3f6858", "#9fd7bd") : d3.interpolate("#e8f6ed", "#4d8b68"); 
-            } else if (currentField === "Medicine") {
-                colorInterpolator = eyeTheme ? d3.interpolate("#704d55", "#e0a2aa") : d3.interpolate("#faece9", "#b8646a");  
+            if (currentField === "Physics" || currentField === "Chemistry" || currentField === "Medicine") {
+                const [startColor, endColor] = getFieldRamp(currentField);
+                colorInterpolator = d3.interpolate(startColor, endColor);
             } else {
+                const eyeTheme = document.documentElement.dataset.theme === "dark";
                 colorInterpolator = eyeTheme ? d3.interpolate("#4b5668", "#c6d2dd") : d3.interpolate("#edf1f5", "#66788d");   
             }
             
