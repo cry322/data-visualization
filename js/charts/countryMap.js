@@ -1,4 +1,4 @@
-﻿// js/charts/countryMap.js
+// js/charts/countryMap.js
 
 import * as topojson from "../vendor/topojson-client.esm.js";
 
@@ -13,7 +13,7 @@ export function initCountryMap() {
     if (!rankContainer.empty()) rankContainer.html("");
 
     // ==========================================
-    // 1. 鍒濆鍖栧湴鍥剧敾甯?
+    // 1. 初始化地图画布
     // ==========================================
     const width = mapContainer.node().getBoundingClientRect().width || 800;
     const height = 450;
@@ -38,7 +38,7 @@ export function initCountryMap() {
         });
     svgMap.call(zoom);
 
-    // 鍒濆鍖栨笎鍙樺浘渚嬪鍣?
+    // 初始化渐变图例容器。
     const legendWidth = 12;
     const legendHeight = 170;
     const legendG = svgMap.append("g")
@@ -46,7 +46,7 @@ export function initCountryMap() {
         .attr("transform", `translate(28, ${height / 2 - legendHeight / 2})`);
 
     const defs = svgMap.append("defs");
-    // 銆愪慨鏀圭偣銆戝浘渚嬬殑绾挎€ф笎鍙樼Щ闄や簡纭紪鐮佺殑鍒濆 stops锛屾敼涓哄湪鏇存柊鍑芥暟涓姩鎬佹覆鏌?
+    // 图例渐变色随当前指标动态更新。
     const linearGradient = defs.append("linearGradient")
         .attr("id", "map-gradient")
         .attr("x1", "0%").attr("y1", "100%")
@@ -64,7 +64,7 @@ export function initCountryMap() {
         .attr("transform", `translate(${legendWidth}, 0)`);
 
     // ==========================================
-    // 2. 鍒濆鍖栨帓琛屾鐢诲竷
+    // 2. 初始化排行榜画布
     // ==========================================
     const marginRank = { top: 20, right: 30, bottom: 40, left: 70 };
     const widthRank = rankContainer.node() ? rankContainer.node().getBoundingClientRect().width || 400 : 400;
@@ -177,7 +177,7 @@ export function initCountryMap() {
         d3.select("#country-sort-select").on("change", function() {
             currentMetric = this.value;
             
-            // 銆愭柊澧炪€戝垏鎹㈡寚鏍囨椂锛屽己鍒舵敹璧峰苟闅愯棌搴曢儴鐨勫浗瀹剁鐮旀。妗堥潰鏉?
+            // 切换指标时收起底部国家详情面板。
             d3.select("#country-detail-panel").style("display", "none");
             
             updateDashboard();
@@ -186,38 +186,38 @@ export function initCountryMap() {
         function updateDashboard() {
             const maxVal = d3.max(combinedData, d => d[currentMetric]) || 1;
             
-            // 銆愪慨鏀圭偣銆戞墜鍔ㄦ寚瀹氱函姝ｇ殑钃濊壊绯绘笎鍙橈紝閬垮厤鍐呯疆鑹查樁鍙戠传鎴栧彂缁?
+            // 为三个指标分别指定渐变色，避免默认色阶偏离当前主题。
             let currentInterpolator;
             if (currentMetric === "m1") {
-                // 娣遍們娴疯摑 (Ocean Blue: 娴呴潚 -> 婀栬摑)
+                // 深海蓝：浅青到湖蓝。
                 currentInterpolator = isEyeTheme()
                     ? d3.interpolate("#355f68", "#9bd8d8")
                     : d3.interpolate("#f0f9ff", "#0369a1"); 
             } else if (currentMetric === "m2") {
-                // 缁忓吀绉戞妧钃?(Tech Blue: 娴呰摑 -> 瀹濊摑)
+                // 科技蓝：浅蓝到宝蓝。
                 currentInterpolator = isEyeTheme()
                     ? d3.interpolate("#4f4967", "#c5b5e3")
                     : d3.interpolate("#eff6ff", "#1d4ed8");  
             } else {
-                // 楂樼骇钘忛潚/鐏拌摑 (Slate/Navy Blue: 娴呯伆鐧?-> 娣辫棌闈?
+                // 暖金色：浅米色到深金色。
                 currentInterpolator = isEyeTheme()
                     ? d3.interpolate("#554a31", "#d7b66f")
                     : d3.interpolate("#faf7ed", "#8a6f3d");  
             }
 
             const colorScale = d3.scaleSequential(currentInterpolator).domain([0, Math.log1p(maxVal)]); 
-            // 鎻愬彇鍑烘偓娴椂鐨勯珮浜鑹诧紙鍙栧綋鍓嶆笎鍙樻潯鐨勬渶娣辫壊锛?
+            // Hover 高亮使用当前渐变的最深色。
             const activeHoverColor = currentInterpolator(1);
 
-            // 銆愪慨鏀圭偣 2銆戝姩鎬佹洿鏂板彸涓嬭鍥句緥鐨勬笎鍙樻潯棰滆壊
+            // 动态更新图例渐变条颜色。
             const stops = linearGradient.selectAll("stop").data(d3.range(0, 1.05, 0.05));
             stops.enter().append("stop")
                 .merge(stops)
-                .transition().duration(750) // 鍚屾娣诲姞杩囨浮鍔ㄧ敾
+                .transition().duration(750)
                 .attr("offset", d => `${d * 100}%`)
                 .attr("stop-color", d => currentInterpolator(d));
 
-            // 鏇存柊鍦板浘棰滆壊
+            // 更新地图着色。
             mapPaths.transition("color").duration(750).attr("fill", d => {
                 const cc = nameToAlpha2[d.properties.name];
                 if (!cc || !countryMetrics.has(cc)) return cssVar("--bg-card"); 
@@ -225,14 +225,13 @@ export function initCountryMap() {
                 return val === 0 ? cssVar("--bg-card") : colorScale(Math.log1p(val));
             });
 
-            // 鏇存柊鍙充笅瑙掑鏁板浘渚嬪潗鏍囪酱
+            // 更新图例坐标轴。
             const axisScale = d3.scaleSymlog()
                 .constant(1)
                 .domain([0, maxVal])
                 .range([legendHeight, 0]);
 
-            // 銆愪慨鏀圭偣銆戝€熺敤绾挎€ф瘮渚嬪昂鐨?ticks 鏂规硶锛岃嚜鍔ㄧ敓鎴?3~4 涓鏁寸殑鏁板€硷紙濡?100, 200锛?
-            // 杩囨护鎺夊甫鏈夊皬鏁扮殑鏁板€硷紝骞朵笖鎶婂ぇ浜庡綋鍓嶆渶澶у€肩殑婧㈠嚭鍒诲害涔熻繃婊ゆ帀
+            // 生成 3~4 个整数刻度，并过滤超出当前最大值的刻度。
             let tickValues = d3.scaleLinear().domain([0, maxVal]).ticks(4)
                                .filter(Number.isInteger)
                                .filter(v => v <= maxVal);
@@ -245,7 +244,7 @@ export function initCountryMap() {
             legendAxisG.selectAll("text").style("font-size", "12px").style("fill", "var(--chart-label)");
             legendAxisG.selectAll("path, line").style("stroke", "var(--chart-axis)");
 
-            // 鏇存柊鍙充晶鍥藉鎺掕姒?Top 10
+            // 更新右侧国家 Top 10 排行榜。
             const sortedList = [...combinedData].sort((a, b) => b[currentMetric] - a[currentMetric]);
             const top10 = sortedList.slice(0, 10);
 
@@ -278,7 +277,7 @@ export function initCountryMap() {
                 .attr("width", d => xRank(d[currentMetric]))
                 .attr("fill", d => colorScale(Math.log1p(d[currentMetric]))); 
 
-            // --- 缁戝畾浜や簰 ---
+            // 绑定地图和排行榜联动交互。
             mapPaths.on("mouseover", function(event, d) {
                 const cc = nameToAlpha2[d.properties.name];
                 if (!cc || !countryMetrics.has(cc)) return;
@@ -286,7 +285,6 @@ export function initCountryMap() {
                 if (cData[currentMetric] === 0) return; 
 
                 d3.select(this).raise().attr("stroke", "var(--chart-highlight)").attr("stroke-width", 1.5);
-                // 銆愪慨鏀圭偣 3銆慔over鑹蹭篃浣跨敤褰撳墠娓愬彉鐨勬渶娣辫壊
                 d3.selectAll(`.rank-bar-${cc}`).transition("hover").duration(150).attr("fill", activeHoverColor);
                 showTooltip(event, cData);
             })
@@ -311,7 +309,6 @@ export function initCountryMap() {
             });
 
             barsEnter.merge(bars).on("mouseover", function(event, d) {
-                // 銆愪慨鏀圭偣 3銆戝悓鐞嗘洿鏂版煴鐘跺浘鐨?Hover 鑹?
                 d3.select(this).transition("hover").duration(150).attr("fill", activeHoverColor); 
                 d3.selectAll(`.map-path-${d.code}`).raise().attr("stroke", "var(--chart-highlight)").attr("stroke-width", 1.5);
                 showTooltip(event, d); 
@@ -356,7 +353,7 @@ export function initCountryMap() {
         }
 
         // ==========================================
-        // 6. 鍥藉鏁版嵁涓嬮捇娓叉煋鍑芥暟
+        // 6. 国家详情面板渲染
         // ==========================================
         function renderCountryDetail(cc, countryData) {
             d3.select("#country-detail-panel").style("display", "block");
@@ -422,7 +419,7 @@ export function initCountryMap() {
 
     }).catch(err => {
         console.error("Map Data Loading Error:", err);
-        mapContainer.html(`<div style="color:red; padding: 20px;">鍦板浘鏁版嵁鍔犺浇澶辫触锛岃妫€鏌ョ綉缁滃拰鏁版嵁璺緞銆?/div>`);
+        mapContainer.html("<div style=\"color:red; padding: 20px;\">地图数据加载失败，请检查相关数据文件。</div>");
     });
 }
 

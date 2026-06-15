@@ -210,23 +210,23 @@ export function initInstitutionOverview() {
                             .style("opacity", 1)
                             .attr("fill", d => colorScale(d[currentMetric]));
                         
-                        // 鍙充晶璇︽儏闈㈡澘閫€鍥炵┖鐧藉崰浣嶇姸鎬?
+                        // 再次点击当前柱子时清空详情面板。
                         d3.select("#institution-detail-content")
                             .html(`<div class="placeholder">机构详情面板位置</div>`);
                     } else {
-                        // 2. 濡傛灉鐐瑰嚮鐨勬槸鍏朵粬鏌卞瓙 -> 鍙樻洿閫変腑椤?
+                        // 点击其他柱子时切换选中机构。
                         selectedInstitutionId = d.id;
                         
-                        // 鍏朵粬鏌卞瓙鍙樻贰锛屽綋鍓嶆煴瀛愰珮浜负绾㈣壊
+                        // 弱化未选中柱子，突出当前机构。
                         svg.selectAll(".bar").transition("click").duration(200)
                             .style("opacity", barData => barData.id === selectedInstitutionId ? 1 : 0.4)
                             .attr("fill", barData => barData.id === selectedInstitutionId ? "var(--chart-highlight)" : colorScale(barData[currentMetric]));
                         
-                        // 娓叉煋鍙充晶鍐呭
+                        // 渲染右侧详情。
                         renderDetailPanel(d);
                     }
                 })
-                // 鍒╃敤 D3 缁熶竴鐢熷懡鍛ㄦ湡绠＄悊锛氶噸缁樻椂鏍规嵁鍏ㄥ眬 selectedInstitutionId 鑷姩鏍″噯鏍峰紡
+                // 重绘时根据 selectedInstitutionId 同步选中状态和透明度。
                 .transition("layout").duration(600)
                 .attr("y", d => y(d.id))
                 .attr("height", y.bandwidth())
@@ -261,12 +261,12 @@ export function initInstitutionOverview() {
                       const val = d[currentMetric];
                       return Number.isInteger(val) ? val : val.toFixed(2);
                   })
-                  // 鏁板€肩殑鏄鹃殣閫忔槑搴︿篃璺熸煴瀛愪繚鎸佷竴鑷磋仈鍔?
+                  // 数值标签透明度与柱子保持一致。
                   .style("opacity", d => selectedInstitutionId === null ? 1 : (d.id === selectedInstitutionId ? 1 : 0.4));
         }
 
         // ==========================================
-        // 鍙充晶闈㈡澘鎺掔増鍑芥暟
+        // 右侧详情面板渲染
         // ==========================================
         function renderDetailPanel(inst) {
             const detailContainer = d3.select("#institution-detail-content");
