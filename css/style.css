@@ -2650,27 +2650,6 @@ main {
   line-height: 1.9;
 }
 
-.story-copy.is-typing::after {
-  content: "";
-  display: inline-block;
-  width: 0.55em;
-  height: 1em;
-  margin-left: 2px;
-  border-right: 2px solid var(--accent-2);
-  transform: translateY(0.15em);
-  animation: storyCaret 760ms steps(1) infinite;
-}
-
-.story-copy.is-complete::after {
-  content: none;
-}
-
-@keyframes storyCaret {
-  50% {
-    opacity: 0;
-  }
-}
-
 .panel,
 .card,
 .appendix-card,
@@ -2927,10 +2906,6 @@ html[data-theme="dark"] .river-legend-dot {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.001ms !important;
-  }
-
-  .story-copy::after {
-    content: none !important;
   }
 }
 

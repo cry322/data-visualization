@@ -71,71 +71,12 @@ function initThemeToggle() {
 
 function initStoryTyping() {
   const storyBlocks = Array.from(document.querySelectorAll(".story-copy[data-story-text]"));
-  const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
   if (!storyBlocks.length) return;
 
   storyBlocks.forEach((block) => {
-    block.textContent = reduceMotion ? block.dataset.storyText : "";
-    if (reduceMotion) block.classList.add("is-complete");
+    block.textContent = block.dataset.storyText || "";
   });
-
-  if (reduceMotion || !("IntersectionObserver" in window)) {
-    storyBlocks.forEach((block) => {
-      block.textContent = block.dataset.storyText;
-      block.classList.add("is-complete");
-    });
-    return;
-  }
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-
-      const block = entry.target;
-      observer.unobserve(block);
-      typeStory(block, block.dataset.storyText || "");
-    });
-  }, {
-    rootMargin: "0px 0px -18% 0px",
-    threshold: 0.28
-  });
-
-  storyBlocks.forEach((block) => observer.observe(block));
-}
-
-function typeStory(element, text) {
-  const sentenceChunks = text.match(/[^。！？；]+[。！？；]?/g) || [text];
-  let chunkIndex = 0;
-  let charIndex = 0;
-  let output = "";
-
-  element.classList.add("is-typing");
-
-  const step = () => {
-    const chunk = sentenceChunks[chunkIndex] || "";
-    output += chunk.charAt(charIndex);
-    element.textContent = output;
-    charIndex += 1;
-
-    if (charIndex >= chunk.length) {
-      chunkIndex += 1;
-      charIndex = 0;
-      output += chunkIndex < sentenceChunks.length ? "" : "";
-    }
-
-    if (chunkIndex >= sentenceChunks.length) {
-      element.textContent = text;
-      element.classList.remove("is-typing");
-      element.classList.add("is-complete");
-      return;
-    }
-
-    const pause = charIndex === 0 ? 70 : 8;
-    window.setTimeout(step, pause);
-  };
-
-  step();
 }
 
 function getCssVar(name) {
